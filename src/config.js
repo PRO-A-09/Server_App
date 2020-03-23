@@ -9,7 +9,7 @@ export class SocketConfig {
 export const logger = winston.createLogger({
     transports: [
         new winston.transports.Console( {
-            level: 'debug',
+            level: 'warning',
             format:  winston.format.combine(
                 winston.format.colorize(),
                 winston.format.simple()
