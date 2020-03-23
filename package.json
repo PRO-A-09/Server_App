@@ -21,6 +21,10 @@
   "homepage": "https://github.com/PRO-A-09/server_app#readme",
   "devDependencies": {
     "chai": "^4.2.0",
-    "mocha": "^7.1.1"
+    "mocha": "^7.1.1",
+    "request": "^2.88.2"
+  },
+  "dependencies": {
+    "winston": "^3.2.1"
   }
 }
