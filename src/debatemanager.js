@@ -1,5 +1,6 @@
 import {SocketConfig, logger} from './conf/config.js'
 import http from 'http'
+import http_terminator from 'http-terminator';
 import Server from 'socket.io'
 
 /**
@@ -56,6 +57,11 @@ export class DebateManager {
      */
     stop() {
         logger.info("Server stopping");
-        this.webServer.close();
+        
+        // Use http-terminator to gracefully terminate the server
+        const httpTerminator = http_terminator.createHttpTerminator({
+            server: this.webServer
+        });
+        httpTerminator.terminate();
     }
 }
