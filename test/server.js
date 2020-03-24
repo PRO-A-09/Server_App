@@ -27,7 +27,7 @@ describe('Server connection test', () => {
 
         beforeEach(() => {
             client = io.connect(srvAddress, {
-                path: '/socket-io',
+                path: '${SocketConfig.DEFAULT_PATH}',
                 forceNew: true
             });
         });
