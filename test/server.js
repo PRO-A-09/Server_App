@@ -1,4 +1,4 @@
-import {SocketConfig} from '../src/config.js'
+import {SocketConfig} from '../src/conf/config.js'
 import {DebateManager} from "../src/debatemanager.js";
 import io from 'socket.io-client'
 import request from 'request'

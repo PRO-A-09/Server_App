@@ -3,6 +3,7 @@ import winston from "winston";
 export class SocketConfig {
     static SOCKET_PORT = 8080;
     static DEFAULT_PATH = '/socket-io';
+    static ADMIN_NAMESPACE = '/admin';
 }
 
 // Create a winston logger that logs to console

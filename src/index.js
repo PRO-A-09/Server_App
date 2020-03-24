@@ -1,4 +1,4 @@
-import {SocketConfig, logger} from './config.js'
+import {SocketConfig, logger} from './conf/config.js'
 import {DebateManager} from "./debatemanager.js";
 
 const debateManager = new DebateManager();
