@@ -36,6 +36,9 @@ export class DebateManager {
         });
     }
 
+    /**
+     * Starts a new socket.io server listening on the webServer.
+     */
     startSocketServer() {
         // Create new socket.io server, listening on a specific path
         this.io = new Server(this.webServer, {
