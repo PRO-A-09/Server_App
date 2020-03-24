@@ -57,8 +57,7 @@ export class DebateManager {
      */
     stop() {
         logger.info("Server stopping");
-        this.io.close();
-
+        
         // Use http-terminator to gracefully terminate the server
         const httpTerminator = http_terminator.createHttpTerminator({
             server: this.webServer
