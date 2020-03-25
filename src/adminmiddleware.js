@@ -1,4 +1,4 @@
-import {logger} from './conf/config.js'
+import {SocketConfig, logger, ErrorMessage} from './conf/config.js'
 
 /**
  * Class implementing a Middleware function with a fixed password
@@ -17,12 +17,12 @@ export class AdminMiddleware {
         const password = socket.handshake.query.password;
         socket.handshake.query.password = null;
 
-        if (password === 'password') {
+        if (password === SocketConfig.ADMIN_PASSWORD) {
             logger.info('Successful connection to the admin namespace');
             return next();
         }
 
-        logger.debug('Invalid password');
-        return next(new Error('Invalid password'));
+        logger.debug(ErrorMessage.ADMIN_PASSWORD_INVALID);
+        return next(new Error(ErrorMessage.ADMIN_PASSWORD_INVALID));
     }
 }
