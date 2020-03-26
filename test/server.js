@@ -1,4 +1,4 @@
-import {SocketConfig} from '../src/config.js'
+import {SocketConfig, ErrorMessage} from '../src/conf/config.js'
 import {DebateManager} from "../src/debatemanager.js";
 import io from 'socket.io-client'
 import request from 'request'
@@ -45,6 +45,64 @@ describe('Server connection test', () => {
             client.disconnected.should.equal(true);
             client.connected.should.equal(false);
             done();
+        });
+
+        afterEach(() => {
+            client.close();
+        });
+    });
+
+    describe('socket.io admin connection test', () => {
+        let client;
+
+        beforeEach(() => {
+            client = io.connect(`http://localhost:${SocketConfig.SOCKET_PORT}${SocketConfig.ADMIN_NAMESPACE}`, {
+                path: SocketConfig.DEFAULT_PATH,
+                forceNew: true,
+                query: {
+                    password: `${SocketConfig.ADMIN_PASSWORD}`
+                }
+            });
+        });
+
+        it('connection', (done) => {
+            client.on('connect', () => {
+                client.connected.should.equal(true);
+                client.disconnected.should.equal(false);
+                done();
+            });
+        });
+
+        it('disconnect', (done) => {
+            client.disconnect();
+            client.disconnected.should.equal(true);
+            client.connected.should.equal(false);
+            done();
+        });
+
+        afterEach(() => {
+            client.close();
+        });
+    });
+
+    describe('socket.io invalid pass admin connect test', () => {
+        let client;
+
+        beforeEach(() => {
+            client = io.connect(`http://localhost:${SocketConfig.SOCKET_PORT}${SocketConfig.ADMIN_NAMESPACE}`, {
+                path: SocketConfig.DEFAULT_PATH,
+                forceNew: true,
+                query: {
+                    password: 'invalid'
+                }
+            });
+        });
+
+        it('Socket.io connection test', (done) => {
+            client.on('error', (err) => {
+                err.should.equal(ErrorMessage.ADMIN_PASSWORD_INVALID);
+                done();
+            })
         });
 
         afterEach(() => {

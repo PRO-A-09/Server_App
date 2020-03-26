@@ -1,4 +1,6 @@
-import {SocketConfig, logger} from './config.js'
+import {SocketConfig, logger} from './conf/config.js'
+import {AdminNamespace} from './namespace/adminnamespace.js';
+import {AdminMiddleware} from './adminmiddleware.js';
 import http from 'http'
 import http_terminator from 'http-terminator';
 import Server from 'socket.io'
@@ -9,6 +11,7 @@ import Server from 'socket.io'
 export class DebateManager {
     webServer;
     io;
+    nspAdmin;
 
     /**
      * Start the DebateManager
@@ -16,6 +19,7 @@ export class DebateManager {
     start() {
         this.startWebServer();
         this.startSocketServer();
+        this.startAdminNamespace();
     }
 
     /**
@@ -53,6 +57,16 @@ export class DebateManager {
                 logger.debug(`Socket (${socket.id}) disconnected`);
             });
         });
+    }
+
+    /**
+     * Creates a new AdminNamespace and registers our middleware.
+     */
+    startAdminNamespace() {
+        this.nspAdmin = new AdminNamespace(this.io.of(SocketConfig.ADMIN_NAMESPACE));
+        const adminMiddleware = new AdminMiddleware();
+
+        this.nspAdmin.registerMiddleware(adminMiddleware.middlewareFunction);
     }
 
     /**
