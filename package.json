@@ -22,11 +22,13 @@
   "devDependencies": {
     "chai": "^4.2.0",
     "mocha": "^7.1.1",
+    "mongodb": "^3.5.5",
     "request": "^2.88.2",
     "socket.io-client": "latest"
   },
   "dependencies": {
     "http-terminator": "^2.0.2",
+    "mongoose": "^5.9.6",
     "socket.io": "^2.3.0",
     "winston": "^3.2.1"
   }
