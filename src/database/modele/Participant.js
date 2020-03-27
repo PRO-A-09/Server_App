@@ -25,7 +25,6 @@ const participantSchema = new mongoose.Schema({
         type: String,
         required: true
     }
-
 });
 
 //Instantiation of the model for Participant so it can be used
