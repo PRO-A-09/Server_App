@@ -10,7 +10,7 @@ COPY package*.json ./
 
 RUN npm install
 
-COPY ./src ./src
+COPY . .
 
 EXPOSE 8080
 
