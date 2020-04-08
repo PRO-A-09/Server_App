@@ -6,14 +6,11 @@ WORKDIR /home/node/server_app
 
 USER node
 
-RUN git init && \
-   	git remote add origin https://github.com/PRO-A-09/server_app.git && \
-	git fetch origin && \
-	git checkout dev
+COPY package*.json ./
 
 RUN npm install
 
-COPY --chown=node:node . .
+COPY ./src ./src
 
 EXPOSE 8080
 
