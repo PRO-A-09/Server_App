@@ -6,7 +6,7 @@ export class SocketConfig {
     static ADMIN_NAMESPACE = '/admin';
     static ADMIN_PASSWORD = 'pass';
     static ADMIN_ROOM_PREFIX = 'ADMIN-';
-    static DEBATE_NAMESPACE_PREFIX = 'DEBATE-';
+    static DEBATE_NAMESPACE_PREFIX = '/DEBATE-';
 }
 
 export class ErrorMessage {

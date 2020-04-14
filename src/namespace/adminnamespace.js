@@ -1,34 +1,38 @@
-import {logger} from '../conf/config.js';
+import {logger, SocketConfig} from '../conf/config.js';
 import {CustomNamespace} from './customnamespace.js'
+import {Debate} from "../debate/debate.js";
 
 /**
  * This class implements an AdminNamespace that extends a CustomNamespace
  */
 export class AdminNamespace extends CustomNamespace {
+    io;
+
     /**
      * Default constructor that saves the socket.io Namespace
-     * @param nsp socket.io Namespace
+     * @param io Socket.io server
      */
-    constructor(nsp) {
-        super(nsp);
+    constructor(io) {
+        super(io.of(SocketConfig.ADMIN_NAMESPACE));
+        this.io = io;
     }
 
     /**
      * Starts handling for events.
      */
     startSocketHandling() {
-        this.nsp.on('connection', this.onConnection);
-    }
+        this.nsp.on('connection', (socket) => {
+            logger.debug(`New connected socket (socketid: ${socket.id}, username: ${socket.username})`);
 
-    /**
-     * Function that handles the new socket connection.
-     * @param socket new connected socket.
-     */
-    onConnection(socket) {
-        logger.debug(`New connected socket (socketid: ${socket.id}, username: ${socket.username})`);
+            socket.on('newDebate', (callback) => {
+                logger.info(`New debate creation requested from ${socket.username}`);
 
-        socket.on('disconnect', _ => {
-            logger.debug(`socket (${socket.id}) disconnected`);
+                // Create a new debate
+                const debate = new Debate(socket, this.io);
+                debate.startSocketHandling();
+
+                callback(debate.debateID);
+            });
         });
     }
 }
