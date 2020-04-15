@@ -58,7 +58,6 @@ describe('Debate test', () => {
         });
 
         beforeEach(() => {
-            console.log(`http://localhost:${SocketConfig.SOCKET_PORT}${SocketConfig.DEBATE_NAMESPACE_PREFIX}${id}`);
             client = io.connect(`http://localhost:${SocketConfig.SOCKET_PORT}${SocketConfig.DEBATE_NAMESPACE_PREFIX}${id}`, {
                 path: SocketConfig.DEFAULT_PATH,
                 forceNew: true,
