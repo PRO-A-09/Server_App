@@ -5,6 +5,7 @@ import {SocketConfig, logger} from '../conf/config.js';
  */
 export class Debate {
     static nb_debate = 0;
+    io;
     debateID;
     adminRoomName;
     userNamespace;
@@ -15,6 +16,7 @@ export class Debate {
      * @param io Socket.io server
      */
     constructor(ownerSocket, io) {
+        this.io = io;
         this.debateID = ++Debate.nb_debate;
         this.adminRoomName = SocketConfig.ADMIN_ROOM_PREFIX + this.debateID;
 
