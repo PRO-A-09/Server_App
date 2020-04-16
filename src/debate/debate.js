@@ -9,6 +9,24 @@ export class Debate {
     debateID;
     adminRoomName;
     userNamespace;
+    questions;
+
+    /**
+     * Nested class Question that contains the question of the debate
+     * @type {Debate.Question}
+     */
+    Question = class Question {
+        static nb_question = 0;
+        id;
+        question;
+        answers;
+
+        constructor(question, answers) {
+            this.id = ++Question.nb_question;
+            this.question = question;
+            this.answers = answers;
+        }
+    };
 
     /**
      * Create a new debate
@@ -17,6 +35,7 @@ export class Debate {
      */
     constructor(ownerSocket, io) {
         this.io = io;
+        this.questions = [];
         this.debateID = ++Debate.nb_debate;
         this.adminRoomName = SocketConfig.ADMIN_ROOM_PREFIX + this.debateID;
 
@@ -32,7 +51,22 @@ export class Debate {
      */
     startSocketHandling() {
         this.userNamespace.on('connection', (socket) => {
-            logger.debug(`New socket connected to namespace ${this.userNamespace.name}`)
+            logger.debug(`New socket connected to namespace ${this.userNamespace.name} + ${socket.id}`);
+
+            socket.on('getQuestions', (callback) => {
+                logger.debug(`getQuestions received from ${socket.id}`);
+                callback(this.questions);
+            });
         });
+    }
+
+    /**
+     * Register a new question to the debate and transmit it to the clients.
+     * @param question object from the nested class Question
+     */
+    sendNewQuestion(question) {
+        logger.debug(`Sending new question with id ${question.id}`);
+        this.questions.push(question);
+        this.userNamespace.emit('newQuestion', question);
     }
 }

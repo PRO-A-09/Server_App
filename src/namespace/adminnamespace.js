@@ -31,11 +31,23 @@ export class AdminNamespace extends CustomNamespace {
 
                 // Create a new debate
                 const debate = new Debate(socket, this.io);
-                this.activeDebates.add(debate.debateID, debate);
+                this.activeDebates.set(debate.debateID, debate);
 
                 debate.startSocketHandling();
                 callback(debate.debateID);
             });
         });
+    }
+
+    /**
+     * Return a Debate with the corresponding id
+     * @param id of the debate
+     * @returns {Debate}
+     */
+    getActiveDebate(id) {
+        if (!this.activeDebates.has(id))
+            throw new Error(`Debate with id (${id}) not found.`);
+
+        return this.activeDebates.get(id);
     }
 }
