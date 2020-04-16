@@ -13,7 +13,6 @@ export class DebateManager {
     io;
     nspAdmin;
 
-
     /**
      * Start the DebateManager
      */

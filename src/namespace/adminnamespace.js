@@ -7,6 +7,7 @@ import {Debate} from "../debate/debate.js";
  */
 export class AdminNamespace extends CustomNamespace {
     io;
+    activeDebates;
 
     /**
      * Default constructor that saves the socket.io Namespace
@@ -15,6 +16,7 @@ export class AdminNamespace extends CustomNamespace {
     constructor(io) {
         super(io.of(SocketConfig.ADMIN_NAMESPACE));
         this.io = io;
+        this.activeDebates = new Map();
     }
 
     /**
@@ -29,8 +31,9 @@ export class AdminNamespace extends CustomNamespace {
 
                 // Create a new debate
                 const debate = new Debate(socket, this.io);
-                debate.startSocketHandling();
+                this.activeDebates.add(debate.debateID, debate);
 
+                debate.startSocketHandling();
                 callback(debate.debateID);
             });
         });
