@@ -53,9 +53,48 @@ export class Debate {
         this.userNamespace.on('connection', (socket) => {
             logger.debug(`New socket connected to namespace ${this.userNamespace.name} + ${socket.id}`);
 
+            // Return the list of questions as an array to callback function
             socket.on('getQuestions', (callback) => {
                 logger.debug(`getQuestions received from ${socket.id}`);
                 callback([ ...this.questions.values() ]);
+            });
+
+            // Answer to a question, questionAnswer contains questionId and answerId
+            // callback is a function that takes true on success, otherwise false.
+            socket.on('answerQuestion', (questionAnswer, callback) => {
+                logger.debug(`answerQuestion received from ${socket.id}`);
+
+                if (!(callback instanceof Function)) {
+                    logger.debug(`callback is not a function.`);
+                    return;
+                }
+
+                const questionId = questionAnswer.questionId;
+                const answerId = questionAnswer.answerId;
+                if (questionId == null || answerId == null) {
+                    logger.debug("questionId or answerId is null.");
+                    callback(false);
+                    return;
+                }
+
+                const question = this.questions.get(questionId);
+                if (question == null) {
+                    logger.debug(`Question with id (${questionId}) not found.`);
+                    callback(false);
+                    return;
+                }
+
+                if (answerId >= question.answers.length) {
+                    logger.debug(`Question (${questionId}) with answer (${answerId}) invalid.`);
+                    callback(false);
+                    return;
+                }
+
+                logger.info(`Socket (${socket.id}) replied ${answerId} to question (${questionId}).`);
+                
+                // Send the reply to the admin room.
+                this.io.to(this.adminRoomName).emit('questionAnswered', {questionId: questionId, answerId: answerId});
+                callback(true);
             });
         });
     }

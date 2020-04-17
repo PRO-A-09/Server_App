@@ -149,6 +149,47 @@ describe('Debate test', () => {
             debate.sendNewQuestion(new debate.Question('Does this test work ?', ['Yes', 'No']));
         });
 
+        describe('answerQuestion', () => {
+            it('valid response', (done) => {
+                let debate = debateManager.nspAdmin.getActiveDebate(id);
+
+                client.on('newQuestion', (questionObj) => {
+                    client.emit('answerQuestion', {questionId : questionObj.id, answerId : 0}, (res) => {
+                        res.should.equal(true);
+                        done();
+                    });
+                });
+
+                debate.sendNewQuestion(new debate.Question('Does this test work ?', ['Yes', 'No']));
+            });
+
+            it('invalid questionID', (done) => {
+                let debate = debateManager.nspAdmin.getActiveDebate(id);
+
+                client.on('newQuestion', (questionObj) => {
+                    client.emit('answerQuestion', {questionId : -1, answerId : 1}, (res) => {
+                        res.should.equal(false);
+                        done();
+                    });
+                });
+
+                debate.sendNewQuestion(new debate.Question('Does this test work ?', ['Yes', 'No']));
+            });
+
+            it('invalid object', (done) => {
+                let debate = debateManager.nspAdmin.getActiveDebate(id);
+
+                client.on('newQuestion', (questionObj) => {
+                    client.emit('answerQuestion', {myFieldIsInvalid: 12}, (res) => {
+                        res.should.equal(false);
+                        done();
+                    });
+                });
+
+                debate.sendNewQuestion(new debate.Question('Does this test work ?', ['Yes', 'No']));
+            });
+        });
+
         afterEach(() => {
             client.close();
         });
