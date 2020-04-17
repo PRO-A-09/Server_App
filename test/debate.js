@@ -57,19 +57,21 @@ describe('Debate test', () => {
             });
         });
 
-        beforeEach(() => {
+        beforeEach((done) => {
             client = io.connect(`http://localhost:${SocketConfig.SOCKET_PORT}${SocketConfig.DEBATE_NAMESPACE_PREFIX}${id}`, {
                 path: SocketConfig.DEFAULT_PATH,
                 forceNew: true,
             });
+
+            client.on('connect', () => {
+                done();
+            });
         });
 
         it('connection', (done) => {
-            client.on('connect', () => {
-                client.connected.should.equal(true);
-                client.disconnected.should.equal(false);
-                done();
-            });
+            client.connected.should.equal(true);
+            client.disconnected.should.equal(false);
+            done();
         });
 
         it('disconnect', (done) => {
