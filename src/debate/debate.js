@@ -35,7 +35,7 @@ export class Debate {
      */
     constructor(ownerSocket, io) {
         this.io = io;
-        this.questions = [];
+        this.questions = new Map();
         this.debateID = ++Debate.nb_debate;
         this.adminRoomName = SocketConfig.ADMIN_ROOM_PREFIX + this.debateID;
 
@@ -55,7 +55,7 @@ export class Debate {
 
             socket.on('getQuestions', (callback) => {
                 logger.debug(`getQuestions received from ${socket.id}`);
-                callback(this.questions);
+                callback([ ...this.questions.values() ]);
             });
         });
     }
@@ -66,7 +66,7 @@ export class Debate {
      */
     sendNewQuestion(question) {
         logger.debug(`Sending new question with id ${question.id}`);
-        this.questions.push(question);
+        this.questions.set(question.id, question);
         this.userNamespace.emit('newQuestion', question);
     }
 }
