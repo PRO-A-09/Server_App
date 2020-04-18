@@ -30,7 +30,7 @@ export class AdminNamespace extends CustomNamespace {
                 logger.info(`New debate creation requested from ${socket.username}`);
 
                 // Create a new debate
-                const debate = new Debate(socket, this.io);
+                const debate = new Debate(socket, this.io, this.nsp);
                 this.activeDebates.set(debate.debateID, debate);
 
                 debate.startSocketHandling();
