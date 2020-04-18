@@ -56,6 +56,12 @@ export class Debate {
             // Return the list of questions as an array to callback function
             socket.on('getQuestions', (callback) => {
                 logger.debug(`getQuestions received from ${socket.id}`);
+
+                if (!(callback instanceof Function)) {
+                    logger.debug(`callback is not a function.`);
+                    return;
+                }
+
                 callback([ ...this.questions.values() ]);
             });
 
