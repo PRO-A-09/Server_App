@@ -93,6 +93,7 @@ describe('Debate test', () => {
     describe("Debate client functions", () => {
         let client;
         let id;
+        let debate;
 
         before((done) => {
             admin = io.connect(`http://localhost:${SocketConfig.SOCKET_PORT}${SocketConfig.ADMIN_NAMESPACE}`, {
@@ -110,6 +111,8 @@ describe('Debate test', () => {
         });
 
         beforeEach((done) => {
+            debate = debateManager.nspAdmin.getActiveDebate(id);
+
             client = io.connect(`http://localhost:${SocketConfig.SOCKET_PORT}${SocketConfig.DEBATE_NAMESPACE_PREFIX}${id}`, {
                 path: SocketConfig.DEFAULT_PATH,
                 forceNew: true,
@@ -120,39 +123,44 @@ describe('Debate test', () => {
             })
         });
 
-        it('getQuestions', (done) => {
-            const NB_QUESTIONS = 3;
-            let debate = debateManager.nspAdmin.getActiveDebate(id);
-
-            for (let i = 0; i < NB_QUESTIONS; ++i)
-                debate.sendNewQuestion(new debate.Question(`Question${i}`, ['...']));
-
-            client.emit('getQuestions', (questions) => {
-                questions.length.should.equal(NB_QUESTIONS);
-                for (let i = 0; i < questions.length; ++i)
-                    questions[i].question.should.equal(`Question${i}`);
-
-                done();
-            })
-        });
-
-        it('newQuestion', (done) => {
-            let debate = debateManager.nspAdmin.getActiveDebate(id);
-
-            client.on('newQuestion', (questionObj) => {
-                questionObj.question.should.equal('Does this test work ?');
-                questionObj.answers[0].should.equal('Yes');
-                questionObj.answers[1].should.equal('No');
-                done();
+        describe('getQuestions', () => {
+            it('no questions', (done) => {
+                client.emit('getQuestions', (questions) => {
+                    questions.length.should.equal(0);
+                    done();
+                })
             });
 
-            debate.sendNewQuestion(new debate.Question('Does this test work ?', ['Yes', 'No']));
+            it('available questions', (done) => {
+                const NB_QUESTIONS = 3;
+                for (let i = 0; i < NB_QUESTIONS; ++i)
+                    debate.sendNewQuestion(new debate.Question(`Question${i}`, ['...']));
+
+                client.emit('getQuestions', (questions) => {
+                    questions.length.should.equal(NB_QUESTIONS);
+                    for (let i = 0; i < questions.length; ++i)
+                        questions[i].question.should.equal(`Question${i}`);
+
+                    done();
+                })
+            });
+        });
+
+        describe('newQuestion', () => {
+            it('valid question', (done) => {
+                client.on('newQuestion', (questionObj) => {
+                    questionObj.question.should.equal('Does this test work ?');
+                    questionObj.answers[0].should.equal('Yes');
+                    questionObj.answers[1].should.equal('No');
+                    done();
+                });
+
+                debate.sendNewQuestion(new debate.Question('Does this test work ?', ['Yes', 'No']));
+            });
         });
 
         describe('answerQuestion', () => {
             it('valid response', (done) => {
-                let debate = debateManager.nspAdmin.getActiveDebate(id);
-
                 client.on('newQuestion', (questionObj) => {
                     client.emit('answerQuestion', {questionId : questionObj.id, answerId : 0}, (res) => {
                         res.should.equal(true);
@@ -164,8 +172,6 @@ describe('Debate test', () => {
             });
 
             it('invalid questionID', (done) => {
-                let debate = debateManager.nspAdmin.getActiveDebate(id);
-
                 client.on('newQuestion', (questionObj) => {
                     client.emit('answerQuestion', {questionId : -1, answerId : 1}, (res) => {
                         res.should.equal(false);
@@ -177,8 +183,6 @@ describe('Debate test', () => {
             });
 
             it('invalid object', (done) => {
-                let debate = debateManager.nspAdmin.getActiveDebate(id);
-
                 client.on('newQuestion', (questionObj) => {
                     client.emit('answerQuestion', {myFieldIsInvalid: 12}, (res) => {
                         res.should.equal(false);
