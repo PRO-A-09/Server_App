@@ -203,6 +203,68 @@ describe('Debate test', () => {
         });
     });
 
+    describe("Debate admin functions", () => {
+        let client;
+        let id;
+        let debate;
+
+        before((done) => {
+            admin = io.connect(`http://localhost:${SocketConfig.SOCKET_PORT}${SocketConfig.ADMIN_NAMESPACE}`, {
+                path: SocketConfig.DEFAULT_PATH,
+                forceNew: true,
+                query: {
+                    password: `${SocketConfig.ADMIN_PASSWORD}`
+                }
+            });
+
+            admin.emit("newDebate", (debateID) => {
+                id = debateID;
+                done();
+            });
+        });
+
+        beforeEach((done) => {
+            debate = debateManager.nspAdmin.getActiveDebate(id);
+
+            client = io.connect(`http://localhost:${SocketConfig.SOCKET_PORT}${SocketConfig.DEBATE_NAMESPACE_PREFIX}${id}`, {
+                path: SocketConfig.DEFAULT_PATH,
+                forceNew: true,
+            });
+
+            client.on('connect', () => {
+                done();
+            })
+        });
+
+        describe('questionAnswered', () => {
+            it('valid answer', (done) => {
+                let question = new debate.Question('Does this test work ?', ['Yes', 'No']);
+
+                admin.on('questionAnswered', (questionObj) => {
+                    questionObj.questionId.should.equal(question.id);
+                    questionObj.answerId.should.equal(0);
+                    done();
+                });
+
+                client.on('newQuestion', (questionObj) => {
+                    client.emit('answerQuestion', {questionId : questionObj.id, answerId : 0}, (res) => {
+                        res.should.equal(true);
+                    });
+                });
+
+                debate.sendNewQuestion(question);
+            });
+        });
+
+        afterEach(() => {
+            client.close();
+        });
+
+        after(() => {
+            admin.close();
+        });
+    });
+
     after(() => {
         debateManager.stop();
     });
