@@ -256,6 +256,21 @@ describe('Debate test', () => {
             });
         });
 
+        describe('newQuestion', () => {
+            it('valid question', (done) => {
+                let newQuestionObj = {
+                    debateId: id,
+                    title: 'Does this test work ?',
+                    answers: ['Yes', 'No']
+                };
+
+                admin.emit('newQuestion', newQuestionObj, (questionId) => {
+                    questionId.should.not.equal(-1);
+                    done();
+                });
+            });
+        });
+
         afterEach(() => {
             client.close();
         });
