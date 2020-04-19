@@ -18,12 +18,12 @@ export class Debate {
     Question = class Question {
         static nb_question = 0;
         id;
-        question;
+        title;
         answers;
 
-        constructor(question, answers) {
+        constructor(title, answers) {
             this.id = ++Question.nb_question;
-            this.question = question;
+            this.title = title;
             this.answers = answers;
         }
     };

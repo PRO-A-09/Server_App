@@ -139,7 +139,7 @@ describe('Debate test', () => {
                 client.emit('getQuestions', (questions) => {
                     questions.length.should.equal(NB_QUESTIONS);
                     for (let i = 0; i < questions.length; ++i)
-                        questions[i].question.should.equal(`Question${i}`);
+                        questions[i].title.should.equal(`Question${i}`);
 
                     done();
                 })
@@ -149,7 +149,7 @@ describe('Debate test', () => {
         describe('newQuestion', () => {
             it('valid question', (done) => {
                 client.on('newQuestion', (questionObj) => {
-                    questionObj.question.should.equal('Does this test work ?');
+                    questionObj.title.should.equal('Does this test work ?');
                     questionObj.answers[0].should.equal('Yes');
                     questionObj.answers[1].should.equal('No');
                     done();
