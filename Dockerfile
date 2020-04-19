@@ -15,3 +15,8 @@ COPY . .
 EXPOSE 8080
 
 CMD [ "npm", "start" ]
+
+# Pull custom base image
+FROM naludrag/mongo:freshInstall
+
+EXPOSE 27017
