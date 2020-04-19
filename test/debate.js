@@ -27,7 +27,12 @@ describe('Debate test', () => {
         });
 
         it("New debate creation", (done) => {
-            admin.emit("newDebate", (debateID) => {
+            let debateInfo = {
+                title: 'My new debate',
+                description: 'Test debate'
+            };
+
+            admin.emit("newDebate", debateInfo, (debateID) => {
                 debateID.should.equal(1);
                 done();
             });
@@ -51,7 +56,11 @@ describe('Debate test', () => {
                 }
             });
 
-            admin.emit("newDebate", (debateID) => {
+            let debateInfo = {
+                title: 'My new debate',
+                description: 'Test debate'
+            };
+            admin.emit("newDebate", debateInfo, (debateID) => {
                 id = debateID;
                 done();
             });
@@ -104,7 +113,11 @@ describe('Debate test', () => {
                 }
             });
 
-            admin.emit("newDebate", (debateID) => {
+            let debateInfo = {
+                title: 'My new debate',
+                description: 'Test debate'
+            };
+            admin.emit("newDebate", debateInfo, (debateID) => {
                 id = debateID;
                 done();
             });
@@ -217,7 +230,11 @@ describe('Debate test', () => {
                 }
             });
 
-            admin.emit("newDebate", (debateID) => {
+            let debateInfo = {
+                title: 'My new debate',
+                description: 'Test debate'
+            };
+            admin.emit("newDebate", debateInfo, (debateID) => {
                 id = debateID;
                 done();
             });

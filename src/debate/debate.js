@@ -9,6 +9,8 @@ export class Debate {
     adminRoomName;
     adminRoom;
     userNamespace;
+    title;
+    description;
     questions;
 
     /**
@@ -30,11 +32,15 @@ export class Debate {
 
     /**
      * Create a new debate
+     * @param title of the debate
+     * @param description of the debate
      * @param ownerSocket socket of the debate creator
      * @param io Socket.io server
      * @param adminNamespace admin namespace to create the room communicate with the admins
      */
-    constructor(ownerSocket, io, adminNamespace) {
+    constructor(title, description, ownerSocket, io, adminNamespace) {
+        this.title = title;
+        this.description = description;
         this.questions = new Map();
         this.debateID = ++Debate.nb_debate;
         this.adminRoomName = SocketConfig.ADMIN_ROOM_PREFIX + this.debateID;

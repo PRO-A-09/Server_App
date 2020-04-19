@@ -26,11 +26,26 @@ export class AdminNamespace extends CustomNamespace {
         this.nsp.on('connection', (socket) => {
             logger.debug(`New connected socket (socketid: ${socket.id}, username: ${socket.username})`);
 
-            socket.on('newDebate', (callback) => {
+            socket.on('newDebate', (newDebateObj, callback) => {
                 logger.info(`New debate creation requested from ${socket.username}`);
 
-                // Create a new debate
-                const debate = new Debate(socket, this.io, this.nsp);
+                if (!(callback instanceof Function)) {
+                    logger.debug(`callback is not a function.`);
+                    return;
+                }
+
+                const title = newDebateObj.title;
+                const description = newDebateObj.description;
+                if (!title || !description) {
+                    logger.debug('Invalid arguments for newDebate.');
+                    callback(-1);
+                    return;
+                }
+
+                //TODO: Check title & description are valid strings
+
+                // Create and start a new debate
+                const debate = new Debate(title, description, socket, this.io, this.nsp);
                 this.activeDebates.set(debate.debateID, debate);
 
                 debate.startSocketHandling();
