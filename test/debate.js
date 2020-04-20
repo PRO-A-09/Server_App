@@ -300,6 +300,26 @@ describe('Debate test', () => {
             });
         });
 
+        describe('getDebates', () => {
+            it('array of debates', (done) => {
+                let debateInfo = {
+                    title: 'My new debate',
+                    description: 'Test debate'
+                };
+
+                admin.emit("newDebate", debateInfo, (debateID) => {
+                    id = debateID;
+
+                    admin.emit('getDebates', (debates) => {
+                        const debate = debates.find(d => d.debateId === id);
+                        debate.title.should.equal('My new debate');
+                        debate.description.should.equal('Test debate');
+                        done();
+                    });
+                });
+            });
+        });
+
         afterEach(() => {
             client.close();
         });
