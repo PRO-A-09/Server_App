@@ -286,6 +286,18 @@ describe('Debate test', () => {
                     done();
                 });
             });
+
+            it('invalid question', (done) => {
+                let newQuestionObj = {
+                    debateId: id,
+                    answers: ['Yes', 'No']
+                };
+
+                admin.emit('newQuestion', newQuestionObj, (questionId) => {
+                    questionId.should.equal(-1);
+                    done();
+                });
+            });
         });
 
         afterEach(() => {
