@@ -35,7 +35,7 @@ async function test() {
         let participantSaved = await participant1.save();
         console.log("participant saved : ", participantSaved);
 
-        //The following information are written in the same way as participant1
+        // The following information are written in the same way as participant1
         const tag1 = new Tag({
             _id: 1,
             name: 'COVID-19'
