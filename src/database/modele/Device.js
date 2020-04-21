@@ -21,8 +21,8 @@ const DeviceSchema = new mongoose.Schema({
     refModerator:{
         type: mongoose.Schema.Types.ObjectId,
         ref: 'UserModerator',
-        //Validate will permit us to make some validation before a refModertaor is saved
-        //The function check if the id of the value passed exits in the DataBase if yes it will return true otherwise false
+        // Validate will permit us to make some validation before a refModertaor is saved
+        // The function check if the id of the value passed exits in the DataBase if yes it will return true otherwise false
         validate: function(v) {
             return new Promise(function(resolve, reject) {
                 UserModerator.findOne({_id: v}, (err, userM) => resolve(userM ? true : false));
