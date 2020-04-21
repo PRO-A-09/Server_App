@@ -42,7 +42,7 @@ export class AdminNamespace extends CustomNamespace {
                         debateId: debate.debateID,
                         title: debate.title,
                         description: debate.description
-                    })
+                    });
                 }
 
                 callback(debates);

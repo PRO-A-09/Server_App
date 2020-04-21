@@ -133,7 +133,7 @@ describe('Debate test', () => {
 
             client.on('connect', () => {
                 done();
-            })
+            });
         });
 
         describe('getQuestions', () => {
@@ -141,7 +141,7 @@ describe('Debate test', () => {
                 client.emit('getQuestions', (questions) => {
                     questions.length.should.equal(0);
                     done();
-                })
+                });
             });
 
             it('available questions', (done) => {
@@ -250,7 +250,7 @@ describe('Debate test', () => {
 
             client.on('connect', () => {
                 done();
-            })
+            });
         });
 
         describe('questionAnswered', () => {
