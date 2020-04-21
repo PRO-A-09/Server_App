@@ -16,7 +16,7 @@ import {Administrator,Moderator,Presentator,UserModerator} from '../modele/Users
 
 import mongoose from 'mongoose';
 
-//Connection to the local database
+// Connection to the local database
 mongoose.connect('mongodb://192.168.99.100:27017/PRO', {useNewUrlParser: true});
 
 /**
