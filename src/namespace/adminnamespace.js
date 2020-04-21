@@ -38,4 +38,16 @@ export class AdminNamespace extends CustomNamespace {
             });
         });
     }
+
+    /**
+     * Return a Debate with the corresponding id
+     * @param id of the debate
+     * @returns {Debate}
+     */
+    getActiveDebate(id) {
+        if (!this.activeDebates.has(id))
+            throw new Error(`Debate with id (${id}) not found.`);
+
+        return this.activeDebates.get(id);
+    }
 }
