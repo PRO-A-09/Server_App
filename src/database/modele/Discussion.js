@@ -39,8 +39,8 @@ const DiscussionSchema = new mongoose.Schema({
             type: Number,
             ref: 'Participant',
             required: true,
-            //Validate will permit us to make some validation before a refParticipant is saved
-            //The function check if the id of the value passed exits in the DataBase if yes it will return true otherwise false
+            // Validate will permit us to make some validation before a refParticipant is saved
+            // The function check if the id of the value passed exits in the DataBase if yes it will return true otherwise false
             validate: function(v) {
                 return new Promise(function(resolve, reject) {
                     Participant.findOne({_id: v}, (err, participant) => resolve(participant ? true : false));
