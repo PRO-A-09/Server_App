@@ -43,7 +43,7 @@ UserModeratorSchema.virtual('type').get(function () { return this.__t; });
 const AdministratorSchema = new UserBaseSchema();
 const ModeratorSchema = new UserBaseSchema();
 
-////Instantiation of the models for User, UserModerator, Presentator, Administrator and Moderator so it can be used
+// Instantiation of the models for User, UserModerator, Presentator, Administrator and Moderator so it can be used
 export const User = mongoose.model('User', UserSchema);
 export const UserModerator = mongoose.model('UserModerator', UserModeratorSchema);
 export const Presentator = mongoose.model('Presentator', PresentatorSchema);
