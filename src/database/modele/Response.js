@@ -37,7 +37,7 @@ const ResponseSchema = new mongoose.Schema({
             refDevice: {
                 type: Number,
                 ref: 'Device',
-                //Validate will permit us to make some validation before a refDevice is saved
+                // Validate will permit us to make some validation before a refDevice is saved
                 validate: function(v) {
                     return new Promise(function(resolve, reject) {
                         Device.findOne({_id: v}, (err, device) => resolve(device ? true : false));
