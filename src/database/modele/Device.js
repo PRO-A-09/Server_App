@@ -17,7 +17,7 @@ const DeviceSchema = new mongoose.Schema({
         type: Number,
         required: true
     },
-    //Will be a reference to the ObjectID(primary key) of a user
+    // Will be a reference to the ObjectID(primary key) of a user
     refModerator:{
         type: mongoose.Schema.Types.ObjectId,
         ref: 'UserModerator',
