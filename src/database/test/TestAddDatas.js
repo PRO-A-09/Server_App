@@ -14,6 +14,8 @@ import {Response} from '../modele/Response.js';
 import {Tag} from '../modele/Tag.js';
 import {Administrator,Moderator,Presentator,UserModerator} from '../modele/Users.js';
 
+import {DataBaseManager} from "../dbmanager.js";
+
 import mongoose from 'mongoose';
 
 //Connection to the local database
@@ -114,5 +116,11 @@ async function test() {
 
 //Run the function to test saving of datas
 test();
+
+const db = new DataBaseManager();
+db.getAdminPassword("admin").then( function(password) {
+        console.log(password);
+    }
+);
 
 //mongoose.connection.close()
