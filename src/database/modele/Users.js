@@ -28,7 +28,7 @@ function UserBaseSchema() {
     });
 }
 
-//Make UserBaseSchema inherit from Schema
+// Make UserBaseSchema inherit from Schema
 util.inherits(UserBaseSchema, Schema);
 
 // All the users in your database will use the BaseSchema
