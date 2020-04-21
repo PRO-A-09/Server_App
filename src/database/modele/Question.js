@@ -41,7 +41,7 @@ const QuestionSchema = new mongoose.Schema({
             refTag: {
                 type: Number,
                 ref: 'Tag',
-                //Validate will permit us to make some validation before a refTag is saved
+                // Validate will permit us to make some validation before a refTag is saved
                 validate: function(v) {
                     return new Promise(function(resolve, reject) {
                         Tag.findOne({_id: v}, (err, tag) => resolve(tag ? true : false));
