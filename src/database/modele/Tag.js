@@ -25,8 +25,8 @@ const TagSchema = new mongoose.Schema({
             discussionTag: {
                 type: Number,
                 ref: 'Discussion',
-                //Validate will permit us to make some validation before a dicussionTag is saved
-                //The function check if the id of the value passed exits in the DataBase if yes it will return true otherwise false
+                // Validate will permit us to make some validation before a dicussionTag is saved
+                // The function check if the id of the value passed exits in the DataBase if yes it will return true otherwise false
                 validate: function(v) {
                     return new Promise(function(resolve, reject) {
                         Discussion.findOne({_id: v}, (err, discussion) => resolve(discussion ? true : false));
