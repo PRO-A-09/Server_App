@@ -31,7 +31,7 @@ function UserBaseSchema() {
 //Make UserBaseSchema inherit from Schema
 util.inherits(UserBaseSchema, Schema);
 
-//All the users in your database will use the BaseSchema
+// All the users in your database will use the BaseSchema
 const UserSchema = new UserBaseSchema();
 const UserModeratorSchema = new UserBaseSchema();
 const PresentatorSchema = new UserBaseSchema();
