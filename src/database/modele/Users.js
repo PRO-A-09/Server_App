@@ -11,7 +11,7 @@ import mongoose from 'mongoose';
 import util from 'util';
 const Schema = mongoose.Schema;
 
-//Creation of a base Schema that will be used by the different User of our Database
+// Creation of a base Schema that will be used by the different User of our Database
 function UserBaseSchema() {
     Schema.apply(this, arguments);
 
