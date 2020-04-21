@@ -5,10 +5,12 @@ import {SocketConfig, logger} from '../conf/config.js';
  */
 export class Debate {
     static nb_debate = 0;
-    io;
     debateID;
     adminRoomName;
+    adminRoom;
     userNamespace;
+    title;
+    description;
     questions;
 
     /**
@@ -30,14 +32,19 @@ export class Debate {
 
     /**
      * Create a new debate
+     * @param title of the debate
+     * @param description of the debate
      * @param ownerSocket socket of the debate creator
      * @param io Socket.io server
+     * @param adminNamespace admin namespace to create the room communicate with the admins
      */
-    constructor(ownerSocket, io) {
-        this.io = io;
+    constructor(title, description, ownerSocket, io, adminNamespace) {
+        this.title = title;
+        this.description = description;
         this.questions = new Map();
         this.debateID = ++Debate.nb_debate;
         this.adminRoomName = SocketConfig.ADMIN_ROOM_PREFIX + this.debateID;
+        this.adminRoom = adminNamespace.to(this.adminRoomName);
 
         // Join the admin room
         ownerSocket.join(this.adminRoomName);
@@ -99,7 +106,7 @@ export class Debate {
                 logger.info(`Socket (${socket.id}) replied ${answerId} to question (${questionId}).`);
                 
                 // Send the reply to the admin room.
-                this.io.to(this.adminRoomName).emit('questionAnswered', {questionId: questionId, answerId: answerId});
+                this.adminRoom.emit('questionAnswered', {questionId: questionId, answerId: answerId});
                 callback(true);
             });
         });

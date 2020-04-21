@@ -27,7 +27,12 @@ describe('Debate test', () => {
         });
 
         it("New debate creation", (done) => {
-            admin.emit("newDebate", (debateID) => {
+            let debateInfo = {
+                title: 'My new debate',
+                description: 'Test debate'
+            };
+
+            admin.emit("newDebate", debateInfo, (debateID) => {
                 debateID.should.equal(1);
                 done();
             });
@@ -51,7 +56,11 @@ describe('Debate test', () => {
                 }
             });
 
-            admin.emit("newDebate", (debateID) => {
+            let debateInfo = {
+                title: 'My new debate',
+                description: 'Test debate'
+            };
+            admin.emit("newDebate", debateInfo, (debateID) => {
                 id = debateID;
                 done();
             });
@@ -104,7 +113,11 @@ describe('Debate test', () => {
                 }
             });
 
-            admin.emit("newDebate", (debateID) => {
+            let debateInfo = {
+                title: 'My new debate',
+                description: 'Test debate'
+            };
+            admin.emit("newDebate", debateInfo, (debateID) => {
                 id = debateID;
                 done();
             });
@@ -120,7 +133,7 @@ describe('Debate test', () => {
 
             client.on('connect', () => {
                 done();
-            })
+            });
         });
 
         describe('getQuestions', () => {
@@ -128,7 +141,7 @@ describe('Debate test', () => {
                 client.emit('getQuestions', (questions) => {
                     questions.length.should.equal(0);
                     done();
-                })
+                });
             });
 
             it('available questions', (done) => {
@@ -191,6 +204,119 @@ describe('Debate test', () => {
                 });
 
                 debate.sendNewQuestion(new debate.Question('Does this test work ?', ['Yes', 'No']));
+            });
+        });
+
+        afterEach(() => {
+            client.close();
+        });
+
+        after(() => {
+            admin.close();
+        });
+    });
+
+    describe("Debate admin functions", () => {
+        let client;
+        let id;
+        let debate;
+
+        before((done) => {
+            admin = io.connect(`http://localhost:${SocketConfig.SOCKET_PORT}${SocketConfig.ADMIN_NAMESPACE}`, {
+                path: SocketConfig.DEFAULT_PATH,
+                forceNew: true,
+                query: {
+                    password: `${SocketConfig.ADMIN_PASSWORD}`
+                }
+            });
+
+            let debateInfo = {
+                title: 'My new debate',
+                description: 'Test debate'
+            };
+            admin.emit("newDebate", debateInfo, (debateID) => {
+                id = debateID;
+                done();
+            });
+        });
+
+        beforeEach((done) => {
+            debate = debateManager.nspAdmin.getActiveDebate(id);
+
+            client = io.connect(`http://localhost:${SocketConfig.SOCKET_PORT}${SocketConfig.DEBATE_NAMESPACE_PREFIX}${id}`, {
+                path: SocketConfig.DEFAULT_PATH,
+                forceNew: true,
+            });
+
+            client.on('connect', () => {
+                done();
+            });
+        });
+
+        describe('questionAnswered', () => {
+            it('valid answer', (done) => {
+                let question = new debate.Question('Does this test work ?', ['Yes', 'No']);
+
+                admin.on('questionAnswered', (questionObj) => {
+                    questionObj.questionId.should.equal(question.id);
+                    questionObj.answerId.should.equal(0);
+                    done();
+                });
+
+                client.on('newQuestion', (questionObj) => {
+                    client.emit('answerQuestion', {questionId : questionObj.id, answerId : 0}, (res) => {
+                        res.should.equal(true);
+                    });
+                });
+
+                debate.sendNewQuestion(question);
+            });
+        });
+
+        describe('newQuestion', () => {
+            it('valid question', (done) => {
+                let newQuestionObj = {
+                    debateId: id,
+                    title: 'Does this test work ?',
+                    answers: ['Yes', 'No']
+                };
+
+                admin.emit('newQuestion', newQuestionObj, (questionId) => {
+                    questionId.should.not.equal(-1);
+                    done();
+                });
+            });
+
+            it('invalid question', (done) => {
+                let newQuestionObj = {
+                    debateId: id,
+                    answers: ['Yes', 'No']
+                };
+
+                admin.emit('newQuestion', newQuestionObj, (questionId) => {
+                    questionId.should.equal(-1);
+                    done();
+                });
+            });
+        });
+
+        describe('getDebates', () => {
+            it('array of debates', (done) => {
+                let debateInfo = {
+                    title: 'My new debate',
+                    description: 'Test debate'
+                };
+
+                admin.emit("newDebate", debateInfo, (debateID) => {
+                    id = debateID;
+
+                    admin.emit('getDebates', (debates) => {
+                        const debate = debates.find(d => d.debateId === id);
+                        debate.title.should.equal('My new debate');
+                        debate.description.should.equal('Test debate');
+                        done();
+                    });
+                });
             });
         });
 
