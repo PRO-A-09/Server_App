@@ -36,8 +36,8 @@ const UserSchema = new UserBaseSchema();
 const UserModeratorSchema = new UserBaseSchema();
 const PresentatorSchema = new UserBaseSchema();
 
-//Creation od a field type that will return the Schema type in UserModerator
-//With this function we will be able to show if the user is an administrator or moderator
+// Creation od a field type that will return the Schema type in UserModerator
+// With this function we will be able to show if the user is an administrator or moderator
 UserModeratorSchema.virtual('type').get(function () { return this.__t; });
 
 const AdministratorSchema = new UserBaseSchema();
