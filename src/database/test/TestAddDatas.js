@@ -79,7 +79,7 @@ async function test() {
             participants: [{refParticipant: 1}],
             administrator: moderator._id
         });
-        //This validation will fail because a moderator created the discussion
+        // This validation will fail because a moderator created the discussion
         await discussion2.validate(async function (err) {
             if (err) {
                 console.log("Discussion is not valid to be saved");
