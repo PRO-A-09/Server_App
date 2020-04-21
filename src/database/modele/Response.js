@@ -10,7 +10,7 @@ import mongoose from 'mongoose';
 import {Device} from "./Device.js";
 import {Question} from "./Question.js";
 const ResponseSchema = new mongoose.Schema({
-    //Redefinition of the primary key _id to be a Number by default it is a ObjectID
+    // Redefinition of the primary key _id to be a Number by default it is a ObjectID
     _id: {
         type: Number,
         required: true
