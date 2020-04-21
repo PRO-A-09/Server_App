@@ -10,7 +10,7 @@
 import mongoose from 'mongoose';
 import {UserModerator} from "./Users.js";
 
-//Creation of the schema that will permit us to define how we want a device to be entered
+// Creation of the schema that will permit us to define how we want a device to be entered
 const DeviceSchema = new mongoose.Schema({
     //Redefinition of the primary key _id to be a Number by default it is a ObjectID
     _id: {
