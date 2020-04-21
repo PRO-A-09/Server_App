@@ -112,7 +112,7 @@ async function test() {
     }
 }
 
-//Run the function to test saving of datas
+// Run the function to test saving of datas
 test();
 
 //mongoose.connection.close()
