@@ -16,7 +16,7 @@ function UserBaseSchema() {
     Schema.apply(this, arguments);
 
     this.add({
-        //The id is not declared here because we want the default id proposed by MongoDB -> ObjectID
+        // The id is not declared here because we want the default id proposed by MongoDB -> ObjectID
         login: {
             type: String,
             required: true
