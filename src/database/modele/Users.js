@@ -47,6 +47,6 @@ const ModeratorSchema = new UserBaseSchema();
 export const User = mongoose.model('User', UserSchema);
 export const UserModerator = mongoose.model('UserModerator', UserModeratorSchema);
 export const Presentator = mongoose.model('Presentator', PresentatorSchema);
-//The discriminator option will save administrator and modertaor users in the UserModerator Collection
+// The discriminator option will save administrator and modertaor users in the UserModerator Collection
 export const Administrator = UserModerator.discriminator('Administrator', AdministratorSchema);
 export const Moderator = UserModerator.discriminator('Moderator', ModeratorSchema);
