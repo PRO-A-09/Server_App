@@ -31,7 +31,7 @@ const ResponseSchema = new mongoose.Schema({
             });
         }
     },
-    //Multiple devices can answer a question so declaration of an array
+    // Multiple devices can answer a question so declaration of an array
     devices:[
         {
             refDevice: {
