@@ -1,12 +1,14 @@
 /*
 * File: Discussion.js
 * Authors: Stéphane Teixeira Carvalho
-* Modified by: -
+* Modified by: Stéphane Teixeira Carvalho
 * Created on 26 mars 2020
 * Description: Implement the schema that represents how we want a discussion
 * to be entered in the MongoDB database
 */
 import mongoose from 'mongoose';
+import {Participant} from "./Participant.js";
+import {Administrator} from "./Users.js";
 
 //Creation of the schema that will permit us to define how we want a discussion to be entered
 const DiscussionSchema = new mongoose.Schema({
@@ -36,19 +38,38 @@ const DiscussionSchema = new mongoose.Schema({
         refParticipant: {
             type: Number,
             ref: 'Participant',
-            required: true
+            required: true,
+            // Validate will permit us to make some validation before a refParticipant is saved
+            // The function check if the id of the value passed exits in the DataBase if yes it will return true otherwise false
+            validate: function(v) {
+                return new Promise(function(resolve, reject) {
+                    Participant.findOne({_id: v}, (err, participant) => resolve(participant ? true : false));
+                });
+            }
         }
     }],
     tags: [{
         refTag: {
             type: Number,
-            ref: 'Tag'
+            ref: 'Tag',
+            // Validate will permit us to make some validation before a refTag is saved
+            validate: function(v) {
+                return new Promise(function(resolve, reject) {
+                    Tag.findOne({_id: v}, (err, tag) => resolve(tag ? true : false));
+                });
+            }
         }
     }],
     administrator: {
         type: mongoose.Schema.Types.ObjectId,
-        ref: 'User',
-        required: true
+        ref: 'Administrator',
+        required: true,
+        //Validate will permit us to make some validation before a reference to an administrator is saved
+        validate: function(v) {
+            return new Promise(function(resolve, reject) {
+                Administrator.findOne({_id: v}, (err, admin) => resolve(admin ? true : false));
+            });
+        }
     }
 });
 
