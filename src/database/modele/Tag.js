@@ -19,7 +19,7 @@ const TagSchema = new mongoose.Schema({
         type: String,
         required: true
     },
-    //Multiple discussion and question can linked the same tag declaration of arrays
+    // Multiple discussion and question can linked the same tag declaration of arrays
     discussions:[
         {
             discussionTag: {
