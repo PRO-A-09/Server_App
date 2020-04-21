@@ -35,7 +35,7 @@ const QuestionSchema = new mongoose.Schema({
             });
         }
     },
-    //Multiple tags can be linked to a question so declaration of an array
+    // Multiple tags can be linked to a question so declaration of an array
     tags:[
         {
             refTag: {
