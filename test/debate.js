@@ -320,6 +320,36 @@ describe('Debate test', () => {
             });
         });
 
+        describe('getDebateQuestions', () => {
+            before((done) => {
+                let newQuestionObj = {
+                    debateId: id,
+                    title: 'Does this test work ?',
+                    answers: ['Yes', 'No']
+                };
+
+                admin.emit('newQuestion', newQuestionObj, (questionId) => {
+                    questionId.should.not.equal(-1);
+                    done();
+                });
+            });
+
+            it ('valid debate', (done) => {
+                admin.emit('getDebateQuestions', id, (res) => {
+                    res.length.should.equal(1);
+                    res[0].title.should.equal('Does this test work ?');
+                    done();
+                });
+            });
+
+            it ('invalid debate', (done) => {
+                admin.emit('getDebateQuestions', -1, (res) => {
+                    res.should.equal(-1);
+                    done();
+                });
+            });
+        });
+
         afterEach(() => {
             client.close();
         });
