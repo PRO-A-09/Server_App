@@ -48,6 +48,30 @@ export class AdminNamespace extends CustomNamespace {
                 callback(debates);
             });
 
+            socket.on('getDebateQuestions', (debateId, callback) => {
+                logger.info(`getDebateQuestions requested from ${socket.username}`);
+
+                if (!(callback instanceof Function)) {
+                    logger.debug(`callback is not a function.`);
+                    return;
+                }
+
+                if (debateId == null) {
+                    logger.debug('Invalid arguments for getQuestions.');
+                    callback(-1);
+                    return;
+                }
+
+                const debate = this.getActiveDebate(debateId);
+                if (debate == null) {
+                    logger.debug(`Debate with id (${debateId}) not found.`);
+                    callback(-1);
+                    return;
+                }
+
+                callback([ ...debate.questions.values() ]);
+            });
+
             socket.on('newDebate', (newDebateObj, callback) => {
                 logger.info(`New debate creation requested from ${socket.username}`);
 
@@ -104,7 +128,7 @@ export class AdminNamespace extends CustomNamespace {
                 const question = new debate.Question(title, answers);
                 debate.sendNewQuestion(question);
                 callback(question.id);
-            })
+            });
         });
     }
 
@@ -114,9 +138,7 @@ export class AdminNamespace extends CustomNamespace {
      * @returns {Debate}
      */
     getActiveDebate(id) {
-        if (!this.activeDebates.has(id))
-            throw new Error(`Debate with id (${id}) not found.`);
-
+        // Return null if not found
         return this.activeDebates.get(id);
     }
 }
