@@ -345,5 +345,6 @@ describe('Debate test', () => {
 
     after(() => {
         debateManager.stop();
+        db.end();
     });
 });
