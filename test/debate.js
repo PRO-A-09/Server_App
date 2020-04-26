@@ -2,7 +2,6 @@ import {SocketConfig} from '../src/conf/config.js'
 import {DebateManager} from "../src/debatemanager.js";
 import io from 'socket.io-client'
 import chai from 'chai';
-import {DataBaseManager} from "../src/database/DatabaseManager";
 
 const expect = chai.expect;
 const should = chai.should();
