@@ -13,7 +13,7 @@ describe('Debate test', () => {
     let admin;
     const db = new DataBaseManager();
 
-    before(() => {
+    before((done)  => {
         debateManager = new DebateManager();
         debateManager.start();
         db.start();
@@ -21,7 +21,7 @@ describe('Debate test', () => {
             login: 'admin',
             password: 'pass'
         });
-        let userSaved = admin.save();
+        let userSaved = admin.save().then(done());
         console.log("administrator saved : ", userSaved);
     });
 
