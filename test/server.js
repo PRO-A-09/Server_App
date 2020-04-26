@@ -1,7 +1,5 @@
 import {SocketConfig, ErrorMessage} from '../src/conf/config.js'
 import {DebateManager} from "../src/debatemanager.js";
-import {DataBaseManager} from "../src/database/DatabaseManager.js";
-import {Administrator} from "../src/database/modele/Users.js";
 import io from 'socket.io-client'
 import request from 'request'
 import chai from 'chai';
@@ -11,18 +9,10 @@ const should = chai.should();
 
 describe('Server connection test', () => {
     const debateManager = new DebateManager();
-    const db = new DataBaseManager();
     const srvAddress = `http://localhost:${SocketConfig.SOCKET_PORT}`;
 
     before(() => {
         debateManager.start();
-        db.start();
-        const admin = new Administrator({
-            login: 'admin',
-            password: 'pass'
-        });
-        let userSaved = admin.save();
-        console.log("administrator saved : ", userSaved);
     });
 
     it('Server response body', (done) => {
