@@ -1,7 +1,5 @@
 services:
   - mongodb
-before_script:
-  - mongo PRO --eval 'db.usermoderators({login:"admin",password:"pass",__t:"Administrator"});'
 language: node_js
 node_js:
   - 13.11.0
