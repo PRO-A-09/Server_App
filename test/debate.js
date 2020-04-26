@@ -2,6 +2,7 @@ import {SocketConfig} from '../src/conf/config.js'
 import {DebateManager} from "../src/debatemanager.js";
 import io from 'socket.io-client'
 import chai from 'chai';
+import {DataBaseManager} from "../src/database/DatabaseManager";
 
 const expect = chai.expect;
 const should = chai.should();
@@ -53,7 +54,8 @@ describe('Debate test', () => {
                 path: SocketConfig.DEFAULT_PATH,
                 forceNew: true,
                 query: {
-                    password: `${SocketConfig.ADMIN_PASSWORD}`
+                    password: `${SocketConfig.ADMIN_PASSWORD}`,
+                    username: `admin`
                 }
             });
 
@@ -110,7 +112,8 @@ describe('Debate test', () => {
                 path: SocketConfig.DEFAULT_PATH,
                 forceNew: true,
                 query: {
-                    password: `${SocketConfig.ADMIN_PASSWORD}`
+                    password: `${SocketConfig.ADMIN_PASSWORD}`,
+                    username: `admin`
                 }
             });
 
@@ -227,7 +230,8 @@ describe('Debate test', () => {
                 path: SocketConfig.DEFAULT_PATH,
                 forceNew: true,
                 query: {
-                    password: `${SocketConfig.ADMIN_PASSWORD}`
+                    password: `${SocketConfig.ADMIN_PASSWORD}`,
+                    username: `admin`
                 }
             });
 
