@@ -2,8 +2,6 @@ import {SocketConfig} from '../src/conf/config.js'
 import {DebateManager} from "../src/debatemanager.js";
 import io from 'socket.io-client'
 import chai from 'chai';
-import {DataBaseManager} from "../src/database/DatabaseManager.js";
-import {Administrator} from "../src/database/modele/Users.js";
 
 const expect = chai.expect;
 const should = chai.should();
@@ -11,21 +9,10 @@ const should = chai.should();
 describe('Debate test', () => {
     let debateManager;
     let admin;
-    const db = new DataBaseManager();
 
-    before((done)  => {
+    before(()  => {
         debateManager = new DebateManager();
         debateManager.start();
-        db.start();
-        const admin = new Administrator({
-            login: 'admin',
-            password: 'pass'
-        });
-        admin.save().then((userSaved) => {
-            console.log("administrator saved : ", userSaved);
-            db.end();
-            done();
-        });
     });
 
     describe("New debate", () => {

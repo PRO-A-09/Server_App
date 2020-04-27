@@ -16,13 +16,13 @@ export class DataBaseManager {
      * Start the DataBaseManager by connecting to the mongoDB instance
      */
     start() {
-        //Connection to the local database
-        mongoose.connect('mongodb://localhost:27017/PRO', {useNewUrlParser: true});
+        // Connection to the local database
+        mongoose.connect('mongodb://192.168.99.100:27017/PRO', {useNewUrlParser: true});
     }
 
-    end(){
+    async end(){
         // Close the connection
-        mongoose.connection.close();
+        await mongoose.disconnect();
     }
 
     /**
@@ -125,7 +125,7 @@ export class DataBaseManager {
             numberVotes: 0,
             refDiscussion: idDiscussion
         });
-        //Save the question in database
+        // Save the question in database
         await questionSave.save()
             .then(questionSaved => console.log("Question saved " + questionSaved))
             .catch(err => {
@@ -137,7 +137,7 @@ export class DataBaseManager {
         if(!saved){
             return false;
         }
-        //Save all the responses related to the question
+        // Save all the responses related to the question
         for(var key of question.answers.keys()){
             let savedState = await this.saveResponse(question.answers.get(key), question.id);
             if(!savedState){
@@ -159,7 +159,7 @@ export class DataBaseManager {
             response: response.value,
             refQuestion: questionId
         });
-        //Save the discussion in database
+        // Save the discussion in database
         let responseSaved = await responseSave.save()
             .then(responseSaved => console.log("Response saved " + responseSaved))
             .catch(err => {
