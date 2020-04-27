@@ -21,8 +21,11 @@ describe('Debate test', () => {
             login: 'admin',
             password: 'pass'
         });
-        let userSaved = admin.save().then(done());
-        console.log("administrator saved : ", userSaved);
+        admin.save().then((userSaved) => {
+            console.log("administrator saved : ", userSaved);
+            db.end();
+            done();
+        });
     });
 
     describe("New debate", () => {
@@ -345,6 +348,5 @@ describe('Debate test', () => {
 
     after(() => {
         debateManager.stop();
-        db.end();
     });
 });
