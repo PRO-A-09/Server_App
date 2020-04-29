@@ -22,11 +22,13 @@ export class Debate {
         id;
         title;
         answers;
+        isOpenQuestion;
 
-        constructor(title, answers) {
+        constructor(title, answers, isOpenQuestion = false) {
             this.id = ++Question.nb_question;
             this.title = title;
             this.answers = answers;
+            this.isOpenQuestion = isOpenQuestion;
         }
     };
 

@@ -125,7 +125,7 @@ export class AdminNamespace extends CustomNamespace {
                     return;
                 }
 
-                const question = new debate.Question(title, answers);
+                const question = new debate.Question(title, answers.map(answer => ({answer})));
                 debate.sendNewQuestion(question);
                 callback(question.id);
             });
