@@ -171,6 +171,4 @@ export class DataBaseManager {
             return false;
         }
     }
-
-
 }
