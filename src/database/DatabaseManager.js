@@ -63,12 +63,15 @@ export class DataBaseManager {
      */
     async getDiscussionsAdmin(username){
         let discussions = null;
+        // Get the id of the username passed in parameter
         let adminId = await this.getAdminId(username);
+        // If the adminId is null the username is unknown
         if(adminId == null){
             console.log("Error when looking for username id");
         }
         else {
             console.log("Getting the Discussions from", username);
+            // Get all the discussions related to the user
             discussions = await Discussion.find({administrator: adminId}, function (err, discussions) {
                 if (err || discussions == null) console.log("Error when requesting discussions");
                 else{
@@ -80,17 +83,19 @@ export class DataBaseManager {
     }
 
     /**
-     * Get the disucssions of an administrator
-     * @param username String that is the username of the administrator
-     * @returns a Array of Discussion that represents the discussions started by an user
+     * Get the questions from disucssion
+     * @param anIDDebate Integer that is the id of the debate that we want to get the questions from
+     * @returns a Array of Questions that represents the questions related to the discussion
      */
-    async getQuestionDiscussion(anIDDebate){
+    async getQuestionsDiscussion(anIDDebate){
         let questions = null;
+        // If id is null error
         if(anIDDebate == null){
             console.log("Error Debate ID cannot be null");
         }
         else {
             console.log("Getting the Questions from discussions ", anIDDebate);
+            // Get all the questions from the DB from the desired debate
             questions = await Question.find({refDiscussion: anIDDebate}, function (err, questions) {
                 if (err || questions == null) console.log("Error when requesting questions");
                 else{

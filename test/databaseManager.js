@@ -96,7 +96,7 @@ describe('Data Base manager test', () => {
 
     describe('Get questions from a debate', () => {
         it('Get Question from debate 1', (done) => {
-            db.getQuestionDiscussion(1).then(function(questions){
+            db.getQuestionsDiscussion(1).then(function(questions){
                 let i = 1;
                 for(let question of questions){
                     question._id.should.equal(i);
