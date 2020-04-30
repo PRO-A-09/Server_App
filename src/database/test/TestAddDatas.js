@@ -14,6 +14,8 @@ import {Response} from '../modele/Response.js';
 import {Tag} from '../modele/Tag.js';
 import {Administrator,Moderator,Presentator,UserModerator} from '../modele/Users.js';
 
+import {DataBaseManager} from "../DatabaseManager.js";
+
 import mongoose from 'mongoose';
 
 // Connection to the local database
@@ -66,7 +68,7 @@ async function test() {
             participants: [{refParticipant: 1}],
             administrator: admin._id
         });
-        //Save the discussion in database
+        // Save the discussion in database
         let discussionSaved = await discussion1.save();
         console.log("discussion saved : ", discussionSaved);
 
@@ -95,8 +97,8 @@ async function test() {
             numberVotes: 0,
             refDiscussion: discussion1._id
         });
-       let questionSaved = await question1.save();
-       console.log("question saved : ", questionSaved);
+        let questionSaved = await question1.save();
+        console.log("question saved : ", questionSaved);
 
         const response1 = new Response({
             _id: 1,
@@ -115,4 +117,8 @@ async function test() {
 // Run the function to test saving of datas
 test();
 
-//mongoose.connection.close()
+const db = new DataBaseManager();
+db.getAdminPassword("admin").then( function(password) {
+        console.log(password);
+    }
+);

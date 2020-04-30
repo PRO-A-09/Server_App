@@ -10,7 +10,7 @@ describe('Debate test', () => {
     let debateManager;
     let admin;
 
-    before(() => {
+    before(()  => {
         debateManager = new DebateManager();
         debateManager.start();
     });
@@ -21,7 +21,8 @@ describe('Debate test', () => {
                 path: SocketConfig.DEFAULT_PATH,
                 forceNew: true,
                 query: {
-                    password: `${SocketConfig.ADMIN_PASSWORD}`
+                    password: `${SocketConfig.ADMIN_PASSWORD}`,
+                    username: `admin`
                 }
             });
         });
@@ -52,7 +53,8 @@ describe('Debate test', () => {
                 path: SocketConfig.DEFAULT_PATH,
                 forceNew: true,
                 query: {
-                    password: `${SocketConfig.ADMIN_PASSWORD}`
+                    password: `${SocketConfig.ADMIN_PASSWORD}`,
+                    username: `admin`
                 }
             });
 
@@ -109,7 +111,8 @@ describe('Debate test', () => {
                 path: SocketConfig.DEFAULT_PATH,
                 forceNew: true,
                 query: {
-                    password: `${SocketConfig.ADMIN_PASSWORD}`
+                    password: `${SocketConfig.ADMIN_PASSWORD}`,
+                    username: `admin`
                 }
             });
 
@@ -226,7 +229,8 @@ describe('Debate test', () => {
                 path: SocketConfig.DEFAULT_PATH,
                 forceNew: true,
                 query: {
-                    password: `${SocketConfig.ADMIN_PASSWORD}`
+                    password: `${SocketConfig.ADMIN_PASSWORD}`,
+                    username: `admin`
                 }
             });
 
