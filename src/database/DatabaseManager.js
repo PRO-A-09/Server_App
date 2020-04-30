@@ -6,7 +6,6 @@ import {Question} from './modele/Question.js';
 import {Response} from './modele/Response.js';
 import {Tag} from './modele/Tag.js';
 import {Administrator,Moderator,Presentator,UserModerator} from './modele/Users.js';
-import {Debate} from "../debate/debate.js";
 
 /**
  * This class is used to manage the database communication.
@@ -18,7 +17,7 @@ export class DataBaseManager {
      */
     start() {
         // Connection to the local database
-        mongoose.connect('mongodb://localhost:27017/PRO', {useNewUrlParser: true});
+        mongoose.connect('mongodb://192.168.99.100:27017/PRO', {useNewUrlParser: true});
     }
 
     async end(){
