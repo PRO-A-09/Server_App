@@ -17,9 +17,12 @@ export class DataBaseManager {
      */
     start() {
         // Connection to the local database
-        mongoose.connect('mongodb://192.168.99.100:27017/PRO', {useNewUrlParser: true});
+        mongoose.connect('mongodb://localhost:27017/PRO', {useNewUrlParser: true});
     }
 
+    /**
+     * Close the connection to the database
+     */
     async end(){
         // Close the connection
         await mongoose.disconnect();
@@ -56,7 +59,7 @@ export class DataBaseManager {
     }
 
     /**
-     * Get the disucssions of an administrator
+     * Get the discussions of an administrator
      * @param username String that is the username of the administrator
      * @returns a Array of Discussion that represents the discussions started by an user
      */
@@ -82,7 +85,7 @@ export class DataBaseManager {
     }
 
     /**
-     * Get the questions from disucssion
+     * Get the questions from discussion
      * @param anIDDebate Integer that is the id of the debate that we want to get the questions from
      * @returns a Array of Questions that represents the questions related to the discussion
      */
@@ -269,6 +272,4 @@ export class DataBaseManager {
             return false;
         }
     }
-
-
 }
