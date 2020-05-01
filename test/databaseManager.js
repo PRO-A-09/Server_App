@@ -64,7 +64,6 @@ describe('Data Base manager test', () => {
         await question2.save().then((questionSaved) => {
             console.log("question saved : ", questionSaved);
         });
-
     });
 
     // When testing this function make sure that in your DB the user admin exists
