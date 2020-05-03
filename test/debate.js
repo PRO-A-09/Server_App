@@ -2,6 +2,8 @@ import {SocketConfig} from '../src/conf/config.js'
 import {DebateManager} from "../src/debatemanager.js";
 import io from 'socket.io-client'
 import chai from 'chai';
+import {dbManager} from "../src/database/DatabaseManager.js";
+import {Discussion} from "../src/database/modele/Discussion.js";
 
 const expect = chai.expect;
 const should = chai.should();
@@ -36,6 +38,20 @@ describe('Debate test', () => {
             admin.emit("newDebate", debateInfo, (debateID) => {
                 debateID.should.equal(1);
                 done();
+            });
+        });
+
+        it("Database save", (done) => {
+            let debateInfo = {
+                title: 'My new debate',
+                description: 'Test debate'
+            };
+
+            admin.emit("newDebate", debateInfo, (debateID) => {
+                Discussion.findOne({_id: debateID}, (err, discussion) => {
+                    discussion.should.not.equal(null);
+                    done();
+                });
             });
         });
 

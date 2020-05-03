@@ -1,6 +1,7 @@
 import {logger, SocketConfig} from '../conf/config.js';
 import {CustomNamespace} from './customnamespace.js'
 import {Debate} from "../debate/debate.js";
+import {dbManager} from "../database/DatabaseManager.js";
 
 /**
  * This class implements an AdminNamespace that extends a CustomNamespace
@@ -72,7 +73,7 @@ export class AdminNamespace extends CustomNamespace {
                 callback([ ...debate.questions.values() ]);
             });
 
-            socket.on('newDebate', (newDebateObj, callback) => {
+            socket.on('newDebate', async (newDebateObj, callback) => {
                 logger.info(`New debate creation requested from ${socket.username}`);
 
                 if (!(callback instanceof Function)) {
@@ -93,6 +94,17 @@ export class AdminNamespace extends CustomNamespace {
                 // Create and start a new debate
                 const debate = new Debate(title, description, socket, this.io, this.nsp);
                 this.activeDebates.set(debate.debateID, debate);
+                await dbManager.saveDiscussion(debate)
+                    .then(res => {
+                        if (res === true) {
+                            logger.info('Debate saved to db');
+                        } else {
+                            logger.warn('Cannot save debate to db');
+                        }
+                    })
+                    .catch(res => {
+                        logger.error(`saveDiscussion threw : ${res}.`)
+                    });
 
                 debate.startSocketHandling();
                 callback(debate.debateID);
