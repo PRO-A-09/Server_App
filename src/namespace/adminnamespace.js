@@ -110,7 +110,7 @@ export class AdminNamespace extends CustomNamespace {
                 callback(debate.debateID);
             });
 
-            socket.on('newQuestion', (newQuestionObj, callback) => {
+            socket.on('newQuestion', async (newQuestionObj, callback) => {
                 logger.debug(`newQuestion received from user (${socket.username}), id(${socket.id})`);
 
                 if (!(callback instanceof Function)) {
@@ -138,6 +138,18 @@ export class AdminNamespace extends CustomNamespace {
                 }
 
                 const question = new debate.Question(title, answers);
+                await dbManager.saveQuestion(question, debateId)
+                    .then(res => {
+                        if (res === true) {
+                            logger.info('Question saved to db');
+                        } else {
+                            logger.warn('Cannot save question to db');
+                        }
+                    })
+                    .catch(res => {
+                        logger.error(`saveQuestion threw : ${res}.`)
+                    });
+
                 debate.sendNewQuestion(question);
                 callback(question.id);
             });

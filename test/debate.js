@@ -4,6 +4,7 @@ import io from 'socket.io-client'
 import chai from 'chai';
 import {dbManager} from "../src/database/DatabaseManager.js";
 import {Discussion} from "../src/database/modele/Discussion.js";
+import {Question} from "../src/database/modele/Question.js";
 
 const expect = chai.expect;
 const should = chai.should();
@@ -316,6 +317,21 @@ describe('Debate test', () => {
                 admin.emit('newQuestion', newQuestionObj, (questionId) => {
                     questionId.should.equal(-1);
                     done();
+                });
+            });
+
+            it("Database save", (done) => {
+                let newQuestionObj = {
+                    debateId: id,
+                    title: 'Does this test work ?',
+                    answers: ['Yes', 'No']
+                };
+
+                admin.emit('newQuestion', newQuestionObj, (questionId) => {
+                    Question.findOne({_id: questionId, refDiscussion: id}, (err, question) => {
+                        question.should.not.equal(null);
+                        done();
+                    });
                 });
             });
         });
