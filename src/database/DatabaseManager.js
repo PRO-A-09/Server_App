@@ -174,4 +174,3 @@ export class DataBaseManager {
 }
 
 export const dbManager = new DataBaseManager();
-dbManager.start();
