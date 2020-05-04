@@ -12,6 +12,7 @@ export class Debate {
     title;
     description;
     questions;
+    admin;
 
     /**
      * Nested class Question that contains the question of the debate
@@ -47,6 +48,9 @@ export class Debate {
         this.debateID = ++Debate.nb_debate;
         this.adminRoomName = SocketConfig.ADMIN_ROOM_PREFIX + this.debateID;
         this.adminRoom = adminNamespace.to(this.adminRoomName);
+        this.admin = ownerSocket.username;
+        //For local tests
+        //this.admin = "admin";
 
         // Join the admin room
         ownerSocket.join(this.adminRoomName);
