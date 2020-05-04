@@ -28,29 +28,7 @@ export class AdminNamespace extends CustomNamespace {
 
             socket.on('getDebates', this.getDebates(socket));
 
-            socket.on('getDebateQuestions', (debateId, callback) => {
-                logger.info(`getDebateQuestions requested from ${socket.username}`);
-
-                if (!(callback instanceof Function)) {
-                    logger.debug(`callback is not a function.`);
-                    return;
-                }
-
-                if (debateId == null) {
-                    logger.debug('Invalid arguments for getQuestions.');
-                    callback(-1);
-                    return;
-                }
-
-                const debate = this.getActiveDebate(debateId);
-                if (debate == null) {
-                    logger.debug(`Debate with id (${debateId}) not found.`);
-                    callback(-1);
-                    return;
-                }
-
-                callback([ ...debate.questions.values() ]);
-            });
+            socket.on('getDebateQuestions', this.getDebateQuestions(socket));
 
             socket.on('newDebate', (newDebateObj, callback) => {
                 logger.info(`New debate creation requested from ${socket.username}`);
@@ -144,5 +122,29 @@ export class AdminNamespace extends CustomNamespace {
         }
 
         callback(debates);
+    };
+
+    getDebateQuestions = (socket) => (debateId, callback) => {
+        logger.info(`getDebateQuestions requested from ${socket.username}`);
+
+        if (!(callback instanceof Function)) {
+            logger.debug(`callback is not a function.`);
+            return;
+        }
+
+        if (debateId == null) {
+            logger.debug('Invalid arguments for getQuestions.');
+            callback(-1);
+            return;
+        }
+
+        const debate = this.getActiveDebate(debateId);
+        if (debate == null) {
+            logger.debug(`Debate with id (${debateId}) not found.`);
+            callback(-1);
+            return;
+        }
+
+        callback([ ...debate.questions.values() ]);
     };
 }
