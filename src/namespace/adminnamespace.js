@@ -30,31 +30,7 @@ export class AdminNamespace extends CustomNamespace {
 
             socket.on('getDebateQuestions', this.getDebateQuestions(socket));
 
-            socket.on('newDebate', (newDebateObj, callback) => {
-                logger.info(`New debate creation requested from ${socket.username}`);
-
-                if (!(callback instanceof Function)) {
-                    logger.debug(`callback is not a function.`);
-                    return;
-                }
-
-                const title = newDebateObj.title;
-                const description = newDebateObj.description;
-                if (!title || !description) {
-                    logger.debug('Invalid arguments for newDebate.');
-                    callback(-1);
-                    return;
-                }
-
-                //TODO: Check title & description are valid strings
-
-                // Create and start a new debate
-                const debate = new Debate(title, description, socket, this.io, this.nsp);
-                this.activeDebates.set(debate.debateID, debate);
-
-                debate.startSocketHandling();
-                callback(debate.debateID);
-            });
+            socket.on('newDebate', this.newDebate(socket));
 
             socket.on('newQuestion', (newQuestionObj, callback) => {
                 logger.debug(`newQuestion received from user (${socket.username}), id(${socket.id})`);
@@ -146,5 +122,31 @@ export class AdminNamespace extends CustomNamespace {
         }
 
         callback([ ...debate.questions.values() ]);
+    };
+
+    newDebate = (socket) => (newDebateObj, callback) => {
+        logger.info(`New debate creation requested from ${socket.username}`);
+
+        if (!(callback instanceof Function)) {
+            logger.debug(`callback is not a function.`);
+            return;
+        }
+
+        const title = newDebateObj.title;
+        const description = newDebateObj.description;
+        if (!title || !description) {
+            logger.debug('Invalid arguments for newDebate.');
+            callback(-1);
+            return;
+        }
+
+        //TODO: Check title & description are valid strings
+
+        // Create and start a new debate
+        const debate = new Debate(title, description, socket, this.io, this.nsp);
+        this.activeDebates.set(debate.debateID, debate);
+
+        debate.startSocketHandling();
+        callback(debate.debateID);
     };
 }
