@@ -65,16 +65,7 @@ export class Debate {
             logger.debug(`New socket connected to namespace ${this.userNamespace.name} + ${socket.id}`);
 
             // Return the list of questions as an array to callback function
-            socket.on('getQuestions', (callback) => {
-                logger.debug(`getQuestions received from ${socket.id}`);
-
-                if (!(callback instanceof Function)) {
-                    logger.debug(`callback is not a function.`);
-                    return;
-                }
-
-                callback([ ...this.questions.values() ]);
-            });
+            socket.on('getQuestions', this.getQuestions(socket));
 
             // Answer to a question, questionAnswer contains questionId and answerId
             // callback is a function that takes true on success, otherwise false.
@@ -108,7 +99,7 @@ export class Debate {
                 }
 
                 logger.info(`Socket (${socket.id}) replied ${answerId} to question (${questionId}).`);
-                
+
                 // Send the reply to the admin room.
                 this.adminRoom.emit('questionAnswered', {questionId: questionId, answerId: answerId});
                 callback(true);
@@ -125,4 +116,17 @@ export class Debate {
         this.questions.set(question.id, question);
         this.userNamespace.emit('newQuestion', question);
     }
+
+    // This section contains the different socket io functions
+
+    getQuestions = (socket) => (callback) => {
+        logger.debug(`getQuestions received from ${socket.id}`);
+
+        if (!(callback instanceof Function)) {
+            logger.debug(`callback is not a function.`);
+            return;
+        }
+
+        callback([ ...this.questions.values() ]);
+    };
 }
