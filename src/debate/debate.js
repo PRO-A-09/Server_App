@@ -30,10 +30,14 @@ export class Debate {
             this.title = title;
             this.isOpenQuestion = isOpenQuestion;
 
-            if (isOpenQuestion) {
-                this.answers = answers.map(a => ({uuid: a.uuid, answer: a.answer}));
+            if (answers == null) {
+                this.answers = [];
             } else {
-                this.answers = answers.map(a => ({answer: a}));
+                if (isOpenQuestion) {
+                    this.answers = answers.map(a => ({uuid: a.uuid, answer: a.answer}));
+                } else {
+                    this.answers = answers.map(a => ({answer: a}));
+                }
             }
         }
 
@@ -132,6 +136,43 @@ export class Debate {
                 
                 // Send the reply to the admin room.
                 this.adminRoom.emit('questionAnswered', {questionId: questionId, answerId: answerId});
+                callback(true);
+            });
+
+            // Answer to an open question, questionAnswer contains questionId and a string answer
+            // callback is a function that takes true on success, otherwise false.
+            socket.on('answerOpenQuestion', (questionAnswer, callback) => {
+                logger.debug(`answerOpenQuestion received from ${socket.id}`);
+
+                if (!(callback instanceof Function)) {
+                    logger.debug(`callback is not a function.`);
+                    return;
+                }
+
+                const questionId = questionAnswer.questionId;
+                const answer = questionAnswer.answer;
+                if (questionId == null || answer == null) {
+                    logger.debug("questionId or answer is null.");
+                    callback(false);
+                    return;
+                }
+
+                const question = this.questions.get(questionId);
+                if (question == null) {
+                    logger.debug(`Question with id (${questionId}) not found.`);
+                    callback(false);
+                    return;
+                }
+
+                if (!question.isOpenQuestion) {
+                    logger.debug(`Question with id (${questionId}) is not an open question.`);
+                    callback(false);
+                    return;
+                }
+
+                // TODO: Pass uuid to answer
+                question.answers.push({answer: answer});
+                logger.info(`Socket (${socket.id}) replied (${answer}) to question (${questionId}).`);
                 callback(true);
             });
         });
