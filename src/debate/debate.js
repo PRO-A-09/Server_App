@@ -69,41 +69,7 @@ export class Debate {
 
             // Answer to a question, questionAnswer contains questionId and answerId
             // callback is a function that takes true on success, otherwise false.
-            socket.on('answerQuestion', (questionAnswer, callback) => {
-                logger.debug(`answerQuestion received from ${socket.id}`);
-
-                if (!(callback instanceof Function)) {
-                    logger.debug(`callback is not a function.`);
-                    return;
-                }
-
-                const questionId = questionAnswer.questionId;
-                const answerId = questionAnswer.answerId;
-                if (questionId == null || answerId == null) {
-                    logger.debug("questionId or answerId is null.");
-                    callback(false);
-                    return;
-                }
-
-                const question = this.questions.get(questionId);
-                if (question == null) {
-                    logger.debug(`Question with id (${questionId}) not found.`);
-                    callback(false);
-                    return;
-                }
-
-                if (answerId >= question.answers.length) {
-                    logger.debug(`Question (${questionId}) with answer (${answerId}) invalid.`);
-                    callback(false);
-                    return;
-                }
-
-                logger.info(`Socket (${socket.id}) replied ${answerId} to question (${questionId}).`);
-
-                // Send the reply to the admin room.
-                this.adminRoom.emit('questionAnswered', {questionId: questionId, answerId: answerId});
-                callback(true);
-            });
+            socket.on('answerQuestion', this.answerQuestion(socket));
         });
     }
 
@@ -128,5 +94,41 @@ export class Debate {
         }
 
         callback([ ...this.questions.values() ]);
+    };
+
+    answerQuestion = (socket) => (questionAnswer, callback) => {
+        logger.debug(`answerQuestion received from ${socket.id}`);
+
+        if (!(callback instanceof Function)) {
+            logger.debug(`callback is not a function.`);
+            return;
+        }
+
+        const questionId = questionAnswer.questionId;
+        const answerId = questionAnswer.answerId;
+        if (questionId == null || answerId == null) {
+            logger.debug("questionId or answerId is null.");
+            callback(false);
+            return;
+        }
+
+        const question = this.questions.get(questionId);
+        if (question == null) {
+            logger.debug(`Question with id (${questionId}) not found.`);
+            callback(false);
+            return;
+        }
+
+        if (answerId >= question.answers.length) {
+            logger.debug(`Question (${questionId}) with answer (${answerId}) invalid.`);
+            callback(false);
+            return;
+        }
+
+        logger.info(`Socket (${socket.id}) replied ${answerId} to question (${questionId}).`);
+
+        // Send the reply to the admin room.
+        this.adminRoom.emit('questionAnswered', {questionId: questionId, answerId: answerId});
+        callback(true);
     };
 }
