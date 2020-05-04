@@ -28,8 +28,26 @@ export class Debate {
         constructor(title, answers, isOpenQuestion = false) {
             this.id = ++Question.nb_question;
             this.title = title;
-            this.answers = answers;
             this.isOpenQuestion = isOpenQuestion;
+
+            if (isOpenQuestion) {
+                this.answers = answers.map(a => ({uuid: a.uuid, answer: a.answer}));
+            } else {
+                this.answers = answers.map(a => ({answer: a}));
+            }
+        }
+
+        /**
+         * Format the question by sending only answers
+         * @returns {{answers: String[], id: int, isOpenQuestion: boolean, title: String}}
+         */
+        format() {
+            return {
+                id: this.id,
+                title: this.title,
+                answers: this.answers.map(a => (a.answer)),
+                isOpenQuestion: this.isOpenQuestion
+            }
         }
     };
 
@@ -75,7 +93,8 @@ export class Debate {
                     return;
                 }
 
-                callback([ ...this.questions.values() ]);
+                // Format the questions before sending them
+                callback(Array.from(this.questions.values(), q => (q.format())));
             });
 
             // Answer to a question, questionAnswer contains questionId and answerId
@@ -125,6 +144,6 @@ export class Debate {
     sendNewQuestion(question) {
         logger.debug(`Sending new question with id ${question.id}`);
         this.questions.set(question.id, question);
-        this.userNamespace.emit('newQuestion', question);
+        this.userNamespace.emit('newQuestion', question.format()); // Format the question before emitting
     }
 }
