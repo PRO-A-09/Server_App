@@ -27,7 +27,7 @@ const ResponseSchema = new mongoose.Schema({
             // Validate will permit us to make some validation before a refQuestion is saved
             // The function check if the id of the value passed exits in the DataBase if yes it will return true otherwise false
             return new Promise(function(resolve, reject) {
-                Question.findOne({_id: v}, (err, question) => resolve(question ? true : false));
+                Question.findOne({id: v}, (err, question) => resolve(question ? true : false));
             });
         }
     },

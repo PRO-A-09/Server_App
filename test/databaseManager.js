@@ -5,6 +5,7 @@ import {Discussion} from "../src/database/modele/Discussion.js";
 import {Question} from "../src/database/modele/Question.js";
 import {Device} from "../src/database/modele/Device.js";
 import {Response} from "../src/database/modele/Response.js";
+import {logger} from "../src/conf/config";
 
 const expect = chai.expect;
 const should = chai.should();
@@ -21,7 +22,7 @@ describe('Data Base manager test', () => {
             password: 'pass'
         });
         await admin.save().then((userSaved) => {
-            console.log("administrator saved : ", userSaved);
+            logger.debug(`administrator saved : ${userSaved}`);
             user = userSaved;
         });
 
@@ -33,7 +34,7 @@ describe('Data Base manager test', () => {
             administrator: user._id
         });
         await discussion1.save().then((discussionSaved) => {
-            console.log("discussion saved : ", discussionSaved);
+            logger.debug(`discussion saved : ${discussionSaved}`);
         });
 
         const discussion2 = new Discussion({
@@ -44,55 +45,55 @@ describe('Data Base manager test', () => {
             administrator: user._id
         });
         await discussion2.save().then((discussionSaved) => {
-            console.log("discussion saved : ", discussionSaved);
+            logger.debug(`discussion saved : ${discussionSaved}`);
         });
 
         const question1 = new Question({
-            _id: 1,
+            id: 1,
             titreQuestion: "Question for debate 1",
             numberVotes: 0,
             refDiscussion: discussion1._id
         });
         await question1.save().then((questionSaved) => {
-            console.log("question saved : ", questionSaved);
+            logger.debug(`question saved : ${questionSaved}`);
         });
 
         const question2 = new Question({
-            _id: 2,
+            id: 2,
             titreQuestion: "Question 2 for debate 1",
             numberVotes: 0,
             refDiscussion: discussion1._id
         });
         await question2.save().then((questionSaved) => {
-            console.log("question saved : ", questionSaved);
+            logger.debug(`question saved : ${questionSaved}`);
         });
 
         const device = new Device({
             _id: "110e8400-e29b-11d4-a716-446655440000"
         });
         await device.save().then((deviceSaved) => {
-            console.log("device saved : ", deviceSaved);
+            logger.debug(`device saved : ${deviceSaved}`);
         });
 
         const response1 = new Response({
             _id: 1,
             response: "Yes",
-            refQuestion: question1._id,
+            refQuestion: question1.id,
             devices: [{
                 refDevice: device._id
             }]
         });
         await response1.save().then((responseSaved) => {
-            console.log("response saved : ", responseSaved);
+            logger.debug(`response saved : ${responseSaved}`);
         });
 
         const response2 = new Response({
             _id: 2,
             response: "No",
-            refQuestion: question1._id,
+            refQuestion: question1.id,
         });
         await response2.save().then((responseSaved) => {
-            console.log("response saved : ", responseSaved);
+            logger.debug(`response saved : ${responseSaved}`);
         });
     });
 
@@ -128,7 +129,7 @@ describe('Data Base manager test', () => {
             db.getQuestionsDiscussion(1).then(function(questions){
                 let i = 1;
                 for(let question of questions){
-                    question._id.should.equal(i);
+                    question.id.should.equal(i);
                     i++;
                 }
                 done();
