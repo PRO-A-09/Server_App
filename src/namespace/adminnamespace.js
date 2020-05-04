@@ -69,7 +69,7 @@ export class AdminNamespace extends CustomNamespace {
                     return;
                 }
 
-                callback([ ...debate.questions.values() ]);
+                callback(Array.from(debate.questions.values(), q => (q.format())));
             });
 
             socket.on('newDebate', (newDebateObj, callback) => {

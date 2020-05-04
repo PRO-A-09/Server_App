@@ -342,6 +342,8 @@ describe('Debate test', () => {
                 admin.emit('getDebateQuestions', id, (res) => {
                     res.length.should.equal(1);
                     res[0].title.should.equal('Does this test work ?');
+                    res[0].answers[0].should.equal('Yes');
+                    res[0].answers[1].should.equal('No');
                     done();
                 });
             });
