@@ -32,37 +32,7 @@ export class AdminNamespace extends CustomNamespace {
 
             socket.on('newDebate', this.newDebate(socket));
 
-            socket.on('newQuestion', (newQuestionObj, callback) => {
-                logger.debug(`newQuestion received from user (${socket.username}), id(${socket.id})`);
-
-                if (!(callback instanceof Function)) {
-                    logger.debug(`callback is not a function.`);
-                    return;
-                }
-
-                const debateId = newQuestionObj.debateId;
-                const title = newQuestionObj.title;
-                const answers = newQuestionObj.answers;
-                // Check debateId, title, answers
-                if (!debateId || !title || !answers) {
-                    logger.debug('Invalid arguments for newQuestion.');
-                    callback(-1);
-                    return;
-                }
-
-                //TODO: Check title is string, answers are string
-
-                const debate = this.getActiveDebate(debateId);
-                if (debate == null) {
-                    logger.debug(`Debate with id (${debateId}) not found.`);
-                    callback(-1);
-                    return;
-                }
-
-                const question = new debate.Question(title, answers);
-                debate.sendNewQuestion(question);
-                callback(question.id);
-            });
+            socket.on('newQuestion', this.newQuestion(socket));
         });
     }
 
@@ -148,5 +118,37 @@ export class AdminNamespace extends CustomNamespace {
 
         debate.startSocketHandling();
         callback(debate.debateID);
+    };
+
+    newQuestion = (socket) => (newQuestionObj, callback) => {
+        logger.debug(`newQuestion received from user (${socket.username}), id(${socket.id})`);
+
+        if (!(callback instanceof Function)) {
+            logger.debug(`callback is not a function.`);
+            return;
+        }
+
+        const debateId = newQuestionObj.debateId;
+        const title = newQuestionObj.title;
+        const answers = newQuestionObj.answers;
+        // Check debateId, title, answers
+        if (!debateId || !title || !answers) {
+            logger.debug('Invalid arguments for newQuestion.');
+            callback(-1);
+            return;
+        }
+
+        //TODO: Check title is string, answers are string
+
+        const debate = this.getActiveDebate(debateId);
+        if (debate == null) {
+            logger.debug(`Debate with id (${debateId}) not found.`);
+            callback(-1);
+            return;
+        }
+
+        const question = new debate.Question(title, answers);
+        debate.sendNewQuestion(question);
+        callback(question.id);
     };
 }
