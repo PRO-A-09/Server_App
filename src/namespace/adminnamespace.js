@@ -26,27 +26,7 @@ export class AdminNamespace extends CustomNamespace {
         this.nsp.on('connection', (socket) => {
             logger.debug(`New connected socket (socketid: ${socket.id}, username: ${socket.username})`);
 
-            socket.on('getDebates', (callback) => {
-                logger.debug(`Get debate requested from ${socket.username}`);
-
-                if (!(callback instanceof Function)) {
-                    logger.debug(`callback is not a function.`);
-                    return;
-                }
-
-                // TODO: Only return debates available for this user
-
-                let debates = [];
-                for (const [key, debate] of this.activeDebates.entries()) {
-                    debates.push({
-                        debateId: debate.debateID,
-                        title: debate.title,
-                        description: debate.description
-                    });
-                }
-
-                callback(debates);
-            });
+            socket.on('getDebates', this.getDebates(socket));
 
             socket.on('getDebateQuestions', (debateId, callback) => {
                 logger.info(`getDebateQuestions requested from ${socket.username}`);
@@ -141,4 +121,28 @@ export class AdminNamespace extends CustomNamespace {
         // Return null if not found
         return this.activeDebates.get(id);
     }
+
+    // This section contains the different socket io functions
+
+    getDebates = (socket) => (callback) => {
+        logger.debug(`Get debate requested from ${socket.username}`);
+
+        if (!(callback instanceof Function)) {
+            logger.debug(`callback is not a function.`);
+            return;
+        }
+
+        // TODO: Only return debates available for this user
+
+        let debates = [];
+        for (const [key, debate] of this.activeDebates.entries()) {
+            debates.push({
+                debateId: debate.debateID,
+                title: debate.title,
+                description: debate.description
+            });
+        }
+
+        callback(debates);
+    };
 }
