@@ -82,7 +82,9 @@ export class Debate {
 
     // This section contains the different socket io functions
 
-    // Return the list of questions to the callback function
+    /**
+     * Return the list of questions to the callback function
+     */
     getQuestions = (socket) => (callback) => {
         logger.debug(`getQuestions received from ${socket.id}`);
 
