@@ -253,14 +253,18 @@ export class DataBaseManager {
      * Save the response in the database
      * @param response the response that need to be saved
      * @param questionId integer that is the id of the question related to the response
+     * @param discussionId integer that is the id of the discussion related to the response
      * @returns {Promise<boolean>} true if save went well false otherwise
      */
-    async saveResponse(response, questionId){
+    async saveResponse(response, questionId, discussionId){
         let saved = true;
         const responseSave = new Response({
             _id: response.key,
             response: response.value,
-            refQuestion: questionId
+            refQuestion: {
+                refQuestion: questionId,
+                refDiscussion: discussionId
+            }
         });
         // Save the response in database
         await responseSave.save()

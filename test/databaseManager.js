@@ -5,7 +5,7 @@ import {Discussion} from "../src/database/modele/Discussion.js";
 import {Question} from "../src/database/modele/Question.js";
 import {Device} from "../src/database/modele/Device.js";
 import {Response} from "../src/database/modele/Response.js";
-import {logger} from "../src/conf/config";
+import {logger} from "../src/conf/config.js";
 
 const expect = chai.expect;
 const should = chai.should();
@@ -76,9 +76,12 @@ describe('Data Base manager test', () => {
         });
 
         const response1 = new Response({
-            _id: 1,
+            id: 1,
             response: "Yes",
-            refQuestion: question1.id,
+            refQuestion: {
+                refQuestion: question1.id,
+                refDiscussion: discussion1._id
+            },
             devices: [{
                 refDevice: device._id
             }]
@@ -88,9 +91,12 @@ describe('Data Base manager test', () => {
         });
 
         const response2 = new Response({
-            _id: 2,
+            id: 2,
             response: "No",
-            refQuestion: question1.id,
+            refQuestion: {
+                refQuestion: question1.id,
+                refDiscussion: discussion1._id
+            }
         });
         await response2.save().then((responseSaved) => {
             logger.debug(`response saved : ${responseSaved}`);
@@ -137,10 +143,10 @@ describe('Data Base manager test', () => {
         });
     });
 
-    describe('Get responses from a device', () => {
-        it('Get Responses from device', (done) => {
+    describe('Get all responses from a device', () => {
+        it('Get Responses from device define', (done) => {
             db.getResponsesDevice("110e8400-e29b-11d4-a716-446655440000").then(function(responses){
-                responses[0]._id.should.equal(1);
+                responses[0].id.should.equal(1);
                 responses[0].response.should.equal("Yes");
                 done();
             });
@@ -148,11 +154,11 @@ describe('Data Base manager test', () => {
     });
 
     describe('Get all responses from a Question', () => {
-        it('Get Responses from Question', (done) => {
+        it('Get Responses from Question 1', (done) => {
             db.getResponsesQuestion(1).then(function(responses){
                 let i = 1;
                 for(let response of responses){
-                    response._id.should.equal(i);
+                    response.id.should.equal(i);
                     i++;
                 }
                 done();
