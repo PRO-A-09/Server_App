@@ -88,93 +88,10 @@ export class Debate {
         this.userNamespace.on('connection', (socket) => {
             logger.debug(`New socket connected to namespace ${this.userNamespace.name} + ${socket.id}`);
 
-            // Return the list of questions as an array to callback function
-            socket.on('getQuestions', (callback) => {
-                logger.debug(`getQuestions received from ${socket.id}`);
-
-                if (!(callback instanceof Function)) {
-                    logger.debug(`callback is not a function.`);
-                    return;
-                }
-
-                // Format the questions before sending them
-                callback(Array.from(this.questions.values(), q => (q.format())));
-            });
-
-            // Answer to a question, questionAnswer contains questionId and answerId
-            // callback is a function that takes true on success, otherwise false.
-            socket.on('answerQuestion', (questionAnswer, callback) => {
-                logger.debug(`answerQuestion received from ${socket.id}`);
-
-                if (!(callback instanceof Function)) {
-                    logger.debug(`callback is not a function.`);
-                    return;
-                }
-
-                const questionId = questionAnswer.questionId;
-                const answerId = questionAnswer.answerId;
-                if (questionId == null || answerId == null) {
-                    logger.debug("questionId or answerId is null.");
-                    callback(false);
-                    return;
-                }
-
-                const question = this.questions.get(questionId);
-                if (question == null) {
-                    logger.debug(`Question with id (${questionId}) not found.`);
-                    callback(false);
-                    return;
-                }
-
-                if (answerId >= question.answers.length) {
-                    logger.debug(`Question (${questionId}) with answer (${answerId}) invalid.`);
-                    callback(false);
-                    return;
-                }
-
-                logger.info(`Socket (${socket.id}) replied ${answerId} to question (${questionId}).`);
-                
-                // Send the reply to the admin room.
-                this.adminRoom.emit('questionAnswered', {questionId: questionId, answerId: answerId});
-                callback(true);
-            });
-
-            // Answer to an open question, questionAnswer contains questionId and a string answer
-            // callback is a function that takes true on success, otherwise false.
-            socket.on('answerOpenQuestion', (questionAnswer, callback) => {
-                logger.debug(`answerOpenQuestion received from ${socket.id}`);
-
-                if (!(callback instanceof Function)) {
-                    logger.debug(`callback is not a function.`);
-                    return;
-                }
-
-                const questionId = questionAnswer.questionId;
-                const answer = questionAnswer.answer;
-                if (questionId == null || answer == null) {
-                    logger.debug("questionId or answer is null.");
-                    callback(false);
-                    return;
-                }
-
-                const question = this.questions.get(questionId);
-                if (question == null) {
-                    logger.debug(`Question with id (${questionId}) not found.`);
-                    callback(false);
-                    return;
-                }
-
-                if (!question.isOpenQuestion) {
-                    logger.debug(`Question with id (${questionId}) is not an open question.`);
-                    callback(false);
-                    return;
-                }
-
-                // TODO: Pass uuid to answer
-                question.answers.push({answer: answer});
-                logger.info(`Socket (${socket.id}) replied (${answer}) to question (${questionId}).`);
-                callback(true);
-            });
+            // Register socket functions
+            socket.on('getQuestions', this.getQuestions(socket));
+            socket.on('answerQuestion', this.answerQuestion(socket));
+            socket.on('answerOpenQuestion', this.answerOpenQuestion(socket));
         });
     }
 
@@ -185,6 +102,104 @@ export class Debate {
     sendNewQuestion(question) {
         logger.debug(`Sending new question with id ${question.id}`);
         this.questions.set(question.id, question);
-        this.userNamespace.emit('newQuestion', question.format()); // Format the question before emitting
+        this.userNamespace.emit('newQuestion', question.format());
     }
+
+    // This section contains the different socket io functions
+
+    /**
+     * Return the list of questions to the callback function
+     */
+    getQuestions = (socket) => (callback) => {
+        logger.debug(`getQuestions received from ${socket.id}`);
+
+        if (!(callback instanceof Function)) {
+            logger.debug(`callback is not a function.`);
+            return;
+        }
+
+        // Format the questions before sending them
+        callback(Array.from(this.questions.values(), q => (q.format())));
+    };
+
+    /**
+     * Register a new answer to a question of the debate.
+     * questionAnswer contains questionId and answerId
+     * callback is a function that takes true on success, otherwise false.
+     */
+    answerQuestion = (socket) => (questionAnswer, callback) => {
+        logger.debug(`answerQuestion received from ${socket.id}`);
+
+        if (!(callback instanceof Function)) {
+            logger.debug(`callback is not a function.`);
+            return;
+        }
+
+        const questionId = questionAnswer.questionId;
+        const answerId = questionAnswer.answerId;
+        if (questionId == null || answerId == null) {
+            logger.debug("questionId or answerId is null.");
+            callback(false);
+            return;
+        }
+
+        const question = this.questions.get(questionId);
+        if (question == null) {
+            logger.debug(`Question with id (${questionId}) not found.`);
+            callback(false);
+            return;
+        }
+
+        if (answerId >= question.answers.length) {
+            logger.debug(`Question (${questionId}) with answer (${answerId}) invalid.`);
+            callback(false);
+            return;
+        }
+
+        logger.info(`Socket (${socket.id}) replied ${answerId} to question (${questionId}).`);
+
+        // Send the reply to the admin room.
+        this.adminRoom.emit('questionAnswered', {questionId: questionId, answerId: answerId});
+        callback(true);
+    };
+
+    /**
+     * Register a new answer to an open question of the debate.
+     * questionAnswer contains questionId and the answer
+     * callback is a function that takes true on success, otherwise false.
+     */
+    answerOpenQuestion = (socket) => (questionAnswer, callback) => {
+        logger.debug(`answerOpenQuestion received from ${socket.id}`);
+
+        if (!(callback instanceof Function)) {
+            logger.debug(`callback is not a function.`);
+            return;
+        }
+
+        const questionId = questionAnswer.questionId;
+        const answer = questionAnswer.answer;
+        if (questionId == null || answer == null) {
+            logger.debug("questionId or answer is null.");
+            callback(false);
+            return;
+        }
+
+        const question = this.questions.get(questionId);
+        if (question == null) {
+            logger.debug(`Question with id (${questionId}) not found.`);
+            callback(false);
+            return;
+        }
+
+        if (!question.isOpenQuestion) {
+            logger.debug(`Question with id (${questionId}) is not an open question.`);
+            callback(false);
+            return;
+        }
+
+        // TODO: Pass uuid to answer
+        question.answers.push({answer: answer});
+        logger.info(`Socket (${socket.id}) replied (${answer}) to question (${questionId}).`);
+        callback(true);
+    };
 }
