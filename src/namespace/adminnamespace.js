@@ -59,14 +59,11 @@ export class AdminNamespace extends CustomNamespace {
 
         // TODO: Only return debates available for this user
 
-        let debates = [];
-        for (const [key, debate] of this.activeDebates.entries()) {
-            debates.push({
-                debateId: debate.debateID,
-                title: debate.title,
-                description: debate.description
-            });
-        }
+        let debates = Array.from(this.activeDebates.values(), d => ({
+            debateId: d.debateID,
+            title: d.title,
+            description: d.description
+        }));
 
         callback(debates);
     };
