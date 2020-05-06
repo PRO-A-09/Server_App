@@ -64,11 +64,8 @@ export class Debate {
         this.userNamespace.on('connection', (socket) => {
             logger.debug(`New socket connected to namespace ${this.userNamespace.name} + ${socket.id}`);
 
-            // Return the list of questions as an array to callback function
+            // Register socket functions
             socket.on('getQuestions', this.getQuestions(socket));
-
-            // Answer to a question, questionAnswer contains questionId and answerId
-            // callback is a function that takes true on success, otherwise false.
             socket.on('answerQuestion', this.answerQuestion(socket));
         });
     }
@@ -85,6 +82,7 @@ export class Debate {
 
     // This section contains the different socket io functions
 
+    // Return the list of questions to the callback function
     getQuestions = (socket) => (callback) => {
         logger.debug(`getQuestions received from ${socket.id}`);
 
@@ -96,6 +94,11 @@ export class Debate {
         callback([ ...this.questions.values() ]);
     };
 
+    /**
+     * Register a new answer to a question of the debate.
+     * questionAnswer contains questionId and answerId
+     * callback is a function that takes true on success, otherwise false.
+     */
     answerQuestion = (socket) => (questionAnswer, callback) => {
         logger.debug(`answerQuestion received from ${socket.id}`);
 

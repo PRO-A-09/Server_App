@@ -26,12 +26,10 @@ export class AdminNamespace extends CustomNamespace {
         this.nsp.on('connection', (socket) => {
             logger.debug(`New connected socket (socketid: ${socket.id}, username: ${socket.username})`);
 
+            // Register socket functions
             socket.on('getDebates', this.getDebates(socket));
-
             socket.on('getDebateQuestions', this.getDebateQuestions(socket));
-
             socket.on('newDebate', this.newDebate(socket));
-
             socket.on('newQuestion', this.newQuestion(socket));
         });
     }
@@ -48,6 +46,9 @@ export class AdminNamespace extends CustomNamespace {
 
     // This section contains the different socket io functions
 
+    /**
+     * Return the list of available debates to the callback function
+     */
     getDebates = (socket) => (callback) => {
         logger.debug(`Get debate requested from ${socket.username}`);
 
@@ -70,6 +71,10 @@ export class AdminNamespace extends CustomNamespace {
         callback(debates);
     };
 
+    /**
+     * Return the list of questions for a debate to the callback function
+     * debateId contains the id of the debate
+     */
     getDebateQuestions = (socket) => (debateId, callback) => {
         logger.info(`getDebateQuestions requested from ${socket.username}`);
 
@@ -94,6 +99,10 @@ export class AdminNamespace extends CustomNamespace {
         callback([ ...debate.questions.values() ]);
     };
 
+    /**
+     * Create a new debate
+     * newDebateObj contains the information of the debate (title, description)
+     */
     newDebate = (socket) => (newDebateObj, callback) => {
         logger.info(`New debate creation requested from ${socket.username}`);
 
@@ -120,6 +129,10 @@ export class AdminNamespace extends CustomNamespace {
         callback(debate.debateID);
     };
 
+    /**
+     * Add a new question to the specified debate
+     * newQuestionObj contains the required information (debateId, title, answers)
+     */
     newQuestion = (socket) => (newQuestionObj, callback) => {
         logger.debug(`newQuestion received from user (${socket.username}), id(${socket.id})`);
 
