@@ -12,13 +12,14 @@ import {logger} from '../conf/config.js';
  * This class is used to manage the database communication.
  */
 export class DataBaseManager {
+    connection;
 
     /**
      * Start the DataBaseManager by connecting to the mongoDB instance
      */
     start() {
         // Connection to the local database
-        mongoose.connect('mongodb://localhost:27017/PRO', {useNewUrlParser: true, useUnifiedTopology: true});
+        mongoose.connect('mongodb://192.168.99.100:27017/PRO', {useNewUrlParser: true, useUnifiedTopology: true});
         mongoose.set('useCreateIndex', true);
     }
 
@@ -27,7 +28,7 @@ export class DataBaseManager {
      */
     async end(){
         // Close the connection
-        await mongoose.disconnect();
+        await mongoose.connection.close();
     }
 
     /**
