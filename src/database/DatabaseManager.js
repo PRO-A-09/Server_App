@@ -37,7 +37,7 @@ export class DataBaseManager {
      */
     async getAdminPassword(username){
         let password = null;
-        logger.debug(`Getting the password of the admin`);
+        logger.debug(`Getting the password of the user ${username}`);
         await Administrator.findOne({login:username},function(err,username) {
             if (err || username == null) logger.debug(`Impossible to find username`);
             else password = username.password;
@@ -52,7 +52,7 @@ export class DataBaseManager {
      */
     async getAdminId(username){
         let id = null;
-        logger.debug(`Getting the id of the admin`);
+        logger.debug(`Getting the id of the user ${username}`);
         await Administrator.findOne({login:username},function(err,username) {
             if (err || username == null) logger.debug(`Impossible to find username`);
             else id = username._id;
