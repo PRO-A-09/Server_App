@@ -35,7 +35,7 @@ const ResponseSchema = new mongoose.Schema({
     devices:[
         {
             refDevice: {
-                type: Number,
+                type: String,
                 ref: 'Device',
                 // Validate will permit us to make some validation before a refDevice is saved
                 validate: function(v) {
