@@ -3,6 +3,8 @@ import chai from 'chai';
 import {Administrator} from "../src/database/modele/Users.js";
 import {Discussion} from "../src/database/modele/Discussion.js";
 import {Question} from "../src/database/modele/Question.js";
+import {Device} from "../src/database/modele/Device.js";
+import {Response} from "../src/database/modele/Response.js";
 
 const expect = chai.expect;
 const should = chai.should();
@@ -64,6 +66,34 @@ describe('Data Base manager test', () => {
         await question2.save().then((questionSaved) => {
             console.log("question saved : ", questionSaved);
         });
+
+        const device = new Device({
+            _id: "110e8400-e29b-11d4-a716-446655440000"
+        });
+        await device.save().then((deviceSaved) => {
+            console.log("device saved : ", deviceSaved);
+        });
+
+        const response1 = new Response({
+            _id: 1,
+            response: "Yes",
+            refQuestion: question1._id,
+            devices: [{
+                refDevice: device._id
+            }]
+        });
+        await response1.save().then((responseSaved) => {
+            console.log("response saved : ", responseSaved);
+        });
+
+        const response2 = new Response({
+            _id: 2,
+            response: "No",
+            refQuestion: question1._id,
+        });
+        await response2.save().then((responseSaved) => {
+            console.log("response saved : ", responseSaved);
+        });
     });
 
     // When testing this function make sure that in your DB the user admin exists
@@ -99,6 +129,29 @@ describe('Data Base manager test', () => {
                 let i = 1;
                 for(let question of questions){
                     question._id.should.equal(i);
+                    i++;
+                }
+                done();
+            });
+        });
+    });
+
+    describe('Get responses from a device', () => {
+        it('Get Responses from device', (done) => {
+            db.getResponsesDevice("110e8400-e29b-11d4-a716-446655440000").then(function(responses){
+                responses[0]._id.should.equal(1);
+                responses[0].response.should.equal("Yes");
+                done();
+            });
+        });
+    });
+
+    describe('Get all responses from a Question', () => {
+        it('Get Responses from Question', (done) => {
+            db.getResponsesQuestion(1).then(function(responses){
+                let i = 1;
+                for(let response of responses){
+                    response._id.should.equal(i);
                     i++;
                 }
                 done();

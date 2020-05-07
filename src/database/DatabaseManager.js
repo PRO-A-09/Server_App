@@ -6,7 +6,6 @@ import {Question} from './modele/Question.js';
 import {Response} from './modele/Response.js';
 import {Tag} from './modele/Tag.js';
 import {Administrator,Moderator,Presentator,UserModerator} from './modele/Users.js';
-import {Debate} from "../debate/debate.js";
 
 /**
  * This class is used to manage the database communication.
@@ -107,6 +106,54 @@ export class DataBaseManager {
             });
         }
         return questions;
+    }
+
+    /**
+     * Get the responses from a device
+     * @param aUUID String that is the UUID of the device that we want to get the responses from
+     * @returns an Array of Responses that represents the responses related to the Device
+     */
+    async getResponsesDevice(aUUID){
+        let responses = null;
+        // If id is null error
+        if(aUUID == null){
+            console.log("Error UUID cannot be null");
+        }
+        else {
+            console.log("Getting the Responses from Device", aUUID);
+            // Get all the responses from the DB from the desired device
+            responses = await Response.find({"devices.refDevice": aUUID}, function (err, responses) {
+                if (err || responses == null) console.log("Error when requesting responses");
+                else{
+                    console.log(responses);
+                }
+            });
+        }
+        return responses;
+    }
+
+    /**
+     * Get all responses from a question
+     * @param aIDQuestion String that is the UUID of the device that we want to get the responses from
+     * @returns an Array of Responses that represents the responses related to the Device
+     */
+    async getResponsesQuestion(aIDQuestion){
+        let responses = null;
+        // If id is null error
+        if(aIDQuestion == null){
+            console.log("Error Question ID cannot be null");
+        }
+        else {
+            console.log("Getting the Responses from Question", aIDQuestion);
+            // Get all the responses from the DB from the desired device
+            responses = await Response.find({refQuestion: aIDQuestion}, function (err, responses) {
+                if (err || responses == null) console.log("Error when requesting responses");
+                else{
+                    console.log(responses);
+                }
+            });
+        }
+        return responses;
     }
 
     /**
