@@ -18,7 +18,7 @@ export class DataBaseManager {
      */
     start() {
         // Connection to the local database
-        mongoose.connect('mongodb://localhost:27017/PRO', {useNewUrlParser: true, useUnifiedTopology: true});
+        mongoose.connect('mongodb://192.168.99.100:27017/PRO', {useNewUrlParser: true, useUnifiedTopology: true});
         mongoose.set('useCreateIndex', true);
     }
 
@@ -38,13 +38,16 @@ export class DataBaseManager {
     async getAdminPassword(username){
         let password = null;
         logger.debug(`Getting the password of the user ${username}`);
-        await Administrator.findOne({login:username},function(err,username) {
+        let user = await Administrator.findOne({login:username},function(err,username) {
             if (err || username == null) logger.debug(`Impossible to find username`);
             else {
                 logger.debug(username);
-                password = username.password;
             }
         });
+        logger.debug(`User getted ${user}`);
+        if(user != null){
+            password = user.password;
+        }
         return password;
     }
 
