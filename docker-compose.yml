@@ -1,0 +1,14 @@
+version: '3.6'
+# Deploys MongoDB
+#
+# usage:
+# sudo docker-compose build
+# sudo docker-compose up -d
+
+
+services:
+  database:
+    image: naludrag/mongo:freshInstall
+    container_name: mongo
+    ports:
+      - 27017:27017
