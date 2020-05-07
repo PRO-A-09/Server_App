@@ -38,7 +38,7 @@ describe('Debate test', () => {
             };
 
             admin.emit("newDebate", debateInfo, (debateID) => {
-                debateID.should.equal(1);
+                debateID.should.above(1);
                 done();
             });
         });

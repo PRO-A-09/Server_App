@@ -278,6 +278,17 @@ export class DataBaseManager {
             return false;
         }
     }
+
+    getLastDiscussionId(callback) {
+        Discussion.find().sort({_id: 'descending'}).exec((err, discussions) => {
+            if (err) {
+                console.log(err);
+                callback(0);
+            } else {
+                callback(discussions[0]._id);
+            }
+        });
+    }
 }
 
 export const dbManager = new DataBaseManager();

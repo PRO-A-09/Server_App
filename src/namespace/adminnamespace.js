@@ -1,6 +1,7 @@
 import {logger, SocketConfig} from '../conf/config.js';
 import {CustomNamespace} from './customnamespace.js'
 import {Debate} from "../debate/debate.js";
+import {dbManager} from "../database/DatabaseManager.js";
 
 /**
  * This class implements an AdminNamespace that extends a CustomNamespace
@@ -117,6 +118,16 @@ export class AdminNamespace extends CustomNamespace {
         }
 
         //TODO: Check title & description are valid strings
+
+        // If this is the first debate, search the last debate in the database
+        if (Debate.nb_debate === 0) {
+            await new Promise(resolve => {
+                dbManager.getLastDiscussionId((last_id) => {
+                    Debate.nb_debate = last_id;
+                    resolve();
+                });
+            });
+        }
 
         // Create and start a new debate
         const debate = new Debate(title, description, socket, this.io, this.nsp);
