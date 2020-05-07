@@ -18,7 +18,7 @@ export class DataBaseManager {
      */
     start() {
         // Connection to the local database
-        mongoose.connect('mongodb://192.168.99.100:27017/PRO', {useNewUrlParser: true, useUnifiedTopology: true});
+        mongoose.connect('mongodb://localhost:27017/PRO', {useNewUrlParser: true, useUnifiedTopology: true});
         mongoose.set('useCreateIndex', true);
     }
 
