@@ -12,7 +12,6 @@ import {logger} from '../conf/config.js';
  * This class is used to manage the database communication.
  */
 export class DataBaseManager {
-    connection;
 
     /**
      * Start the DataBaseManager by connecting to the mongoDB instance
