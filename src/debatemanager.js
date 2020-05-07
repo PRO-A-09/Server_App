@@ -62,11 +62,11 @@ export class DebateManager {
     /**
      * Creates a new AdminNamespace and registers our middleware.
      */
-    startAdminNamespace() {
+    async startAdminNamespace() {
         this.nspAdmin = new AdminNamespace(this.io);
         const adminMiddleware = new AdminMiddleware();
 
-        this.nspAdmin.registerMiddleware(adminMiddleware.middlewareFunction);
+        await this.nspAdmin.registerMiddleware(adminMiddleware.middlewareFunction);
         this.nspAdmin.startSocketHandling();
     }
 
