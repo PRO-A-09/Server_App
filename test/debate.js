@@ -420,8 +420,8 @@ describe('Debate test', () => {
             };
 
             admin.emit('newQuestion', newQuestionObj, (questionId) => {
-                Question.findOne({_id: questionId, refDiscussion: id}, (err, question) => {
-                    question.should.not.equal(null);
+                Question.findOne({id: questionId, refDiscussion: id}, (err, question) => {
+                    should.exist(question);
                     done();
                 });
             });
