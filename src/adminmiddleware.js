@@ -21,7 +21,9 @@ export class AdminMiddleware {
 
         const db = new DataBaseManager();
         db.start();
-        if (password === await db.getAdminPassword(username)) {
+        let passwordDB = await db.getAdminPassword(username);
+        logger.info(passwordDB);
+        if (password === passwordDB) {
             logger.info('Successful connection to the admin namespace');
             db.end();
             return next();
