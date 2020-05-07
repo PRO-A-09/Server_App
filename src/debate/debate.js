@@ -197,8 +197,7 @@ export class Debate {
             return;
         }
 
-        // TODO: Pass uuid to answer
-        question.answers.push({answer: answer});
+        question.answers.push({answer: answer, uuid: socket.uuid});
         logger.info(`Socket (${socket.id}) replied (${answer}) to question (${questionId}).`);
         callback(true);
     };
