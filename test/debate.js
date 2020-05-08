@@ -466,6 +466,29 @@ describe('Debate test', () => {
                 });
             });
         });
+
+        it('Question response save', (done) => {
+            let newQuestionObj = {
+                debateId: id,
+                title: 'Does this test work ?',
+                answers: ['Yes', 'No']
+            };
+
+            admin.emit('newQuestion', newQuestionObj, (questionId) => {
+                Question.findOne({id: questionId, refDiscussion: id}, (err, question) => {
+                    Response.findOne({
+                        id: 0,
+                        refQuestion: {
+                            refQuestion: questionId,
+                            refDiscussion: id
+                        }
+                    }, (err, response) => {
+                        should.exist(response);
+                        done();
+                    });
+                });
+            });
+        });
         
         afterEach(() => {
             client.close();

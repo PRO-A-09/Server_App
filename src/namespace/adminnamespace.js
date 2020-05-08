@@ -178,6 +178,10 @@ export class AdminNamespace extends CustomNamespace {
         }
 
         const question = new debate.Question(title, answers);
+
+        //TODO: - Control if await slows down the app
+        //      - If it slows down the app, remove it and modify tests
+        //          (currently only pass with await otherwise they are executed too quickly)
         await dbManager.saveQuestion(question, debateId)
             .then(res => {
                 if (res === true) {
