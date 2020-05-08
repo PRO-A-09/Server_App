@@ -285,13 +285,21 @@ export class DataBaseManager {
         }
     }
 
-    getLastDiscussionId(callback) {
-        Discussion.find().sort({_id: 'descending'}).exec((err, discussions) => {
-            if (err) {
-                callback(0);
-            } else {
-                callback(discussions[0]._id);
-            }
+    /**
+     * Get the id of the latest discussion
+     */
+    async getLastDiscussionId() {
+        logger.debug('getLastDiscussionId called');
+        return new Promise(resolve => {
+            Discussion.find().sort({_id: 'descending'}).exec((err, discussions) => {
+                if (err) {
+                    logger.debug('getLastDiscussionId returning 0');
+                    resolve(0);
+                } else {
+                    logger.debug(`getLastDiscussionId returning ${discussions[0]._id}`);
+                    resolve(discussions[0]._id);
+                }
+            });
         });
     }
 }

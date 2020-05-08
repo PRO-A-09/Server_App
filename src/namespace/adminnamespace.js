@@ -121,12 +121,10 @@ export class AdminNamespace extends CustomNamespace {
 
         // If this is the first debate, search the last debate in the database
         if (Debate.nb_debate === 0) {
-            await new Promise(resolve => {
-                dbManager.getLastDiscussionId((last_id) => {
+            await dbManager.getLastDiscussionId()
+                .then(last_id => {
                     Debate.nb_debate = last_id;
-                    resolve();
                 });
-            });
         }
 
         // Create and start a new debate
