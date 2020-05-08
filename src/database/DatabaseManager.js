@@ -6,6 +6,7 @@ import {Question} from './modele/Question.js';
 import {Response} from './modele/Response.js';
 import {Tag} from './modele/Tag.js';
 import {Administrator,Moderator,Presentator,UserModerator} from './modele/Users.js';
+import {logger} from '../conf/config.js';
 
 /**
  * This class is used to manage the database communication.
@@ -17,7 +18,8 @@ export class DataBaseManager {
      */
     start() {
         // Connection to the local database
-        mongoose.connect('mongodb://localhost:27017/PRO', {useNewUrlParser: true});
+        mongoose.connect('mongodb://localhost:27017/PRO', {useNewUrlParser: true, useUnifiedTopology: true});
+        mongoose.set('useCreateIndex', true);
     }
 
     /**
@@ -35,9 +37,9 @@ export class DataBaseManager {
      */
     async getAdminPassword(username){
         let password = null;
-        console.log("Getting the password");
+        logger.debug(`Getting the password of the admin`);
         await Administrator.findOne({login:username},function(err,username) {
-            if (err || username == null) console.log("Impossible to find username");
+            if (err || username == null) logger.debug(`Impossible to find username`);
             else password = username.password;
         });
         return password;
@@ -50,9 +52,9 @@ export class DataBaseManager {
      */
     async getAdminId(username){
         let id = null;
-        console.log("Getting the id");
+        logger.debug(`Getting the id of the admin`);
         await Administrator.findOne({login:username},function(err,username) {
-            if (err || username == null) console.log("Impossible to find username");
+            if (err || username == null) logger.debug(`Impossible to find username`);
             else id = username._id;
         });
         return id;
@@ -69,13 +71,13 @@ export class DataBaseManager {
         let adminId = await this.getAdminId(username);
         // If the adminId is null the username is unknown
         if(adminId == null){
-            console.log("Error when looking for username id");
+            logger.debug(`Error when looking for username id`);
         }
         else {
-            console.log("Getting the Discussions from", username);
+            logger.debug(`Getting the Discussions from ${username}`);
             // Get all the discussions related to the user
             discussions = await Discussion.find({administrator: adminId}, function (err, discussions) {
-                if (err || discussions == null) console.log("Error when requesting discussions");
+                if (err || discussions == null) logger.debug(`Error when requesting discussions`);
                 else{
                     console.log(discussions);
                 }
@@ -93,13 +95,13 @@ export class DataBaseManager {
         let questions = null;
         // If id is null error
         if(anIDDebate == null){
-            console.log("Error Debate ID cannot be null");
+            logger.debug(`Error Debate ID cannot be null`);
         }
         else {
-            console.log("Getting the Questions from discussions ", anIDDebate);
+            logger.debug(`Getting the Questions from discussions ${anIDDebate}`);
             // Get all the questions from the DB from the desired debate
             questions = await Question.find({refDiscussion: anIDDebate}, function (err, questions) {
-                if (err || questions == null) console.log("Error when requesting questions");
+                if (err || questions == null) logger.debug(`Error when requesting questions`);
                 else{
                     console.log(questions);
                 }
@@ -117,15 +119,15 @@ export class DataBaseManager {
         let responses = null;
         // If id is null error
         if(aUUID == null){
-            console.log("Error UUID cannot be null");
+            logger.debug(`Error UUID cannot be null`);
         }
         else {
-            console.log("Getting the Responses from Device", aUUID);
+            logger.debug(`Getting the Responses from Device ${aUUID}`);
             // Get all the responses from the DB from the desired device
             responses = await Response.find({"devices.refDevice": aUUID}, function (err, responses) {
-                if (err || responses == null) console.log("Error when requesting responses");
+                if (err || responses == null) logger.debug(`Error when requesting responses`);
                 else{
-                    console.log(responses);
+                    logger.debug(responses);
                 }
             });
         }
@@ -141,15 +143,15 @@ export class DataBaseManager {
         let responses = null;
         // If id is null error
         if(aIDQuestion == null){
-            console.log("Error Question ID cannot be null");
+            logger.debug(`Error Question ID cannot be null`);
         }
         else {
-            console.log("Getting the Responses from Question", aIDQuestion);
+            logger.debug(`Getting the Responses from Question ${aIDQuestion}`);
             // Get all the responses from the DB from the desired device
             responses = await Response.find({refQuestion: aIDQuestion}, function (err, responses) {
-                if (err || responses == null) console.log("Error when requesting responses");
+                if (err || responses == null) logger.debug(`Error when requesting responses`);
                 else{
-                    console.log(responses);
+                    logger.debug(responses);
                 }
             });
         }
@@ -168,7 +170,7 @@ export class DataBaseManager {
         // Search for the admin id of the discussion
         let idAdmin = await this.getAdminId(discussion.admin);
         if(idAdmin == null){
-            console.log("Error when looking for username id");
+            logger.debug(`Error when looking for username id`);
             return false;
         }
         /* Search for participants is not enable for the moment because participant are not implemented in the server
@@ -187,13 +189,13 @@ export class DataBaseManager {
         });
         // Try to save the discussion in database
         await discussion1.save()
-              .then(discussionSaved => console.log('Discussion saved ' + discussionSaved))
+              .then(discussionSaved => logger.debug(`Discussion saved ${discussionSaved}`))
               .catch(err => {
-                            console.log("Error when saving Disucssion");
+                            logger.debug(`Error when saving Disucssion`);
                             console.log(err);
                             saved = false
               });
-        console.log("saved = ", saved);
+        logger.debug(`saved = ${saved}`);
         // If the save function failed exit the function with false
         if(!saved){
             return saved;
@@ -221,16 +223,16 @@ export class DataBaseManager {
     async saveQuestion(question, idDiscussion){
         let saved = true;
         const questionSave = new Question({
-            _id: question.id,
+            id: question.id,
             titreQuestion: question.title,
             numberVotes: 0,
             refDiscussion: idDiscussion
         });
         // Save the question in database
         await questionSave.save()
-            .then(questionSaved => console.log("Question saved " + questionSaved))
+            .then(questionSaved => logger.debug(`Question saved ${questionSaved}`))
             .catch(err => {
-                console.log("Error when saving Question id = ", question.id);
+                logger.debug(`Error when saving Question id = ${question.id}`);
                 console.log(err);
                 saved = false;
             });
@@ -251,20 +253,24 @@ export class DataBaseManager {
      * Save the response in the database
      * @param response the response that need to be saved
      * @param questionId integer that is the id of the question related to the response
+     * @param discussionId integer that is the id of the discussion related to the response
      * @returns {Promise<boolean>} true if save went well false otherwise
      */
-    async saveResponse(response, questionId){
+    async saveResponse(response, questionId, discussionId){
         let saved = true;
         const responseSave = new Response({
             _id: response.key,
             response: response.value,
-            refQuestion: questionId
+            refQuestion: {
+                refQuestion: questionId,
+                refDiscussion: discussionId
+            }
         });
         // Save the response in database
         await responseSave.save()
-            .then(responseSaved => console.log("Response saved " + responseSaved))
+            .then(responseSaved => logger.debug(`Response saved ${responseSaved}`))
             .catch(err => {
-                console.log("Error when saving Question id = ", response.key);
+                logger.debug(`Error when saving Question id = ${response.key}`);
                 console.log(err);
                 saved = false;
             });
