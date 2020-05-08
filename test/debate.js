@@ -214,6 +214,44 @@ describe('Debate test', () => {
             });
         });
 
+        describe('answerOpenQuestion', () => {
+            it('valid response', (done) => {
+                client.on('newQuestion', (questionObj) => {
+                    client.emit('answerOpenQuestion', {questionId : questionObj.id, answer : 'Hopefully, yes'}, (res) => {
+                        res.should.equal(true);
+
+                        let question = debate.questions.get(questionObj.id);
+                        question.answers[0].answer.should.equal('Hopefully, yes');
+                        done();
+                    });
+                });
+
+                debate.sendNewQuestion(new debate.Question('Does this test work ?', null, true));
+            });
+
+            it('invalid questionID', (done) => {
+                client.on('newQuestion', (questionObj) => {
+                    client.emit('answerOpenQuestion', {questionId : -1, answer : 'Hey'}, (res) => {
+                        res.should.equal(false);
+                        done();
+                    });
+                });
+
+                debate.sendNewQuestion(new debate.Question('Does this test work ?', null, true));
+            });
+
+            it('invalid object', (done) => {
+                client.on('newQuestion', (questionObj) => {
+                    client.emit('answerOpenQuestion', {myFieldIsInvalid: 12}, (res) => {
+                        res.should.equal(false);
+                        done();
+                    });
+                });
+
+                debate.sendNewQuestion(new debate.Question('Does this test work ?', null, true));
+            });
+        });
+
         afterEach(() => {
             client.close();
         });
@@ -346,6 +384,8 @@ describe('Debate test', () => {
                 admin.emit('getDebateQuestions', id, (res) => {
                     res.length.should.equal(1);
                     res[0].title.should.equal('Does this test work ?');
+                    res[0].answers[0].should.equal('Yes');
+                    res[0].answers[1].should.equal('No');
                     done();
                 });
             });

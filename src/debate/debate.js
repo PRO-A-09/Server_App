@@ -23,11 +23,35 @@ export class Debate {
         id;
         title;
         answers;
+        isOpenQuestion;
 
-        constructor(title, answers) {
+        constructor(title, answers, isOpenQuestion = false) {
             this.id = ++Question.nb_question;
             this.title = title;
-            this.answers = answers;
+            this.isOpenQuestion = isOpenQuestion;
+
+            if (answers == null) {
+                this.answers = [];
+            } else {
+                if (isOpenQuestion) {
+                    this.answers = answers.map(a => ({uuid: a.uuid, answer: a.answer}));
+                } else {
+                    this.answers = answers.map(a => ({answer: a}));
+                }
+            }
+        }
+
+        /**
+         * Format the question by sending only answers
+         * @returns {{answers: String[], id: int, isOpenQuestion: boolean, title: String}}
+         */
+        format() {
+            return {
+                id: this.id,
+                title: this.title,
+                answers: this.answers.map(a => (a.answer)),
+                isOpenQuestion: this.isOpenQuestion
+            }
         }
     };
 
@@ -67,6 +91,7 @@ export class Debate {
             // Register socket functions
             socket.on('getQuestions', this.getQuestions(socket));
             socket.on('answerQuestion', this.answerQuestion(socket));
+            socket.on('answerOpenQuestion', this.answerOpenQuestion(socket));
         });
     }
 
@@ -77,7 +102,7 @@ export class Debate {
     sendNewQuestion(question) {
         logger.debug(`Sending new question with id ${question.id}`);
         this.questions.set(question.id, question);
-        this.userNamespace.emit('newQuestion', question);
+        this.userNamespace.emit('newQuestion', question.format());
     }
 
     // This section contains the different socket io functions
@@ -93,7 +118,8 @@ export class Debate {
             return;
         }
 
-        callback([ ...this.questions.values() ]);
+        // Format the questions before sending them
+        callback(Array.from(this.questions.values(), q => (q.format())));
     };
 
     /**
@@ -134,6 +160,45 @@ export class Debate {
 
         // Send the reply to the admin room.
         this.adminRoom.emit('questionAnswered', {questionId: questionId, answerId: answerId});
+        callback(true);
+    };
+
+    /**
+     * Register a new answer to an open question of the debate.
+     * questionAnswer contains questionId and the answer
+     * callback is a function that takes true on success, otherwise false.
+     */
+    answerOpenQuestion = (socket) => (questionAnswer, callback) => {
+        logger.debug(`answerOpenQuestion received from ${socket.id}`);
+
+        if (!(callback instanceof Function)) {
+            logger.debug(`callback is not a function.`);
+            return;
+        }
+
+        const questionId = questionAnswer.questionId;
+        const answer = questionAnswer.answer;
+        if (questionId == null || answer == null) {
+            logger.debug("questionId or answer is null.");
+            callback(false);
+            return;
+        }
+
+        const question = this.questions.get(questionId);
+        if (question == null) {
+            logger.debug(`Question with id (${questionId}) not found.`);
+            callback(false);
+            return;
+        }
+
+        if (!question.isOpenQuestion) {
+            logger.debug(`Question with id (${questionId}) is not an open question.`);
+            callback(false);
+            return;
+        }
+
+        question.answers.push({answer: answer, uuid: socket.uuid});
+        logger.info(`Socket (${socket.id}) replied (${answer}) to question (${questionId}).`);
         callback(true);
     };
 }
