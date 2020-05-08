@@ -40,11 +40,10 @@ export class DataBaseManager {
         logger.debug(`Getting the password of the user ${username}`);
         let user = await Administrator.findOne({login:username},function(err,username) {
             if (err || username == null) logger.debug(`Impossible to find username`);
-            else {
-                logger.debug(username);
+            else{
+                logger.debug(`User found: ${username}`);
             }
         });
-        logger.debug(`User getted ${user}`);
         if(user != null){
             password = user.password;
         }

@@ -52,6 +52,8 @@ const QuestionSchema = new mongoose.Schema({
     ]
 });
 
+// Create a composite Primary Key for a Question the primary key is now : the id of the Question and the Discussion
+// linked to the question
 QuestionSchema.index({id: 1, refDiscussion: 1}, {unique: true});
 
 
