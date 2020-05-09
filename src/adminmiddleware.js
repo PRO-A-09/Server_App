@@ -21,16 +21,12 @@ export class AdminMiddleware {
 
         const db = new DataBaseManager();
         db.start();
-        logger.info('Connection with db started');
         let passwordDB = await db.getAdminPassword(username);
-        logger.info(passwordDB);
         if (password === passwordDB) {
             logger.info('Successful connection to the admin namespace');
-            logger.info('Deconnection with db');
             db.end();
             return next();
         }
-        logger.info('Deconnection with db');
         db.end();
 
         logger.debug(ErrorMessage.ADMIN_PASSWORD_INVALID);

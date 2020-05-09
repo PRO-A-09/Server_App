@@ -14,11 +14,11 @@ import {Response} from '../modele/Response.js';
 import {Tag} from '../modele/Tag.js';
 import {Administrator,Moderator,Presentator,UserModerator} from '../modele/Users.js';
 
-import {DataBaseManager} from "../dbmanager.js";
+import {DataBaseManager} from "../DatabaseManager.js";
 
 import mongoose from 'mongoose';
 
-//Connection to the local database
+// Connection to the local database
 mongoose.connect('mongodb://192.168.99.100:27017/PRO', {useNewUrlParser: true});
 
 /**
@@ -27,7 +27,7 @@ mongoose.connect('mongodb://192.168.99.100:27017/PRO', {useNewUrlParser: true});
  */
 async function test() {
     try {
-        //Creation of a participant and save him in the database
+        // Creation of a participant and save him in the database
         const participant1 = new Participant({
             _id: 1,
             name: 'Bill',
@@ -37,7 +37,7 @@ async function test() {
         let participantSaved = await participant1.save();
         console.log("participant saved : ", participantSaved);
 
-        //The following information are written in the same way as participant1
+        // The following information are written in the same way as participant1
         const tag1 = new Tag({
             _id: 1,
             name: 'COVID-19'
@@ -68,7 +68,7 @@ async function test() {
             participants: [{refParticipant: 1}],
             administrator: admin._id
         });
-        //Save the discussion in database
+        // Save the discussion in database
         let discussionSaved = await discussion1.save();
         console.log("discussion saved : ", discussionSaved);
 
@@ -81,7 +81,7 @@ async function test() {
             participants: [{refParticipant: 1}],
             administrator: moderator._id
         });
-        //This validation will fail because a moderator created the discussion
+        // This validation will fail because a moderator created the discussion
         await discussion2.validate(async function (err) {
             if (err) {
                 console.log("Discussion is not valid to be saved");
@@ -114,7 +114,7 @@ async function test() {
     }
 }
 
-//Run the function to test saving of datas
+// Run the function to test saving of datas
 test();
 
 const db = new DataBaseManager();
@@ -122,5 +122,3 @@ db.getAdminPassword("admin").then( function(password) {
         console.log(password);
     }
 );
-
-//mongoose.connection.close()
