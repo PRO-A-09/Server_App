@@ -1,6 +1,7 @@
 import {logger, SocketConfig} from '../conf/config.js';
 import {CustomNamespace} from './customnamespace.js'
 import {Debate} from "../debate/debate.js";
+import {Statistic} from "../statistic/statistic.js";
 
 /**
  * This class implements an AdminNamespace that extends a CustomNamespace

@@ -141,19 +141,20 @@ export class DataBaseManager {
 
     /**
      * Get all responses from a question
-     * @param aIDQuestion String that is the UUID of the device that we want to get the responses from
-     * @returns an Array of Responses that represents the responses related to the Device
+     * @param anIDQuestion Integer that is the ID of the question thta we want to get the responses from
+     * @param anIDDebate Integer that is the ID of the disucssion related to the question
+     * @returns an Array of Responses that represents the responses related to the Question
      */
-    async getResponsesQuestion(aIDQuestion){
+    async getResponsesQuestion(anIDQuestion, anIDDebate){
         let responses = null;
         // If id is null error
-        if(aIDQuestion == null){
+        if(anIDQuestion == null){
             logger.debug(`Error Question ID cannot be null`);
         }
         else {
-            logger.debug(`Getting the Responses from Question ${aIDQuestion}`);
+            logger.debug(`Getting the Responses from Question ${anIDQuestion} of the debate ${anIDDebate}`);
             // Get all the responses from the DB from the desired device
-            responses = await Response.find({refQuestion: aIDQuestion}, function (err, responses) {
+            responses = await Response.find({refQuestion: {anIDQuestion, anIDDebate}}, function (err, responses) {
                 if (err || responses == null) logger.debug(`Error when requesting responses`);
                 else{
                     logger.debug(responses);
