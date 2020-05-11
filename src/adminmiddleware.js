@@ -1,5 +1,6 @@
 import {SocketConfig, logger, ErrorMessage} from './conf/config.js'
 import {DataBaseManager} from "./database/DatabaseManager.js";
+import {dbManager} from "./database/DatabaseManager.js";
 
 /**
  * Class implementing a Middleware function with a fixed password
@@ -17,17 +18,13 @@ export class AdminMiddleware {
 
         const password = socket.handshake.query.password;
         const username = socket.handshake.query.username;
+        socket.username = username;
         socket.handshake.query.password = null;
 
-        const db = new DataBaseManager();
-        db.start();
-        let passwordDB = await db.getAdminPassword(username);
-        if (password === passwordDB) {
+        if (password === await dbManager.getAdminPassword(username)) {
             logger.info('Successful connection to the admin namespace');
-            db.end();
             return next();
         }
-        db.end();
 
         logger.debug(ErrorMessage.ADMIN_PASSWORD_INVALID);
         return next(new Error(ErrorMessage.ADMIN_PASSWORD_INVALID));
