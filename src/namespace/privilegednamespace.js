@@ -4,9 +4,9 @@ import {Debate} from "../debate/debate.js";
 import {dbManager} from "../database/DatabaseManager.js";
 
 /**
- * This class implements an AdminNamespace that extends a CustomNamespace
+ * This class implements an Privilegednamespace that extends a CustomNamespace
  */
-export class AdminNamespace extends CustomNamespace {
+export class PrivilegedNamespace extends CustomNamespace {
     io;
     activeDebates;
 

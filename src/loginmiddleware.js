@@ -5,7 +5,7 @@ import {dbManager} from "./database/DatabaseManager.js";
 /**
  * Class implementing a Middleware function with a fixed password
  */
-export class AdminMiddleware {
+export class LoginMiddleware {
     /**
      * This function checks the password send by the socket and
      * chains to the next middleware
