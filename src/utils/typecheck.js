@@ -1,12 +1,15 @@
 
 /**
  * Returns if a value is a string
- * @author Webbjocke: https://webbjocke.com/javascript-check-data-types/
  * @param value value to check
+ * @param maxSize optional, maximum length of the string
  * @returns {boolean} true if a string, false otherwise
  */
-export function isString (value) {
-    return typeof value === 'string' || value instanceof String;
+export function isString (value, maxSize) {
+    if (typeof value === 'string' || value instanceof String)
+        return maxSize == null || value.length <= maxSize;
+    else
+        return false;
 }
 
 /**
@@ -22,10 +25,14 @@ export function isFunction (value) {
 /**
  * Returns if a value is an integer
  * @param value value to check
+ * @param max optional, maximum value
  * @returns {boolean} true if a integer, false otherwise
  */
-export function isInteger(value) {
-    return Number.isInteger(value);
+export function isInteger(value, max) {
+    if (Number.isInteger(value))
+        return max == null || value <= max
+    else
+        return false
 }
 
 /**
