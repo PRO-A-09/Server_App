@@ -81,7 +81,7 @@ export class AdminNamespace extends CustomNamespace {
             return;
         }
 
-        if (debateId == null) {
+        if (!Number.isInteger(debateId)) {
             logger.debug('Invalid arguments for getQuestions.');
             callback(-1);
             return;
