@@ -1,11 +1,8 @@
 import mongoose from 'mongoose';
-import {Device} from './modele/Device.js';
 import {Discussion} from './modele/Discussion.js';
-import {Participant} from './modele/Participant.js';
 import {Question} from './modele/Question.js';
 import {Response} from './modele/Response.js';
-import {Tag} from './modele/Tag.js';
-import {Administrator,Moderator,Presentator,UserModerator} from './modele/Users.js';
+import {Administrator} from './modele/Users.js';
 import {logger} from '../conf/config.js';
 
 /**
@@ -63,6 +60,17 @@ export class DataBaseManager {
             else id = username._id;
         });
         return id;
+    }
+
+    async getDiscussion(anIdDiscussion){
+        logger.debug(`Getting the Discussions with id ${anIdDiscussion}`);
+        // Get all the discussions related to the user
+        return Discussion.findOne({_id: anIdDiscussion}, function (err, discussion) {
+            if (err || discussion == null) logger.debug(`Error when requesting discussion`);
+            else {
+                console.log(discussion);
+            }
+        });
     }
 
     /**
@@ -154,7 +162,7 @@ export class DataBaseManager {
         else {
             logger.debug(`Getting the Responses from Question ${anIDQuestion} of the debate ${anIDDebate}`);
             // Get all the responses from the DB from the desired device
-            responses = await Response.find({refQuestion: {anIDQuestion, anIDDebate}}, function (err, responses) {
+            responses = await Response.find({"refQuestion.refQuestion": anIDQuestion, "refQuestion.refDiscussion": anIDDebate}, function (err, responses) {
                 if (err || responses == null) logger.debug(`Error when requesting responses`);
                 else{
                     logger.debug(responses);
@@ -247,8 +255,8 @@ export class DataBaseManager {
             return false;
         }
         // Save all the responses related to the question
-        for(let key of question.answers.keys()){
-            let savedState = await this.saveResponse(question.answers.get(key), question.id);
+        for (let i = 0; i < question.answers.length; ++i) {
+            let savedState = await this.saveResponse(i, question.answers[i].answer, question.id, idDiscussion);
             if(!savedState){
                 return false;
             }
@@ -258,16 +266,17 @@ export class DataBaseManager {
 
     /**
      * Save the response in the database
+     * @param responseId the id of response that need to be saved
      * @param response the response that need to be saved
      * @param questionId integer that is the id of the question related to the response
      * @param discussionId integer that is the id of the discussion related to the response
      * @returns {Promise<boolean>} true if save went well false otherwise
      */
-    async saveResponse(response, questionId, discussionId){
+    async saveResponse(responseId, response, questionId, discussionId){
         let saved = true;
         const responseSave = new Response({
-            _id: response.key,
-            response: response.value,
+            id: responseId,
+            response: response,
             refQuestion: {
                 refQuestion: questionId,
                 refDiscussion: discussionId
@@ -277,10 +286,30 @@ export class DataBaseManager {
         await responseSave.save()
             .then(responseSaved => logger.debug(`Response saved ${responseSaved}`))
             .catch(err => {
-                logger.debug(`Error when saving Question id = ${response.key}`);
+                logger.debug(`Error when saving Response id = ${responseId}`);
                 console.log(err);
                 saved = false;
             });
         return saved;
     }
+
+    /**
+     * Get the id of the latest discussion
+     */
+    async getLastDiscussionId() {
+        logger.debug('getLastDiscussionId called');
+        return new Promise(resolve => {
+            Discussion.find().sort({_id: 'descending'}).exec((err, discussions) => {
+                if (err) {
+                    logger.debug('getLastDiscussionId returning 0');
+                    resolve(0);
+                } else {
+                    logger.debug(`getLastDiscussionId returning ${discussions[0]._id}`);
+                    resolve(discussions[0]._id);
+                }
+            });
+        });
+    }
 }
+
+export const dbManager = new DataBaseManager();

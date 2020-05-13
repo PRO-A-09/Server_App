@@ -31,6 +31,8 @@ describe('Data Base manager test', () => {
             title: "Debate1",
             description: "My First Debate",
             startTime: new Date(),
+            finishTime: new Date().setHours( new Date().getHours() + 2 ),
+            auditeurs: 50,
             administrator: user._id
         });
         await discussion1.save().then((discussionSaved) => {
@@ -42,6 +44,7 @@ describe('Data Base manager test', () => {
             title: "Debate2",
             description: "My Second Debate",
             startTime: new Date(),
+            auditeurs: 0,
             administrator: user._id
         });
         await discussion2.save().then((discussionSaved) => {
@@ -163,6 +166,16 @@ describe('Data Base manager test', () => {
                 }
                 done();
             });
+        });
+    });
+
+    describe('Get last discussion id', () => {
+        it('Get last discussion id', (done) => {
+            db.getLastDiscussionId()
+                .then(id => {
+                    id.should.equal(2);
+                    done();
+                });
         });
     });
 

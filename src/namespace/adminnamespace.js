@@ -2,6 +2,7 @@ import {logger, SocketConfig} from '../conf/config.js';
 import {CustomNamespace} from './customnamespace.js'
 import {Debate} from "../debate/debate.js";
 import {Statistic} from "../statistic/statistic.js";
+import {dbManager} from "../database/DatabaseManager.js";
 
 /**
  * This class implements an AdminNamespace that extends a CustomNamespace
@@ -9,6 +10,7 @@ import {Statistic} from "../statistic/statistic.js";
 export class AdminNamespace extends CustomNamespace {
     io;
     activeDebates;
+    statistic;
 
     /**
      * Default constructor that saves the socket.io Namespace
@@ -18,6 +20,7 @@ export class AdminNamespace extends CustomNamespace {
         super(io.of(SocketConfig.ADMIN_NAMESPACE));
         this.io = io;
         this.activeDebates = new Map();
+        this.statistic = new Statistic();
     }
 
     /**
@@ -32,6 +35,9 @@ export class AdminNamespace extends CustomNamespace {
             socket.on('getDebateQuestions', this.getDebateQuestions(socket));
             socket.on('newDebate', this.newDebate(socket));
             socket.on('newQuestion', this.newQuestion(socket));
+            socket.on('getAdminStats', this.getAdminStats(socket));
+            socket.on('getDebateStats', this.getDebateStats(socket));
+            socket.on('getQuestionStats', this.getDebateStats(socket));
         });
     }
 
@@ -101,7 +107,7 @@ export class AdminNamespace extends CustomNamespace {
      * Create a new debate
      * newDebateObj contains the information of the debate (title, description)
      */
-    newDebate = (socket) => (newDebateObj, callback) => {
+    newDebate = (socket) => async (newDebateObj, callback) => {
         logger.info(`New debate creation requested from ${socket.username}`);
 
         if (!(callback instanceof Function)) {
@@ -119,9 +125,28 @@ export class AdminNamespace extends CustomNamespace {
 
         //TODO: Check title & description are valid strings
 
+        // If this is the first debate, search the last debate in the database
+        if (Debate.nb_debate === 0) {
+            await dbManager.getLastDiscussionId()
+                .then(last_id => {
+                    Debate.nb_debate = last_id;
+                });
+        }
+
         // Create and start a new debate
         const debate = new Debate(title, description, socket, this.io, this.nsp);
         this.activeDebates.set(debate.debateID, debate);
+        await dbManager.saveDiscussion(debate)
+            .then(res => {
+                if (res === true) {
+                    logger.info('Debate saved to db');
+                } else {
+                    logger.warn('Cannot save debate to db');
+                }
+            })
+            .catch(res => {
+                logger.error(`saveDiscussion threw : ${res}.`)
+            });
 
         debate.startSocketHandling();
         callback(debate.debateID);
@@ -131,7 +156,7 @@ export class AdminNamespace extends CustomNamespace {
      * Add a new question to the specified debate
      * newQuestionObj contains the required information (debateId, title, answers)
      */
-    newQuestion = (socket) => (newQuestionObj, callback) => {
+    newQuestion = (socket) => async (newQuestionObj, callback) => {
         logger.debug(`newQuestion received from user (${socket.username}), id(${socket.id})`);
 
         if (!(callback instanceof Function)) {
@@ -159,7 +184,73 @@ export class AdminNamespace extends CustomNamespace {
         }
 
         const question = new debate.Question(title, answers);
+
+        //TODO: - Control if await slows down the app
+        //      - If it slows down the app, remove it and modify tests
+        //          (currently only pass with await otherwise they are executed too quickly)
+        await dbManager.saveQuestion(question, debateId)
+            .then(res => {
+                if (res === true) {
+                    logger.info('Question saved to db');
+                } else {
+                    logger.warn('Cannot save question to db');
+                }
+            })
+            .catch(res => {
+                logger.error(`saveQuestion threw : ${res}.`)
+            });
+
         debate.sendNewQuestion(question);
         callback(question.id);
+    };
+
+    /**
+     * Return an array that contains stats for the debates of an admin in the result of the callback function
+     */
+    getAdminStats = (socket) => async (callback) => {
+        logger.debug(`getAdminStats received from ${socket.id}`);
+
+        if (!(callback instanceof Function)) {
+            logger.debug(`callback is not a function.`);
+            return;
+        }
+
+        // Ask for the stats for an admin user in the statistic class
+        let allDiscussions = await this.statistic.adminStats(socket.username);
+
+        callback([allDiscussions[0], allDiscussions[1]]);
+    };
+
+    /**
+     * Return an array that contains stats for a specific debate in the result of the callback function
+     */
+    getDebateStats = (socket) => async (debateId, callback) => {
+        logger.debug(`getDebatStats received from ${socket.id}`);
+
+        if (!(callback instanceof Function)) {
+            logger.debug(`callback is not a function.`);
+            return;
+        }
+
+        let allQuestions = await this.statistic.debateStats(debateId);
+
+        callback([allQuestions[0], allQuestions[1], allQuestions[2]]);
+    };
+
+    /**
+     * Return an array that contains stats for a specific question in the result of the callback function
+     */
+    getQuestionStats = (socket) => async (questionId, debateId, callback) => {
+        logger.debug(`getQuestionStats received from ${socket.id}`);
+
+        if (!(callback instanceof Function)) {
+            logger.debug(`callback is not a function.`);
+            return;
+        }
+
+        let allResponses = await this.statistic.questionStats(questionId, debateId);
+
+        callback([allResponses[0], allResponses[1], allResponses[2]]);
+
     };
 }
