@@ -11,7 +11,7 @@ import {Discussion} from "./Discussion.js";
 import {Tag} from "./Tag.js";
 const QuestionSchema = new mongoose.Schema({
     // Redefinition of the primary key _id to be a Number by default it is a ObjectID
-    _id: {
+    id: {
         type: Number,
         required: true
     },
@@ -51,6 +51,11 @@ const QuestionSchema = new mongoose.Schema({
         }
     ]
 });
+
+// Create a composite Primary Key for a Question the primary key is now : the id of the Question and the Discussion
+// linked to the question
+QuestionSchema.index({id: 1, refDiscussion: 1}, {unique: true});
+
 
 //Instantiation of the model for Question so it can be used
 export const Question = mongoose.model('Question', QuestionSchema);

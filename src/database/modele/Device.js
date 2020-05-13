@@ -14,7 +14,7 @@ import {UserModerator} from "./Users.js";
 const DeviceSchema = new mongoose.Schema({
     //Redefinition of the primary key _id to be a Number by default it is a ObjectID
     _id: {
-        type: Number,
+        type: String,
         required: true
     },
     // Will be a reference to the ObjectID(primary key) of a user

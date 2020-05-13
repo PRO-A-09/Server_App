@@ -1,4 +1,5 @@
-import {SocketConfig, logger} from '../conf/config.js';
+import {SocketConfig, logger, DebateConfig} from '../conf/config.js';
+import * as TypeCheck from '../utils/typecheck.js'
 
 /**
  * This class implements a new Debate and the communication with the clients.
@@ -118,7 +119,7 @@ export class Debate {
     getQuestions = (socket) => (callback) => {
         logger.debug(`getQuestions received from ${socket.id}`);
 
-        if (!(callback instanceof Function)) {
+        if (!TypeCheck.isFunction(callback)) {
             logger.debug(`callback is not a function.`);
             return;
         }
@@ -135,14 +136,14 @@ export class Debate {
     answerQuestion = (socket) => (questionAnswer, callback) => {
         logger.debug(`answerQuestion received from ${socket.id}`);
 
-        if (!(callback instanceof Function)) {
+        if (!TypeCheck.isFunction(callback)) {
             logger.debug(`callback is not a function.`);
             return;
         }
 
         const questionId = questionAnswer.questionId;
         const answerId = questionAnswer.answerId;
-        if (questionId == null || answerId == null) {
+        if (!TypeCheck.isInteger(questionId) || !TypeCheck.isInteger(answerId)) {
             logger.debug("questionId or answerId is null.");
             callback(false);
             return;
@@ -176,14 +177,15 @@ export class Debate {
     answerOpenQuestion = (socket) => (questionAnswer, callback) => {
         logger.debug(`answerOpenQuestion received from ${socket.id}`);
 
-        if (!(callback instanceof Function)) {
+        if (!TypeCheck.isFunction(callback)) {
             logger.debug(`callback is not a function.`);
             return;
         }
 
         const questionId = questionAnswer.questionId;
         const answer = questionAnswer.answer;
-        if (questionId == null || answer == null) {
+        if (!TypeCheck.isInteger(questionId) ||
+            !TypeCheck.isString(answer, DebateConfig.MAX_OPEN_ANSWER_LENGTH)) {
             logger.debug("questionId or answer is null.");
             callback(false);
             return;
@@ -202,8 +204,7 @@ export class Debate {
             return;
         }
 
-        // TODO: Pass uuid to answer
-        question.answers.push({answer: answer});
+        question.answers.push({answer: answer, uuid: socket.uuid});
         logger.info(`Socket (${socket.id}) replied (${answer}) to question (${questionId}).`);
         callback(true);
     };

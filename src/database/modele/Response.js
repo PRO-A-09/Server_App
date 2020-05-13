@@ -9,9 +9,34 @@
 import mongoose from 'mongoose';
 import {Device} from "./Device.js";
 import {Question} from "./Question.js";
+import {Discussion} from "./Discussion.js";
+
+//create a simple schema to define how the primary is checked in a question
+let PrimaryKeyQuestionSchema = {
+    refQuestion: {
+        type: Number,
+        ref: 'Question'
+    },
+    refDiscussion: {
+        type: Number,
+        ref: 'Discussion'
+    }
+};
+
+/**
+ * Function that validates the primary key interred in the ResponseSchema
+ * @param value value that contains the id of the question and the id of the discussion
+ * @returns {Promise<boolean>} true if the question exists false otherwise
+ */
+function validatePrimaryKey(value){
+    return new Promise(function(resolve, reject) {
+        Question.findOne({id: value.refQuestion, refDiscussion: value.refDiscussion}, (err, question) => resolve(question ? true : false));
+    });
+}
+
 const ResponseSchema = new mongoose.Schema({
     // Redefinition of the primary key _id to be a Number by default it is a ObjectID
-    _id: {
+    id: {
         type: Number,
         required: true
     },
@@ -20,22 +45,15 @@ const ResponseSchema = new mongoose.Schema({
         required: true
     },
     refQuestion:{
-        type: Number,
-        ref: 'Question',
+        type: PrimaryKeyQuestionSchema,
         required: true,
-        validate: function(v) {
-            // Validate will permit us to make some validation before a refQuestion is saved
-            // The function check if the id of the value passed exits in the DataBase if yes it will return true otherwise false
-            return new Promise(function(resolve, reject) {
-                Question.findOne({_id: v}, (err, question) => resolve(question ? true : false));
-            });
-        }
+        validate: validatePrimaryKey
     },
     // Multiple devices can answer a question so declaration of an array
     devices:[
         {
             refDevice: {
-                type: Number,
+                type: String,
                 ref: 'Device',
                 // Validate will permit us to make some validation before a refDevice is saved
                 validate: function(v) {
@@ -47,6 +65,6 @@ const ResponseSchema = new mongoose.Schema({
         }
     ]
 });
-
+ResponseSchema.index({id: 1, refQuestion:1, refDiscussion: 1}, {unique: true});
 //Instantiation of the model for Question so it can be used
 export const Response = mongoose.model('Response', ResponseSchema);

@@ -4,6 +4,7 @@ import {AdminMiddleware} from './adminmiddleware.js';
 import http from 'http'
 import http_terminator from 'http-terminator';
 import Server from 'socket.io'
+import {dbManager} from "./database/DatabaseManager.js";
 
 /**
  * This class is used to manage the debate server.
@@ -20,6 +21,7 @@ export class DebateManager {
         this.startWebServer();
         this.startSocketServer();
         this.startAdminNamespace();
+        dbManager.start();
     }
 
     /**
@@ -32,6 +34,14 @@ export class DebateManager {
         this.webServer = http.createServer((req, res) => {
             res.write('Socket.io server');
             res.end();
+        });
+
+        this.webServer.on('error', (e) => {
+            logger.error(`Web server error : ${e.code}. Stack trace : ${e.stack}`);
+            if (e.code === 'EADDRINUSE') {
+                logger.error('Forcefully exiting application...');
+                process.exit(-1);
+            }
         });
 
         // Listen on the specified port
@@ -50,8 +60,12 @@ export class DebateManager {
         });
 
         // Setup handlers
-        this.io.on('connect', (socket) => {
+        this.io.on('connection', (socket) => {
             logger.debug(`New socket (${socket.id}) connected to server`);
+
+            socket.on('error', (error) => {
+                logger.warn(`Socket error from (${socket.id}): ${error}`);
+            });
 
             socket.on('disconnect', (reason) => {
                 logger.debug(`Socket (${socket.id}) disconnected`);
@@ -75,7 +89,9 @@ export class DebateManager {
      */
     stop() {
         logger.info("Server stopping");
-        
+
+        dbManager.end();
+
         // Use http-terminator to gracefully terminate the server
         const httpTerminator = http_terminator.createHttpTerminator({
             server: this.webServer
