@@ -12,6 +12,8 @@ export class Debate {
     title;
     description;
     questions;
+    approvedSuggestedQuestions;
+    suggestedQuestions;
     admin;
 
     /**
@@ -67,6 +69,8 @@ export class Debate {
         this.title = title;
         this.description = description;
         this.questions = new Map();
+        this.suggestedQuestions = new Map();
+        this.approvedSuggestedQuestions = new Map();
         this.debateID = ++Debate.nb_debate;
         this.adminRoomName = SocketConfig.ADMIN_ROOM_PREFIX + this.debateID;
         this.adminRoom = adminNamespace.to(this.adminRoomName);
@@ -92,6 +96,7 @@ export class Debate {
             socket.on('getQuestions', this.getQuestions(socket));
             socket.on('answerQuestion', this.answerQuestion(socket));
             socket.on('answerOpenQuestion', this.answerOpenQuestion(socket));
+            socket.on('suggestQuestion', this.suggestQuestion(socket));
         });
     }
 
@@ -200,6 +205,31 @@ export class Debate {
         // TODO: Pass uuid to answer
         question.answers.push({answer: answer});
         logger.info(`Socket (${socket.id}) replied (${answer}) to question (${questionId}).`);
+        callback(true);
+    };
+
+    suggestQuestion = (socket) => (question, callback) => {
+        logger.debug(`suggestQuestion received from ${socket.id}`);
+
+        if (!(callback instanceof Function)) {
+            logger.debug(`callback is not a function.`);
+            return;
+        }
+
+        if (!!question) {
+            logger.debug("question is null or empty.");
+            callback(false);
+            return;
+        }
+
+        // TODO: Remove ternary once uuid is set in middleware
+        this.suggestedQuestions.set(socket.uuid ? socket.uuid : 1, question);
+        this.adminRoom.emit('questionSuggested', {
+            question: question,
+            uuid: socket.uuid
+        });
+
+        logger.info(`Socket (${socket.id}) suggested (${question}).`);
         callback(true);
     };
 }
