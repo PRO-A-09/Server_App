@@ -36,6 +36,14 @@ export class DebateManager {
             res.end();
         });
 
+        this.webServer.on('error', (e) => {
+            logger.error(`Web server error : ${e.code}. Stack trace : ${e.stack}`);
+            if (e.code === 'EADDRINUSE') {
+                logger.error('Forcefully exiting application...');
+                process.exit(-1);
+            }
+        });
+
         // Listen on the specified port
         this.webServer.listen(SocketConfig.SOCKET_PORT, _ => {
             logger.info(`Server listening on *:${SocketConfig.SOCKET_PORT}`)
