@@ -112,8 +112,8 @@ export class AdminNamespace extends CustomNamespace {
 
         const title = newDebateObj.title;
         const description = newDebateObj.description;
-        if (!TypeCheck.isString(title)                   || !TypeCheck.isString(description) ||
-            title.length > DebateConfig.MAX_TITLE_LENGTH || description.length > DebateConfig.MAX_DESCRIPTION_LENGTH) {
+        if (!TypeCheck.isString(title, DebateConfig.MAX_TITLE_LENGTH) ||
+            !TypeCheck.isString(description, DebateConfig.MAX_DESCRIPTION_LENGTH)) {
             logger.debug('Invalid arguments for newDebate.');
             callback(-1);
             return;
