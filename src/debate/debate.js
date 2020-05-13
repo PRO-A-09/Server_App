@@ -212,13 +212,13 @@ export class Debate {
     suggestQuestion = (socket) => (question, callback) => {
         logger.debug(`suggestQuestion received from ${socket.id}`);
 
-        if (!(callback instanceof Function)) {
+        if (!TypeCheck.isFunction(callback)) {
             logger.debug(`callback is not a function.`);
             return;
         }
 
-        if (!!question) {
-            logger.debug("question is null or empty.");
+        if (!TypeCheck.isString(question, DebateConfig.MAX_QUESTION_LENGTH)) {
+            logger.debug('Invalid arguments for suggestQuestion.');
             callback(false);
             return;
         }
