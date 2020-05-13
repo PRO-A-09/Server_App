@@ -199,6 +199,7 @@ export class DataBaseManager {
             title: discussion.title,
             description: discussion.description,
             startTime: new Date(),
+            auditeurs: 10,// To change after implementation of this feature for the debate
             administrator: idAdmin
         });
         // Try to save the discussion in database
