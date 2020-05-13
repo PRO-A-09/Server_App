@@ -1,4 +1,5 @@
-import {SocketConfig, logger} from '../conf/config.js';
+import {SocketConfig, logger, DebateConfig} from '../conf/config.js';
+import * as TypeCheck from '../utils/typecheck.js'
 
 /**
  * This class implements a new Debate and the communication with the clients.
@@ -113,7 +114,7 @@ export class Debate {
     getQuestions = (socket) => (callback) => {
         logger.debug(`getQuestions received from ${socket.id}`);
 
-        if (!(callback instanceof Function)) {
+        if (!TypeCheck.isFunction(callback)) {
             logger.debug(`callback is not a function.`);
             return;
         }
@@ -130,7 +131,7 @@ export class Debate {
     answerQuestion = (socket) => (questionAnswer, callback) => {
         logger.debug(`answerQuestion received from ${socket.id}`);
 
-        if (!(callback instanceof Function)) {
+        if (!TypeCheck.isFunction(callback)) {
             logger.debug(`callback is not a function.`);
             return;
         }
@@ -171,7 +172,7 @@ export class Debate {
     answerOpenQuestion = (socket) => (questionAnswer, callback) => {
         logger.debug(`answerOpenQuestion received from ${socket.id}`);
 
-        if (!(callback instanceof Function)) {
+        if (!TypeCheck.isFunction(callback)) {
             logger.debug(`callback is not a function.`);
             return;
         }
