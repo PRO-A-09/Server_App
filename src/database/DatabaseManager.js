@@ -84,7 +84,7 @@ export class DataBaseManager {
             discussions = await Discussion.find({administrator: adminId}, function (err, discussions) {
                 if (err || discussions == null) logger.debug(`Error when requesting discussions`);
                 else{
-                    console.log(discussions);
+                    logger.debug(discussions);
                 }
             });
         }
@@ -108,7 +108,7 @@ export class DataBaseManager {
             questions = await Question.find({refDiscussion: anIDDebate}, function (err, questions) {
                 if (err || questions == null) logger.debug(`Error when requesting questions`);
                 else{
-                    console.log(questions);
+                    logger.debug(questions);
                 }
             });
         }
@@ -170,7 +170,7 @@ export class DataBaseManager {
      */
     async saveDiscussion(discussion){
         // Show the Disucssion that will be saved
-        console.log(discussion);
+        logger.debug(`Discussion : ${discussion}`);
         let saved = true;
         // Search for the admin id of the discussion
         let idAdmin = await this.getAdminId(discussion.admin);
@@ -197,7 +197,7 @@ export class DataBaseManager {
               .then(discussionSaved => logger.debug(`Discussion saved ${discussionSaved}`))
               .catch(err => {
                             logger.debug(`Error when saving Disucssion`);
-                            console.log(err);
+                            logger.debug(err);
                             saved = false
               });
         logger.debug(`saved = ${saved}`);
@@ -238,7 +238,7 @@ export class DataBaseManager {
             .then(questionSaved => logger.debug(`Question saved ${questionSaved}`))
             .catch(err => {
                 logger.debug(`Error when saving Question id = ${question.id}`);
-                console.log(err);
+                logger.debug(err);
                 saved = false;
             });
         // If the save went wrong we exit the function and return false;
@@ -277,7 +277,7 @@ export class DataBaseManager {
             .then(responseSaved => logger.debug(`Response saved ${responseSaved}`))
             .catch(err => {
                 logger.debug(`Error when saving Response id = ${responseId}`);
-                console.log(err);
+                logger.debug(err);
                 saved = false;
             });
         if(!saved){
