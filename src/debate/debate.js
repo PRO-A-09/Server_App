@@ -179,7 +179,8 @@ export class Debate {
 
         const questionId = questionAnswer.questionId;
         const answer = questionAnswer.answer;
-        if (questionId == null || answer == null) {
+        if (!TypeCheck.isInteger(questionId) ||
+            !TypeCheck.isString(answer, DebateConfig.MAX_OPEN_ANSWER_LENGTH)) {
             logger.debug("questionId or answer is null.");
             callback(false);
             return;
