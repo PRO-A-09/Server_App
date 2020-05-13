@@ -2,6 +2,7 @@ import {logger, SocketConfig} from '../conf/config.js';
 import {CustomNamespace} from './customnamespace.js'
 import {Debate} from "../debate/debate.js";
 import {dbManager} from "../database/DatabaseManager.js";
+import * as TypeCheck from '../utils/typecheck.js'
 
 /**
  * This class implements an AdminNamespace that extends a CustomNamespace
@@ -53,7 +54,7 @@ export class AdminNamespace extends CustomNamespace {
     getDebates = (socket) => (callback) => {
         logger.debug(`Get debate requested from ${socket.username}`);
 
-        if (!(callback instanceof Function)) {
+        if (!TypeCheck.isFunction(callback)) {
             logger.debug(`callback is not a function.`);
             return;
         }
@@ -76,12 +77,12 @@ export class AdminNamespace extends CustomNamespace {
     getDebateQuestions = (socket) => (debateId, callback) => {
         logger.info(`getDebateQuestions requested from ${socket.username}`);
 
-        if (!(callback instanceof Function)) {
+        if (!TypeCheck.isFunction(callback)) {
             logger.debug(`callback is not a function.`);
             return;
         }
 
-        if (!Number.isInteger(debateId)) {
+        if (!TypeCheck.isInteger(debateId)) {
             logger.debug('Invalid arguments for getQuestions.');
             callback(-1);
             return;
@@ -104,20 +105,18 @@ export class AdminNamespace extends CustomNamespace {
     newDebate = (socket) => async (newDebateObj, callback) => {
         logger.info(`New debate creation requested from ${socket.username}`);
 
-        if (!(callback instanceof Function)) {
+        if (!TypeCheck.isFunction(callback)) {
             logger.debug(`callback is not a function.`);
             return;
         }
 
         const title = newDebateObj.title;
         const description = newDebateObj.description;
-        if (!title || !description) {
+        if (!TypeCheck.isString(title) || !TypeCheck.isString(description)) {
             logger.debug('Invalid arguments for newDebate.');
             callback(-1);
             return;
         }
-
-        //TODO: Check title & description are valid strings
 
         // If this is the first debate, search the last debate in the database
         if (Debate.nb_debate === 0) {
@@ -153,7 +152,7 @@ export class AdminNamespace extends CustomNamespace {
     newQuestion = (socket) => async (newQuestionObj, callback) => {
         logger.debug(`newQuestion received from user (${socket.username}), id(${socket.id})`);
 
-        if (!(callback instanceof Function)) {
+        if (!TypeCheck.isFunction(callback)) {
             logger.debug(`callback is not a function.`);
             return;
         }
@@ -162,7 +161,7 @@ export class AdminNamespace extends CustomNamespace {
         const title = newQuestionObj.title;
         const answers = newQuestionObj.answers;
         // Check debateId, title, answers
-        if (!debateId || !title || !answers) {
+        if (!TypeCheck.isInteger(debateId) || !TypeCheck.isString(title) || !answers) {
             logger.debug('Invalid arguments for newQuestion.');
             callback(-1);
             return;
