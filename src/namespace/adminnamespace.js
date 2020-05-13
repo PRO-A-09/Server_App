@@ -1,4 +1,4 @@
-import {logger, SocketConfig} from '../conf/config.js';
+import {logger, SocketConfig, DebateConfig} from '../conf/config.js';
 import {CustomNamespace} from './customnamespace.js'
 import {Debate} from "../debate/debate.js";
 import {dbManager} from "../database/DatabaseManager.js";
@@ -112,7 +112,8 @@ export class AdminNamespace extends CustomNamespace {
 
         const title = newDebateObj.title;
         const description = newDebateObj.description;
-        if (!TypeCheck.isString(title) || !TypeCheck.isString(description)) {
+        if (!TypeCheck.isString(title)                   || !TypeCheck.isString(description) ||
+            title.length > DebateConfig.MAX_TITLE_LENGTH || description.length > DebateConfig.MAX_DESCRIPTION_LENGTH) {
             logger.debug('Invalid arguments for newDebate.');
             callback(-1);
             return;

@@ -13,6 +13,11 @@ export class ErrorMessage {
     static ADMIN_PASSWORD_INVALID = 'Invalid password';
 }
 
+export class DebateConfig {
+    static MAX_TITLE_LENGTH = 50;
+    static MAX_DESCRIPTION_LENGTH = 250;
+}
+
 // Create a winston logger that logs to console
 export const logger = winston.createLogger({
     transports: [
