@@ -162,13 +162,12 @@ export class AdminNamespace extends CustomNamespace {
         const title = newQuestionObj.title;
         const answers = newQuestionObj.answers;
         // Check debateId, title, answers
-        if (!TypeCheck.isInteger(debateId) || !TypeCheck.isString(title) || !answers) {
+        if (!TypeCheck.isInteger(debateId) || !TypeCheck.isString(title) ||
+            !TypeCheck.isArrayOf(answers, TypeCheck.isString, DebateConfig.MAX_CLOSED_ANSWERS)) {
             logger.debug('Invalid arguments for newQuestion.');
             callback(-1);
             return;
         }
-
-        //TODO: Check title is string, answers are string
 
         const debate = this.getActiveDebate(debateId);
         if (debate == null) {
