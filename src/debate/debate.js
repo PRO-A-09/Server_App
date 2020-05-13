@@ -138,7 +138,7 @@ export class Debate {
 
         const questionId = questionAnswer.questionId;
         const answerId = questionAnswer.answerId;
-        if (questionId == null || answerId == null) {
+        if (!TypeCheck.isInteger(questionId) || !TypeCheck.isInteger(answerId)) {
             logger.debug("questionId or answerId is null.");
             callback(false);
             return;
