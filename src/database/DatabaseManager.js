@@ -217,6 +217,8 @@ export class DataBaseManager {
         // Add finishTime to the discussion not implemented yet
         /* discussion1.finishTime = new Date();
         await discussion1.save(); */
+
+        return saved;
     }
 
     /**
@@ -252,6 +254,8 @@ export class DataBaseManager {
                 return false;
             }
         }
+
+        return saved;
     }
 
     /**
@@ -280,9 +284,8 @@ export class DataBaseManager {
                 logger.debug(err);
                 saved = false;
             });
-        if(!saved){
-            return false;
-        }
+
+        return saved;
     }
 
     /**
