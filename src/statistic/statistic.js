@@ -55,7 +55,7 @@ export class Statistic {
         return {
             response: response.response,
             numberVotes: response.devices.length,
-            percentage: (response.devices.length/numberTotalVotes) * 100
+            percentage: Math.round((response.devices.length/numberTotalVotes) * 100)
         }
     }
 
@@ -88,7 +88,6 @@ export class Statistic {
         let allQuestions = await dbManager.getQuestionsDiscussion(debateID);
         for(let i = 0; i < allQuestions.length; ++i) {
             allQuestions[i].numberVotes = await this.getNumberVotesQuestion(allQuestions[i].id, debateID);
-            logger.debug(allQuestions[i].numberVotes);// To remove
         }
 
         return [allQuestions.length, debate.auditeurs, Array.from(allQuestions.values(), q => this.questionFormat(q)).
@@ -104,13 +103,9 @@ export class Statistic {
     };
 
    async questionStats(questionId, discussionId){
+       let debate = await dbManager.getDiscussion(discussionId);
        let allResponses = await dbManager.getResponsesQuestion(questionId, discussionId);
-       let numberTotalVotes = 0;
-       // Get all the votes for all the responses
-       for (let i = 0; i < allResponses.length; ++i) {
-           numberTotalVotes += allResponses[i].devices.length;
-       }
-
-       callback([allResponses.size(), Array.from(allResponses.values(), r => this.responseFormat(r, numberTotalVotes))]);
+       let numberTotalVotes = await this.getNumberVotesQuestion(questionId,discussionId);
+       return[allResponses.length, Math.round((numberTotalVotes/debate.auditeurs) * 100), Array.from(allResponses.values(), r => this.responseFormat(r, numberTotalVotes))];
    }
 }

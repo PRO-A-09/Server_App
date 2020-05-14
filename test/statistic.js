@@ -51,6 +51,20 @@ describe('Statistic test', () => {
             });
         });
 
+        it("Get stats of specific question", (done) => {
+            let debateID = 1;
+            let questionID = 1;
+            admin.emit("getQuestionStats", questionID, debateID, (questionStats) => {
+                questionStats[0].should.equal(2);// Verify number of responses
+                questionStats[1].should.equal(2);// Verify percentage
+                questionStats[2][0].response.should.equal("Yes");// Verify the response given
+                questionStats[2][1].response.should.equal("No");
+                questionStats[2][0].percentage.should.equal(100);// Verify the percentage of the responses
+                questionStats[2][1].percentage.should.equal(0);
+                done();
+            });
+        });
+
         after(() => {
             admin.close();
         });

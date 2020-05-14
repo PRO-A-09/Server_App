@@ -37,7 +37,7 @@ export class AdminNamespace extends CustomNamespace {
             socket.on('newQuestion', this.newQuestion(socket));
             socket.on('getAdminStats', this.getAdminStats(socket));
             socket.on('getDebateStats', this.getDebateStats(socket));
-            socket.on('getQuestionStats', this.getDebateStats(socket));
+            socket.on('getQuestionStats', this.getQuestionStats(socket));
         });
     }
 
@@ -249,6 +249,8 @@ export class AdminNamespace extends CustomNamespace {
         }
 
         let allResponses = await this.statistic.questionStats(questionId, debateId);
+
+        logger.info(`My respones : ${allResponses}`);// to REmoce
 
         callback([allResponses[0], allResponses[1], allResponses[2]]);
 
