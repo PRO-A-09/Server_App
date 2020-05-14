@@ -188,7 +188,8 @@ describe('Data Base manager test', () => {
             }
             let debate = new myDebate(2);
             db.saveEndDiscussion(debate).then(() => {
-                    db.getDiscussion(2);
+                    let updatedDebate = db.getDiscussion(2);
+                    updatedDebate.auditeurs = 57;
                     done();
             });
 

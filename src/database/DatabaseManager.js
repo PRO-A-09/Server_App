@@ -70,9 +70,14 @@ export class DataBaseManager {
         return id;
     }
 
+    /**
+     * Get a discussion stored in the database with the corresponding id
+     * @param anIdDiscussion integer that reprents the id of the discussion desires
+     * @returns {Promise<Query|void>} A Discussion or null if not found
+     */
     async getDiscussion(anIdDiscussion){
         logger.debug(`Getting the Discussions with id ${anIdDiscussion}`);
-        // Get all the discussions related to the user
+        // Get the discussions related to the id
         return Discussion.findOne({_id: anIdDiscussion}, function (err, discussion) {
             if (err || discussion == null) logger.debug(`Error when requesting discussion`);
             else {
