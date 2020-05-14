@@ -151,18 +151,20 @@ describe('Debate test', () => {
                 });
             });
 
-            it('available questions', (done) => {
+            it('available questions', async () => {
                 const NB_QUESTIONS = 3;
                 for (let i = 0; i < NB_QUESTIONS; ++i)
-                    debate.sendNewQuestion(new debate.Question(`Question${i}`, ['...']));
+                    await debate.sendNewQuestion(new debate.Question(`Question${i}`, ['...']));
 
-                client.emit('getQuestions', (questions) => {
-                    questions.length.should.equal(NB_QUESTIONS);
-                    for (let i = 0; i < questions.length; ++i)
-                        questions[i].title.should.equal(`Question${i}`);
+                return new Promise(resolve => {
+                    client.emit('getQuestions', (questions) => {
+                        questions.length.should.equal(NB_QUESTIONS);
+                        for (let i = 0; i < questions.length; ++i)
+                            questions[i].title.should.equal(`Question${i}`);
 
-                    done();
-                })
+                        resolve();
+                    });
+                });
             });
         });
 

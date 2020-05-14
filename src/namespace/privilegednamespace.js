@@ -187,22 +187,7 @@ export class PrivilegedNamespace extends CustomNamespace {
 
         const question = new debate.Question(title, answers, isOpenQuestion);
 
-        //TODO: - Control if await slows down the app
-        //      - If it slows down the app, remove it and modify tests
-        //          (currently only pass with await otherwise they are executed too quickly)
-        await dbManager.saveQuestion(question, debateId)
-            .then(res => {
-                if (res === true) {
-                    logger.info('Question saved to db');
-                } else {
-                    logger.warn('Cannot save question to db');
-                }
-            })
-            .catch(res => {
-                logger.error(`saveQuestion threw : ${res}.`)
-            });
-
-        debate.sendNewQuestion(question);
+        await debate.sendNewQuestion(question);
         callback(question.id);
     };
 }
