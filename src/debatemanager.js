@@ -1,6 +1,6 @@
 import {SocketConfig, logger} from './conf/config.js'
-import {AdminNamespace} from './namespace/adminnamespace.js';
-import {AdminMiddleware} from './adminmiddleware.js';
+import {PrivilegedNamespace} from './namespace/privilegednamespace.js';
+import {LoginMiddleware} from './loginmiddleware.js';
 import http from 'http'
 import http_terminator from 'http-terminator';
 import Server from 'socket.io'
@@ -74,11 +74,11 @@ export class DebateManager {
     }
 
     /**
-     * Creates a new AdminNamespace and registers our middleware.
+     * Creates a new Privilegednamespace and registers our middleware.
      */
     startAdminNamespace() {
-        this.nspAdmin = new AdminNamespace(this.io);
-        const adminMiddleware = new AdminMiddleware();
+        this.nspAdmin = new PrivilegedNamespace(this.io);
+        const adminMiddleware = new LoginMiddleware();
 
         this.nspAdmin.registerMiddleware(adminMiddleware.middlewareFunction);
         this.nspAdmin.startSocketHandling();

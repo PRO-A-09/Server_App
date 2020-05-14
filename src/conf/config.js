@@ -3,14 +3,14 @@ import winston from "winston";
 export class SocketConfig {
     static SOCKET_PORT = 8080;
     static DEFAULT_PATH = '/socket-io';
-    static ADMIN_NAMESPACE = '/admin';
+    static PRIVILEGED_NAMESPACE = '/admin';
     static ADMIN_PASSWORD = 'pass';
     static ADMIN_ROOM_PREFIX = 'ADMIN-';
     static DEBATE_NAMESPACE_PREFIX = '/DEBATE-';
 }
 
 export class ErrorMessage {
-    static ADMIN_PASSWORD_INVALID = 'Invalid password';
+    static LOGIN_PASSWORD_INVALID = 'Invalid password';
 }
 
 export class DebateConfig {

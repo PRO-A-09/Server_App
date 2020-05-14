@@ -5,9 +5,9 @@ import {dbManager} from "../database/DatabaseManager.js";
 import * as TypeCheck from '../utils/typecheck.js'
 
 /**
- * This class implements an AdminNamespace that extends a CustomNamespace
+ * This class implements an PrivilegedNamespace that extends a CustomNamespace
  */
-export class AdminNamespace extends CustomNamespace {
+export class PrivilegedNamespace extends CustomNamespace {
     io;
     activeDebates;
 
@@ -16,7 +16,7 @@ export class AdminNamespace extends CustomNamespace {
      * @param io Socket.io server
      */
     constructor(io) {
-        super(io.of(SocketConfig.ADMIN_NAMESPACE));
+        super(io.of(SocketConfig.PRIVILEGED_NAMESPACE));
         this.io = io;
         this.activeDebates = new Map();
     }
