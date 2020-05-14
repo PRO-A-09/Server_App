@@ -56,7 +56,7 @@ describe('Server connection test', () => {
         let client;
 
         beforeEach(() => {
-            client = io.connect(`http://localhost:${SocketConfig.SOCKET_PORT}${SocketConfig.ADMIN_NAMESPACE}`, {
+            client = io.connect(`http://localhost:${SocketConfig.SOCKET_PORT}${SocketConfig.PRIVILEGED_NAMESPACE}`, {
                 path: SocketConfig.DEFAULT_PATH,
                 forceNew: true,
                 query: {
@@ -90,7 +90,7 @@ describe('Server connection test', () => {
         let client;
 
         beforeEach(() => {
-            client = io.connect(`http://localhost:${SocketConfig.SOCKET_PORT}${SocketConfig.ADMIN_NAMESPACE}`, {
+            client = io.connect(`http://localhost:${SocketConfig.SOCKET_PORT}${SocketConfig.PRIVILEGED_NAMESPACE}`, {
                 path: SocketConfig.DEFAULT_PATH,
                 forceNew: true,
                 query: {
@@ -102,7 +102,7 @@ describe('Server connection test', () => {
 
         it('Socket.io connection test', (done) => {
             client.on('error', (err) => {
-                err.should.equal(ErrorMessage.ADMIN_PASSWORD_INVALID);
+                err.should.equal(ErrorMessage.LOGIN_PASSWORD_INVALID);
                 done();
             })
         });
