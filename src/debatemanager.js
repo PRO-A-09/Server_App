@@ -1,6 +1,6 @@
 import {SocketConfig, logger} from './conf/config.js'
 import {PrivilegedNamespace} from './namespace/privilegednamespace.js';
-import {LoginMiddleware} from './loginmiddleware.js';
+import {LoginMiddleware} from './middleware/loginmiddleware.js';
 import http from 'http'
 import http_terminator from 'http-terminator';
 import Server from 'socket.io'
