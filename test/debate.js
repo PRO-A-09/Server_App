@@ -21,7 +21,7 @@ describe('Debate test', () => {
 
     describe("New debate", () => {
         before(() => {
-            admin = io.connect(`http://localhost:${SocketConfig.SOCKET_PORT}${SocketConfig.ADMIN_NAMESPACE}`, {
+            admin = io.connect(`http://localhost:${SocketConfig.SOCKET_PORT}${SocketConfig.PRIVILEGED_NAMESPACE}`, {
                 path: SocketConfig.DEFAULT_PATH,
                 forceNew: true,
                 query: {
@@ -53,7 +53,7 @@ describe('Debate test', () => {
         let id;
 
         before((done) => {
-            admin = io.connect(`http://localhost:${SocketConfig.SOCKET_PORT}${SocketConfig.ADMIN_NAMESPACE}`, {
+            admin = io.connect(`http://localhost:${SocketConfig.SOCKET_PORT}${SocketConfig.PRIVILEGED_NAMESPACE}`, {
                 path: SocketConfig.DEFAULT_PATH,
                 forceNew: true,
                 query: {
@@ -111,7 +111,7 @@ describe('Debate test', () => {
         let debate;
 
         before((done) => {
-            admin = io.connect(`http://localhost:${SocketConfig.SOCKET_PORT}${SocketConfig.ADMIN_NAMESPACE}`, {
+            admin = io.connect(`http://localhost:${SocketConfig.SOCKET_PORT}${SocketConfig.PRIVILEGED_NAMESPACE}`, {
                 path: SocketConfig.DEFAULT_PATH,
                 forceNew: true,
                 query: {
@@ -267,7 +267,7 @@ describe('Debate test', () => {
         let debate;
 
         before((done) => {
-            admin = io.connect(`http://localhost:${SocketConfig.SOCKET_PORT}${SocketConfig.ADMIN_NAMESPACE}`, {
+            admin = io.connect(`http://localhost:${SocketConfig.SOCKET_PORT}${SocketConfig.PRIVILEGED_NAMESPACE}`, {
                 path: SocketConfig.DEFAULT_PATH,
                 forceNew: true,
                 query: {
@@ -413,7 +413,7 @@ describe('Debate test', () => {
         let debate;
 
         before((done) => {
-            admin = io.connect(`http://localhost:${SocketConfig.SOCKET_PORT}${SocketConfig.ADMIN_NAMESPACE}`, {
+            admin = io.connect(`http://localhost:${SocketConfig.SOCKET_PORT}${SocketConfig.PRIVILEGED_NAMESPACE}`, {
                 path: SocketConfig.DEFAULT_PATH,
                 forceNew: true,
                 query: {

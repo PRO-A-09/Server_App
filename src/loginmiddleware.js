@@ -26,7 +26,7 @@ export class LoginMiddleware {
             return next();
         }
 
-        logger.debug(ErrorMessage.ADMIN_PASSWORD_INVALID);
-        return next(new Error(ErrorMessage.ADMIN_PASSWORD_INVALID));
+        logger.debug(ErrorMessage.LOGIN_PASSWORD_INVALID);
+        return next(new Error(ErrorMessage.LOGIN_PASSWORD_INVALID));
     }
 }
