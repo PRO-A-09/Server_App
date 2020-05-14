@@ -108,6 +108,87 @@ describe('Debate test', () => {
         });
     });
 
+    describe("Debate class functions", () => {
+        let debate;
+        let id;
+        before(() => {
+            admin = io.connect(`http://localhost:${SocketConfig.SOCKET_PORT}${SocketConfig.PRIVILEGED_NAMESPACE}`, {
+                path: SocketConfig.DEFAULT_PATH,
+                forceNew: true,
+                query: {
+                    password: `${SocketConfig.ADMIN_PASSWORD}`,
+                    username: `admin`
+                }
+            });
+        });
+
+        beforeEach((done) => {
+            let debateInfo = {
+                title: 'My new debate',
+                description: 'Test debate'
+            };
+            admin.emit("newDebate", debateInfo, (debateID) => {
+                id = debateID;
+                debate = debateManager.nspAdmin.getActiveDebate(id);
+                done();
+            });
+        });
+
+        describe('getNbUniqueClients', () => {
+            it('3 unique clients', async () => {
+                const NB_CLIENTS = 3;
+                let clients = [];
+                for (let i = 0; i < NB_CLIENTS; ++i) {
+                    clients[i] = io.connect(`http://localhost:${SocketConfig.SOCKET_PORT}${SocketConfig.DEBATE_NAMESPACE_PREFIX}${id}`, {
+                        path: SocketConfig.DEFAULT_PATH,
+                        forceNew: true,
+                        query: {
+                            uuid: `${1000 + i}`
+                        }
+                    });
+
+                    await new Promise(resolve => {
+                        clients[i].on('connect', resolve);
+                    });
+                }
+
+                debate.getNbUniqueClients().should.equal(NB_CLIENTS);
+
+                for (let i = 0; i < NB_CLIENTS; ++i) {
+                    clients[i].close();
+                }
+            });
+
+            it('3 identical clients', async () => {
+                const NB_CLIENTS = 3;
+                let clients = [];
+                for (let i = 0; i < NB_CLIENTS; ++i) {
+                    clients[i] = io.connect(`http://localhost:${SocketConfig.SOCKET_PORT}${SocketConfig.DEBATE_NAMESPACE_PREFIX}${id}`, {
+                        path: SocketConfig.DEFAULT_PATH,
+                        forceNew: true,
+                        query: {
+                            uuid: '1000'
+                        }
+                    });
+
+                    await new Promise(resolve => {
+                        clients[i].on('connect', resolve);
+                    });
+                }
+
+                debate.getNbUniqueClients().should.equal(1);
+
+                for (let i = 0; i < NB_CLIENTS; ++i) {
+                    clients[i].close();
+                }
+            });
+        });
+
+        after(() => {
+            admin.close();
+        });
+    });
+
     describe("Debate client functions", () => {
         let client;
         let id;

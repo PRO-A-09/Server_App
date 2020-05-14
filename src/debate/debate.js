@@ -137,7 +137,7 @@ export class Debate {
      * @returns {Number} number of unique clients that connected to the debate
      */
     getNbUniqueClients() {
-        return this.clients.length;
+        return Object.keys(this.clients).length;
     }
 
     // This section contains the different socket io functions
