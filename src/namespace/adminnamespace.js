@@ -31,6 +31,7 @@ export class AdminNamespace extends CustomNamespace {
             socket.on('getDebates', this.getDebates(socket));
             socket.on('getDebateQuestions', this.getDebateQuestions(socket));
             socket.on('newDebate', this.newDebate(socket));
+            socket.on('closeDebate', this.closeDebate(socket));
             socket.on('newQuestion', this.newQuestion(socket));
         });
     }
@@ -67,6 +68,27 @@ export class AdminNamespace extends CustomNamespace {
         }));
 
         callback(debates);
+    };
+
+    /**
+     * Return the list of available debates to the callback function
+     */
+    closeDebate = (socket) => async (IdDiscussion, callback) => {
+        logger.debug(`Get debate requested from ${socket.username}`);
+
+        if (!(callback instanceof Function)) {
+            logger.debug(`callback is not a function.`);
+            return;
+        }
+
+        // Get the debate with the desired value
+        let debate = this.getActiveDebate(IdDiscussion);
+        // Delete debate from active debates
+        this.activeDebates.delete(IdDiscussion);
+
+        let update = dbManager.saveEndDiscussion(debate);
+
+        callback(update);
     };
 
     /**
