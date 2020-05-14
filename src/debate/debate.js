@@ -1,4 +1,6 @@
-import {SocketConfig, logger} from '../conf/config.js';
+import {SocketConfig, logger, DebateConfig} from '../conf/config.js';
+import * as TypeCheck from '../utils/typecheck.js'
+import {dbManager} from "../database/DatabaseManager.js";
 
 /**
  * This class implements a new Debate and the communication with the clients.
@@ -39,6 +41,15 @@ export class Debate {
                     this.answers = answers.map(a => ({answer: a}));
                 }
             }
+        }
+
+        /**
+         * Return the answer text
+         * @param answerId id of the answer
+         * @returns {string} text of the answer
+         */
+        getAnswer(answerId) {
+            return this.answers[answerId].answer;
         }
 
         /**
@@ -113,7 +124,7 @@ export class Debate {
     getQuestions = (socket) => (callback) => {
         logger.debug(`getQuestions received from ${socket.id}`);
 
-        if (!(callback instanceof Function)) {
+        if (!TypeCheck.isFunction(callback)) {
             logger.debug(`callback is not a function.`);
             return;
         }
@@ -127,17 +138,17 @@ export class Debate {
      * questionAnswer contains questionId and answerId
      * callback is a function that takes true on success, otherwise false.
      */
-    answerQuestion = (socket) => (questionAnswer, callback) => {
+    answerQuestion = (socket) => async (questionAnswer, callback) => {
         logger.debug(`answerQuestion received from ${socket.id}`);
 
-        if (!(callback instanceof Function)) {
+        if (!TypeCheck.isFunction(callback)) {
             logger.debug(`callback is not a function.`);
             return;
         }
 
         const questionId = questionAnswer.questionId;
         const answerId = questionAnswer.answerId;
-        if (questionId == null || answerId == null) {
+        if (!TypeCheck.isInteger(questionId) || !TypeCheck.isInteger(answerId)) {
             logger.debug("questionId or answerId is null.");
             callback(false);
             return;
@@ -156,6 +167,21 @@ export class Debate {
             return;
         }
 
+        //TODO: - Control if await slows down the app
+        //      - If it slows down the app, remove it and modify tests
+        //          (currently only pass with await otherwise they are executed too quickly)
+        await dbManager.saveResponse(answerId, question.getAnswer(answerId), questionId, this.debateID)
+        .then(res => {
+            if (res === true) {
+                logger.info('Response saved to db');
+            } else {
+                logger.warn('Cannot save response to db');
+            }
+        })
+        .catch(res => {
+            logger.error(`saveResponse threw : ${res}.`)
+        });
+
         logger.info(`Socket (${socket.id}) replied ${answerId} to question (${questionId}).`);
 
         // Send the reply to the admin room.
@@ -171,14 +197,15 @@ export class Debate {
     answerOpenQuestion = (socket) => (questionAnswer, callback) => {
         logger.debug(`answerOpenQuestion received from ${socket.id}`);
 
-        if (!(callback instanceof Function)) {
+        if (!TypeCheck.isFunction(callback)) {
             logger.debug(`callback is not a function.`);
             return;
         }
 
         const questionId = questionAnswer.questionId;
         const answer = questionAnswer.answer;
-        if (questionId == null || answer == null) {
+        if (!TypeCheck.isInteger(questionId) ||
+            !TypeCheck.isString(answer, DebateConfig.MAX_OPEN_ANSWER_LENGTH)) {
             logger.debug("questionId or answer is null.");
             callback(false);
             return;
