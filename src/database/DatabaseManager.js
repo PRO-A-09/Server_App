@@ -58,11 +58,27 @@ export class DataBaseManager {
     async getAdminId(username){
         let id = null;
         logger.debug(`Getting the id of the user ${username}`);
-        await Administrator.findOne({login:username},function(err,username) {
+        let user = await Administrator.findOne({login:username},function(err,username) {
             if (err || username == null) logger.debug(`Impossible to find username`);
-            else id = username._id;
+            else{
+                logger.debug(`User found: ${username}`);
+            }
         });
+        if(user != null){
+            id = user._id;
+        }
         return id;
+    }
+
+    async getDiscussion(anIdDiscussion){
+        logger.debug(`Getting the Discussions with id ${anIdDiscussion}`);
+        // Get all the discussions related to the user
+        return Discussion.findOne({_id: anIdDiscussion}, function (err, discussion) {
+            if (err || discussion == null) logger.debug(`Error when requesting discussion`);
+            else {
+                console.log(discussion);
+            }
+        });
     }
 
     /**
@@ -190,6 +206,7 @@ export class DataBaseManager {
             title: discussion.title,
             description: discussion.description,
             startTime: new Date(),
+            auditors: 0,
             administrator: idAdmin
         });
         // Try to save the discussion in database
@@ -214,9 +231,41 @@ export class DataBaseManager {
             }
         }
         return saved;
-        // Add finishTime to the discussion not implemented yet
-        /* discussion1.finishTime = new Date();
-        await discussion1.save(); */
+    }
+
+    /**
+     * Update a discussion when the discussion is closed.
+     * Save the finish time and the number of auditors.
+     * @param discussion object of the class Discussion
+     * @returns {Promise<boolean>} true if the update in the database went well false otherwise
+     */
+    async saveEndDiscussion(discussion){
+        if(discussion.id != null) {
+            // Get the current state of the discussion in the database
+            let debate = await this.getDiscussion(discussion.id);
+            // If debate is null the discussion does not exist in the database so we exit with error
+            if(debate == null){
+                logger.alert(`Error when updating discussion. Discussion not found`);
+                return false;
+            }
+            logger.debug(`Updating discussion : ${debate}`);
+            // Update the field finishTime and auditors
+            debate.finishTime = new Date();
+            // Will be changed by an attribute in the debate class
+            debate.auditors = 57;
+            let update = true;
+            // Update the discussion in the database
+            await debate.save()
+            .then(debateUpdated => {
+                logger.debug(`Discussion updated saved ${debateUpdated}`);
+            }).catch(err => {
+                logger.debug(`Error when updating discussion id = ${debate.id}`);
+                console.log(err);
+                update = false
+            });
+            return update;
+        }
+        return false;
     }
 
     /**
