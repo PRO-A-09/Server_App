@@ -166,6 +166,16 @@ describe('Data Base manager test', () => {
         });
     });
 
+    describe('Get last discussion id', () => {
+        it('Get last discussion id', (done) => {
+            db.getLastDiscussionId()
+                .then(id => {
+                    id.should.equal(2);
+                    done();
+                });
+        });
+    });
+
     after((done) => {
         db.end();
         done();

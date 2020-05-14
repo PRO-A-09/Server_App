@@ -1,6 +1,7 @@
 import {logger, SocketConfig} from '../conf/config.js';
 import {CustomNamespace} from './customnamespace.js'
 import {Debate} from "../debate/debate.js";
+import {dbManager} from "../database/DatabaseManager.js";
 
 /**
  * This class implements an AdminNamespace that extends a CustomNamespace
@@ -100,7 +101,7 @@ export class AdminNamespace extends CustomNamespace {
      * Create a new debate
      * newDebateObj contains the information of the debate (title, description)
      */
-    newDebate = (socket) => (newDebateObj, callback) => {
+    newDebate = (socket) => async (newDebateObj, callback) => {
         logger.info(`New debate creation requested from ${socket.username}`);
 
         if (!(callback instanceof Function)) {
@@ -118,9 +119,28 @@ export class AdminNamespace extends CustomNamespace {
 
         //TODO: Check title & description are valid strings
 
+        // If this is the first debate, search the last debate in the database
+        if (Debate.nb_debate === 0) {
+            await dbManager.getLastDiscussionId()
+                .then(last_id => {
+                    Debate.nb_debate = last_id;
+                });
+        }
+
         // Create and start a new debate
         const debate = new Debate(title, description, socket, this.io, this.nsp);
         this.activeDebates.set(debate.debateID, debate);
+        await dbManager.saveDiscussion(debate)
+            .then(res => {
+                if (res === true) {
+                    logger.info('Debate saved to db');
+                } else {
+                    logger.warn('Cannot save debate to db');
+                }
+            })
+            .catch(res => {
+                logger.error(`saveDiscussion threw : ${res}.`)
+            });
 
         debate.startSocketHandling();
         callback(debate.debateID);
@@ -130,7 +150,7 @@ export class AdminNamespace extends CustomNamespace {
      * Add a new question to the specified debate
      * newQuestionObj contains the required information (debateId, title, answers)
      */
-    newQuestion = (socket) => (newQuestionObj, callback) => {
+    newQuestion = (socket) => async (newQuestionObj, callback) => {
         logger.debug(`newQuestion received from user (${socket.username}), id(${socket.id})`);
 
         if (!(callback instanceof Function)) {
@@ -158,6 +178,22 @@ export class AdminNamespace extends CustomNamespace {
         }
 
         const question = new debate.Question(title, answers);
+
+        //TODO: - Control if await slows down the app
+        //      - If it slows down the app, remove it and modify tests
+        //          (currently only pass with await otherwise they are executed too quickly)
+        await dbManager.saveQuestion(question, debateId)
+            .then(res => {
+                if (res === true) {
+                    logger.info('Question saved to db');
+                } else {
+                    logger.warn('Cannot save question to db');
+                }
+            })
+            .catch(res => {
+                logger.error(`saveQuestion threw : ${res}.`)
+            });
+
         debate.sendNewQuestion(question);
         callback(question.id);
     };

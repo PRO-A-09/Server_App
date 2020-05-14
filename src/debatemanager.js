@@ -4,6 +4,7 @@ import {AdminMiddleware} from './adminmiddleware.js';
 import http from 'http'
 import http_terminator from 'http-terminator';
 import Server from 'socket.io'
+import {dbManager} from "./database/DatabaseManager.js";
 
 /**
  * This class is used to manage the debate server.
@@ -20,6 +21,7 @@ export class DebateManager {
         this.startWebServer();
         this.startSocketServer();
         this.startAdminNamespace();
+        dbManager.start();
     }
 
     /**
@@ -75,7 +77,9 @@ export class DebateManager {
      */
     stop() {
         logger.info("Server stopping");
-        
+
+        dbManager.end();
+
         // Use http-terminator to gracefully terminate the server
         const httpTerminator = http_terminator.createHttpTerminator({
             server: this.webServer
