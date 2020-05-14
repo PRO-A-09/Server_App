@@ -333,6 +333,19 @@ describe('Debate test', () => {
                 });
             });
 
+            it('open question', (done) => {
+                let newQuestionObj = {
+                    debateId: id,
+                    title: 'Does this test work ?',
+                    isOpenQuestion: true
+                };
+
+                admin.emit('newQuestion', newQuestionObj, (questionId) => {
+                    questionId.should.not.equal(-1);
+                    done();
+                });
+            });
+
             it('invalid question', (done) => {
                 let newQuestionObj = {
                     debateId: id,

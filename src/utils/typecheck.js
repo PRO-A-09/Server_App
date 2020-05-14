@@ -36,6 +36,15 @@ export function isInteger(value, max) {
 }
 
 /**
+ * Returns if a value is a boolean
+ * @param value value to check
+ * @returns {boolean} true if a boolean, false otherwise
+ */
+export function isBoolean(value) {
+    return typeof value === "boolean";
+}
+
+/**
  * Returns if a value is an array
  * @param value value to check
  * @returns {boolean} true if an array, false otherwise
