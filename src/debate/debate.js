@@ -101,11 +101,13 @@ export class Debate {
      */
     startSocketHandling() {
         this.userNamespace.on('connection', (socket) => {
-            logger.debug(`New socket connected to namespace ${this.userNamespace.name} + ${socket.id}`);
+            logger.debug(`New socket connected to namespace (${this.userNamespace.name}) id (${socket.id})`);
 
             if (this.clients[socket.uuid]) {
+                logger.debug(`Existing client uuid (${socket.uuid})`)
                 this.clients[socket.uuid].socket = socket;
             } else {
+                logger.debug(`New client uuid (${socket.uuid})`)
                 // Store the socket and initialize attributes
                 this.clients[socket.uuid] = {
                     socket: socket,
