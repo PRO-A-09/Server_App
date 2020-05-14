@@ -11,6 +11,8 @@ export class SocketConfig {
 
 export class ErrorMessage {
     static LOGIN_PASSWORD_INVALID = 'Invalid password';
+    static UNSPECIFIED_UUID = 'Device UUID need to be provided';
+    static BLACKLISTED_DEVICE = 'This device has been banned';
 }
 
 // Create a winston logger that logs to console
