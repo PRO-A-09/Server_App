@@ -18,7 +18,7 @@ export class DataBaseManager {
      */
     start() {
         // Connection to the local database
-        mongoose.connect('mongodb://localhost:27017/PRO', {useNewUrlParser: true, useUnifiedTopology: true});
+        mongoose.connect('mongodb://192.168.99.100:27017/PRO', {useNewUrlParser: true, useUnifiedTopology: true});
         mongoose.set('useCreateIndex', true);
     }
 
@@ -64,9 +64,11 @@ export class DataBaseManager {
                 logger.debug(`User found: ${username}`);
             }
         });
+        logger.info(user);
         if(user != null){
             id = user._id;
         }
+        logger.info(id);
         return id;
     }
 
@@ -105,6 +107,35 @@ export class DataBaseManager {
             discussions = await Discussion.find({administrator: adminId}, function (err, discussions) {
                 if (err || discussions == null) logger.debug(`Error when requesting discussions`);
                 else{
+                    console.log(discussions);
+                }
+            });
+        }
+        return discussions;
+    }
+
+    /**
+     * Get the closed discussions of an administrator
+     * @param username String that is the username of the administrator
+     * @returns a Array of Discussion that represents the discussions started by an user
+     */
+    async getClosedDiscussionsAdmin(username){
+        let discussions = null;
+        // Get the id of the username passed in parameter
+        let adminId = await this.getAdminId(username);
+        // If the adminId is null the username is unknown
+        if(adminId == null){
+            logger.debug(`Error when looking for username id`);
+        }
+        else {
+            logger.debug(`Getting the Discussions from ${username}`);
+            // Get all the discussions related to the user
+            discussions = await Discussion.find({administrator: adminId, finishTime: {$exists: true}}, function (err, discussions) {
+                if (err) {
+                    logger.debug(`Error when requesting discussions`);
+                }else if(discussions == null){
+                    logger.debug(`No debates were found`);
+                }else{
                     console.log(discussions);
                 }
             });
