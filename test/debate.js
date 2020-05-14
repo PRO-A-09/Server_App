@@ -496,6 +496,7 @@ describe('Debate test', () => {
                         }
                     }, (err, response) => {
                         should.exist(response);
+                        should.not.exist(err);
                         done();
                     });
                 });

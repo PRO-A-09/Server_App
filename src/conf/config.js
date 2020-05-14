@@ -15,6 +15,13 @@ export class ErrorMessage {
     static BLACKLISTED_DEVICE = 'This device has been banned';
 }
 
+export class DebateConfig {
+    static MAX_TITLE_LENGTH = 50;
+    static MAX_DESCRIPTION_LENGTH = 250;
+    static MAX_CLOSED_ANSWERS = 20;
+    static MAX_OPEN_ANSWER_LENGTH = 50;
+}
+
 // Create a winston logger that logs to console
 export const logger = winston.createLogger({
     transports: [
