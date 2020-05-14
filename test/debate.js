@@ -76,6 +76,9 @@ describe('Debate test', () => {
             client = io.connect(`http://localhost:${SocketConfig.SOCKET_PORT}${SocketConfig.DEBATE_NAMESPACE_PREFIX}${id}`, {
                 path: SocketConfig.DEFAULT_PATH,
                 forceNew: true,
+                query: {
+                    uuid: '2345675432'
+                }
             });
 
             client.on('connect', () => {
@@ -136,6 +139,9 @@ describe('Debate test', () => {
             client = io.connect(`http://localhost:${SocketConfig.SOCKET_PORT}${SocketConfig.DEBATE_NAMESPACE_PREFIX}${id}`, {
                 path: SocketConfig.DEFAULT_PATH,
                 forceNew: true,
+                query: {
+                    uuid: '2345675432'
+                }
             });
 
             client.on('connect', () => {
@@ -294,6 +300,9 @@ describe('Debate test', () => {
             client = io.connect(`http://localhost:${SocketConfig.SOCKET_PORT}${SocketConfig.DEBATE_NAMESPACE_PREFIX}${id}`, {
                 path: SocketConfig.DEFAULT_PATH,
                 forceNew: true,
+                query: {
+                    uuid: '2345675432'
+                }
             });
 
             client.on('connect', () => {
@@ -453,6 +462,9 @@ describe('Debate test', () => {
             client = io.connect(`http://localhost:${SocketConfig.SOCKET_PORT}${SocketConfig.DEBATE_NAMESPACE_PREFIX}${id}`, {
                 path: SocketConfig.DEFAULT_PATH,
                 forceNew: true,
+                query: {
+                    uuid: '2345675432'
+                }
             });
 
             client.on('connect', () => {
