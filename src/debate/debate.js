@@ -1,5 +1,6 @@
 import {SocketConfig, logger, DebateConfig} from '../conf/config.js';
 import * as TypeCheck from '../utils/typecheck.js'
+import {dbManager} from "../database/DatabaseManager.js";
 
 /**
  * This class implements a new Debate and the communication with the clients.
@@ -40,6 +41,15 @@ export class Debate {
                     this.answers = answers.map(a => ({answer: a}));
                 }
             }
+        }
+
+        /**
+         * Return the answer text
+         * @param answerId id of the answer
+         * @returns {string} text of the answer
+         */
+        getAnswer(answerId) {
+            return this.answers[answerId].answer;
         }
 
         /**
@@ -128,7 +138,7 @@ export class Debate {
      * questionAnswer contains questionId and answerId
      * callback is a function that takes true on success, otherwise false.
      */
-    answerQuestion = (socket) => (questionAnswer, callback) => {
+    answerQuestion = (socket) => async (questionAnswer, callback) => {
         logger.debug(`answerQuestion received from ${socket.id}`);
 
         if (!TypeCheck.isFunction(callback)) {
@@ -156,6 +166,21 @@ export class Debate {
             callback(false);
             return;
         }
+
+        //TODO: - Control if await slows down the app
+        //      - If it slows down the app, remove it and modify tests
+        //          (currently only pass with await otherwise they are executed too quickly)
+        await dbManager.saveResponse(answerId, question.getAnswer(answerId), questionId, this.debateID)
+        .then(res => {
+            if (res === true) {
+                logger.info('Response saved to db');
+            } else {
+                logger.warn('Cannot save response to db');
+            }
+        })
+        .catch(res => {
+            logger.error(`saveResponse threw : ${res}.`)
+        });
 
         logger.info(`Socket (${socket.id}) replied ${answerId} to question (${questionId}).`);
 
