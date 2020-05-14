@@ -84,7 +84,7 @@ export class DataBaseManager {
             discussions = await Discussion.find({administrator: adminId}, function (err, discussions) {
                 if (err || discussions == null) logger.debug(`Error when requesting discussions`);
                 else{
-                    console.log(discussions);
+                    logger.debug(discussions);
                 }
             });
         }
@@ -108,7 +108,7 @@ export class DataBaseManager {
             questions = await Question.find({refDiscussion: anIDDebate}, function (err, questions) {
                 if (err || questions == null) logger.debug(`Error when requesting questions`);
                 else{
-                    console.log(questions);
+                    logger.debug(questions);
                 }
             });
         }
@@ -170,7 +170,7 @@ export class DataBaseManager {
      */
     async saveDiscussion(discussion){
         // Show the Disucssion that will be saved
-        console.log(discussion);
+        logger.debug(`Discussion : ${discussion}`);
         let saved = true;
         // Search for the admin id of the discussion
         let idAdmin = await this.getAdminId(discussion.admin);
@@ -197,7 +197,7 @@ export class DataBaseManager {
               .then(discussionSaved => logger.debug(`Discussion saved ${discussionSaved}`))
               .catch(err => {
                             logger.debug(`Error when saving Disucssion`);
-                            console.log(err);
+                            logger.debug(err);
                             saved = false
               });
         logger.debug(`saved = ${saved}`);
@@ -217,6 +217,8 @@ export class DataBaseManager {
         // Add finishTime to the discussion not implemented yet
         /* discussion1.finishTime = new Date();
         await discussion1.save(); */
+
+        return saved;
     }
 
     /**
@@ -238,7 +240,7 @@ export class DataBaseManager {
             .then(questionSaved => logger.debug(`Question saved ${questionSaved}`))
             .catch(err => {
                 logger.debug(`Error when saving Question id = ${question.id}`);
-                console.log(err);
+                logger.debug(err);
                 saved = false;
             });
         // If the save went wrong we exit the function and return false;
@@ -246,26 +248,29 @@ export class DataBaseManager {
             return false;
         }
         // Save all the responses related to the question
-        for(let key of question.answers.keys()){
-            let savedState = await this.saveResponse(question.answers.get(key), question.id);
+        for (let i = 0; i < question.answers.length; ++i) {
+            let savedState = await this.saveResponse(i, question.answers[i].answer, question.id, idDiscussion);
             if(!savedState){
                 return false;
             }
         }
+
+        return saved;
     }
 
     /**
      * Save the response in the database
+     * @param responseId the id of response that need to be saved
      * @param response the response that need to be saved
      * @param questionId integer that is the id of the question related to the response
      * @param discussionId integer that is the id of the discussion related to the response
      * @returns {Promise<boolean>} true if save went well false otherwise
      */
-    async saveResponse(response, questionId, discussionId){
+    async saveResponse(responseId, response, questionId, discussionId){
         let saved = true;
         const responseSave = new Response({
-            _id: response.key,
-            response: response.value,
+            id: responseId,
+            response: response,
             refQuestion: {
                 refQuestion: questionId,
                 refDiscussion: discussionId
@@ -275,12 +280,31 @@ export class DataBaseManager {
         await responseSave.save()
             .then(responseSaved => logger.debug(`Response saved ${responseSaved}`))
             .catch(err => {
-                logger.debug(`Error when saving Question id = ${response.key}`);
-                console.log(err);
+                logger.debug(`Error when saving Response id = ${responseId}`);
+                logger.debug(err);
                 saved = false;
             });
-        if(!saved){
-            return false;
-        }
+
+        return saved;
+    }
+
+    /**
+     * Get the id of the latest discussion
+     */
+    async getLastDiscussionId() {
+        logger.debug('getLastDiscussionId called');
+        return new Promise(resolve => {
+            Discussion.find().sort({_id: 'descending'}).exec((err, discussions) => {
+                if (err) {
+                    logger.debug('getLastDiscussionId returning 0');
+                    resolve(0);
+                } else {
+                    logger.debug(`getLastDiscussionId returning ${discussions[0]._id}`);
+                    resolve(discussions[0]._id);
+                }
+            });
+        });
     }
 }
+
+export const dbManager = new DataBaseManager();
