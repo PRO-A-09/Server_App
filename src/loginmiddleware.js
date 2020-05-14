@@ -5,7 +5,7 @@ import {dbManager} from "./database/DatabaseManager.js";
 /**
  * Class implementing a Middleware function with a fixed password
  */
-export class AdminMiddleware {
+export class LoginMiddleware {
     /**
      * This function checks the password send by the socket and
      * chains to the next middleware
@@ -26,7 +26,7 @@ export class AdminMiddleware {
             return next();
         }
 
-        logger.debug(ErrorMessage.ADMIN_PASSWORD_INVALID);
-        return next(new Error(ErrorMessage.ADMIN_PASSWORD_INVALID));
+        logger.debug(ErrorMessage.LOGIN_PASSWORD_INVALID);
+        return next(new Error(ErrorMessage.LOGIN_PASSWORD_INVALID));
     }
 }
