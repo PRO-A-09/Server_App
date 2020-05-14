@@ -1,6 +1,7 @@
 import {SocketConfig, logger, DebateConfig} from '../conf/config.js';
 import * as TypeCheck from '../utils/typecheck.js'
 import {dbManager} from "../database/DatabaseManager.js";
+import {ClientBlacklistMiddleware} from "../middleware/clientblacklistmiddleware.js";
 
 /**
  * This class implements a new Debate and the communication with the clients.
@@ -90,6 +91,7 @@ export class Debate {
 
         // Create a new namespace for the debate
         this.userNamespace = io.of(SocketConfig.DEBATE_NAMESPACE_PREFIX + this.debateID);
+        this.userNamespace.use(new ClientBlacklistMiddleware().middlewareFunction);
     }
 
     /**
