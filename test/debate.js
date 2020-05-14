@@ -186,10 +186,39 @@ describe('Debate test', () => {
         });
 
         describe('answerQuestion', () => {
-            it('valid response', (done) => {
+            it('valid answer', (done) => {
                 client.on('newQuestion', (questionObj) => {
                     client.emit('answerQuestion', {questionId : questionObj.id, answerId : 0}, (res) => {
                         res.should.equal(true);
+                        done();
+                    });
+                });
+
+                debate.sendNewQuestion(new debate.Question('Does this test work ?', ['Yes', 'No']));
+            });
+
+            it('on open question', (done) => {
+                client.on('newQuestion', (questionObj) => {
+                    client.emit('answerQuestion', {questionId : questionObj.id, answerId : 0}, (res) => {
+                        res.should.equal(false);
+                        done();
+                    });
+                });
+
+                debate.sendNewQuestion(new debate.Question('Does this test work ?', null, true));
+            });
+
+            it('should not answer twice', (done) => {
+                client.on('newQuestion', async (questionObj) => {
+                    await new Promise(resolve => {
+                        client.emit('answerQuestion', {questionId: questionObj.id, answerId: 0}, (res) => {
+                            res.should.equal(true);
+                            resolve();
+                        });
+                    });
+
+                    client.emit('answerQuestion', {questionId: questionObj.id, answerId: 0}, (res) => {
+                        res.should.equal(false);
                         done();
                     });
                 });
@@ -228,6 +257,35 @@ describe('Debate test', () => {
 
                         let question = debate.questions.get(questionObj.id);
                         question.answers[0].answer.should.equal('Hopefully, yes');
+                        done();
+                    });
+                });
+
+                debate.sendNewQuestion(new debate.Question('Does this test work ?', null, true));
+            });
+
+            it('on closed question', (done) => {
+                client.on('newQuestion', (questionObj) => {
+                    client.emit('answerOpenQuestion', {questionId : questionObj.id, answer : 'Hopefully, yes'}, (res) => {
+                        res.should.equal(false);
+                        done();
+                    });
+                });
+
+                debate.sendNewQuestion(new debate.Question('Does this test work ?', ['Yes', 'No']));
+            });
+
+            it('invalid answering twice', (done) => {
+                client.on('newQuestion', async (questionObj) => {
+                    await new Promise(resolve => {
+                        client.emit('answerOpenQuestion', {questionId : questionObj.id, answer : 'Hopefully, yes'}, (res) => {
+                            res.should.equal(true);
+                            resolve();
+                        });
+                    });
+
+                    client.emit('answerOpenQuestion', {questionId : questionObj.id, answer : 'Hopefully, yes'}, (res) => {
+                        res.should.equal(false);
                         done();
                     });
                 });

@@ -185,7 +185,13 @@ export class Debate {
             return;
         }
 
-        if (this.clients[socket.uuid].answers[questionId]) {
+        if (question.isOpenQuestion) {
+            logger.debug(`Question with id (${questionId}) is not an open question.`);
+            callback(false);
+            return;
+        }
+
+        if (this.clients[socket.uuid].answers[questionId] !== undefined) {
             logger.debug(`Client with uuid (${socket.uuid}) already answered.`);
             callback(false);
             return;
@@ -249,14 +255,14 @@ export class Debate {
             return;
         }
 
-        if (this.clients[socket.uuid].answers[questionId]) {
-            logger.debug(`Client with uuid (${socket.uuid}) already answered.`);
+        if (!question.isOpenQuestion) {
+            logger.debug(`Question with id (${questionId}) is not an open question.`);
             callback(false);
             return;
         }
 
-        if (!question.isOpenQuestion) {
-            logger.debug(`Question with id (${questionId}) is not an open question.`);
+        if (this.clients[socket.uuid].answers[questionId] !== undefined) {
+            logger.debug(`Client with uuid (${socket.uuid}) already answered.`);
             callback(false);
             return;
         }
