@@ -19,10 +19,6 @@ const QuestionSchema = new mongoose.Schema({
         type: String,
         required: true
     },
-    numberVotes:{
-        type: Number,
-        required: true
-    },
     refDiscussion:{
         type: Number,
         ref: 'Discussion',

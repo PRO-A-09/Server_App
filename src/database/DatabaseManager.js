@@ -7,6 +7,8 @@ import {Response} from './modele/Response.js';
 import {Tag} from './modele/Tag.js';
 import {Administrator,Moderator,Presentator,UserModerator} from './modele/Users.js';
 import {logger} from '../conf/config.js';
+import {QuestionAdmin} from "./modele/QuestionAdmin.js";
+import {QuestionSuggestion} from "./modele/QuestionSuggestion.js";
 
 /**
  * This class is used to manage the database communication.
@@ -74,11 +76,11 @@ export class DataBaseManager {
 
     /**
      * Get a discussion stored in the database with the corresponding id
-     * @param anIdDiscussion integer that reprents the id of the discussion desires
+     * @param anIdDiscussion integer that represents the id of the discussion desired
      * @returns {Promise<Query|void>} A Discussion or null if not found
      */
     async getDiscussion(anIdDiscussion){
-        logger.debug(`Getting the Discussions with id ${anIdDiscussion}`);
+        logger.debug(`Getting the Discussion with id ${anIdDiscussion}`);
         // Get the discussions related to the id
         return Discussion.findOne({_id: anIdDiscussion}, function (err, discussion) {
             if (err || discussion == null) logger.debug(`Error when requesting discussion`);
@@ -87,6 +89,26 @@ export class DataBaseManager {
             }
         });
     }
+
+    /**
+     * Get a question of a user stored in the database with the corresponding id
+     * @param anIdQuestion integer that represents the id of the question desired
+     * @param anIdDiscussion integer that represents the id of the discussion related to the question
+     * @returns {Promise<Query|void>} A Question or null if not found
+     */
+    async getUserQuestion(anIdQuestion, anIdDiscussion){
+        logger.debug(`Getting the Question with id ${anIdQuestion}`);
+        // Get the discussions related to the id
+        return QuestionSuggestion.findOne({"id.refQuestion": anIdQuestion, "id.refDiscussion": anIdDiscussion}, function (err, question) {
+            if (err || question == null) logger.debug(`Error when requesting question`);
+            else {
+                console.log(question);
+            }
+        });
+    }
+
+    // TODO : Get all accepted question
+    // TODO : Get all not yet accepted question
 
     /**
      * Get the discussions of an administrator
@@ -217,6 +239,24 @@ export class DataBaseManager {
     }
 
     /**
+     * Get the id of the latest discussion
+     */
+    async getLastDiscussionId() {
+        logger.debug('getLastDiscussionId called');
+        return new Promise(resolve => {
+            Discussion.find().sort({_id: 'descending'}).exec((err, discussions) => {
+                if (err) {
+                    logger.debug('getLastDiscussionId returning 0');
+                    resolve(0);
+                } else {
+                    logger.debug(`getLastDiscussionId returning ${discussions[0]._id}`);
+                    resolve(discussions[0]._id);
+                }
+            });
+        });
+    }
+
+    /**
      * Save a discussion in the database
      * @param discussion object Debate that represents the discussion to save in the databse
      * @returns {Promise<boolean>} true if the saving was successful false otherwise
@@ -282,7 +322,7 @@ export class DataBaseManager {
             let debate = await this.getDiscussion(discussion.id);
             // If debate is null the discussion does not exist in the database so we exit with error
             if(debate == null){
-                logger.alert(`Error when updating discussion. Discussion not found`);
+                logger.debug(`Error when updating discussion. Discussion not found`);
                 return false;
             }
             logger.debug(`Updating discussion : ${debate}`);
@@ -316,7 +356,6 @@ export class DataBaseManager {
         const questionSave = new Question({
             id: question.id,
             titreQuestion: question.title,
-            numberVotes: 0,
             refDiscussion: idDiscussion
         });
         // Save the question in database
@@ -339,6 +378,102 @@ export class DataBaseManager {
             }
         }
         return saved;
+    }
+
+    /**
+     * Save a question of an admin in the database
+     * @param question object Question that represents the Question to save
+     * @param idDiscussion integer that is the id of the Discussion related to the question
+     * @param username String that is the username of the admin
+     * @returns {Promise<boolean>} true if the save went well false otherwise
+     */
+    async saveQuestionAdmin(question, idDiscussion, username){
+        let saved = await this.saveQuestion(question,idDiscussion);
+        if(!saved){
+            return false;
+        }
+        // Save the question as an admin Question in the database
+        let idAdmin = await this.getAdminId(username);
+        if(idAdmin == null){
+            logger.debug(`Error when looking for username id`);
+            return false;
+        }
+        logger.info(`my id ${idAdmin}`);
+        const questionAdminSave = new QuestionAdmin({
+            id: {
+                refQuestion: question.id,
+                refDiscussion: idDiscussion
+            },
+            administrator: idAdmin
+        });
+
+        await questionAdminSave.save()
+            .then(questionAdminSave => logger.debug(`Question of admin saved ${questionAdminSave}`))
+            .catch(err => {
+                logger.debug(`Error when saving Question of admin id = ${question.id}`);
+                console.log(err);
+                saved = false;
+            });
+        // If the save went wrong we exit the function and return false;
+        if(!saved){
+            return false;
+        }
+        return saved;
+    }
+
+    /**
+     * Save a question suggested by a user in the database
+     * @param question object Question that represents the Question to save
+     * @param idDiscussion integer that is the id of the Discussion related to the question
+     * @returns {Promise<boolean>} true if the save went well false otherwise
+     */
+    async saveQuestionUser(question, idDiscussion){
+        let saved = await this.saveQuestion(question,idDiscussion);
+        if(!saved){
+            return false;
+        }
+        const questionSuggestionSave = new QuestionSuggestion({
+            id: {
+                refQuestion: question.id,
+                refDiscussion: idDiscussion
+            }
+        });
+
+        await questionSuggestionSave.save()
+            .then(questionAdminSave => logger.debug(`Question of user saved ${questionAdminSave}`))
+            .catch(err => {
+                logger.debug(`Error when saving Question of user id = ${question.id}`);
+                console.log(err);
+                saved = false;
+            });
+        // If the save went wrong we exit the function and return false;
+        if(!saved){
+            return false;
+        }
+        return saved;
+    }
+
+    async saveApprovedQuestion(questionId, disucssionId){
+        let questionUser = await this.getUserQuestion(questionId,disucssionId);
+
+        if(questionUser == null){
+            logger.debug(`Error when updating question. Question not found`);
+            return false;
+        }
+        logger.debug(`Updating question : ${questionUser}`);
+        // Update the field finishTime and auditors
+        questionUser.approved = true;
+        let update = true;
+        // Update the discussion in the database
+        await questionUser.save()
+            .then(debateUpdated => {
+                logger.debug(`Question suggestion updated saved ${debateUpdated}`);
+            }).catch(err => {
+                logger.debug(`Error when updating question suggestion id = ${debate.id}`);
+                console.log(err);
+                update = false
+            });
+        return update;
     }
 
     /**
@@ -370,23 +505,7 @@ export class DataBaseManager {
         return saved;
     }
 
-    /**
-     * Get the id of the latest discussion
-     */
-    async getLastDiscussionId() {
-        logger.debug('getLastDiscussionId called');
-        return new Promise(resolve => {
-            Discussion.find().sort({_id: 'descending'}).exec((err, discussions) => {
-                if (err) {
-                    logger.debug('getLastDiscussionId returning 0');
-                    resolve(0);
-                } else {
-                    logger.debug(`getLastDiscussionId returning ${discussions[0]._id}`);
-                    resolve(discussions[0]._id);
-                }
-            });
-        });
-    }
+    // TODO : Remove Question from DB if not accepted
 }
 
 export const dbManager = new DataBaseManager();
