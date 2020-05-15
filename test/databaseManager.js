@@ -206,14 +206,25 @@ describe('Data Base manager test', () => {
             class myDebate{
                 id;
                 constructor(id){
-                   this.id = id;
+                    this.id = id;
                 }
             }
             let debate = new myDebate(2);
             db.saveEndDiscussion(debate).then(() => {
-                    let updatedDebate = db.getDiscussion(2);
-                    updatedDebate.auditeurs = 57;
-                    done();
+                let updatedDebate = db.getDiscussion(2);
+                updatedDebate.auditeurs = 57;
+                done();
+            });
+
+        });
+    });
+
+    describe('Get ended debate of an admin', () => {
+        it('Get ended deabtes', (done) => {
+            db.getClosedDiscussionsAdmin("admin").then((discussions) => {
+                discussions.length.should.equal(1);
+                discussions[0]._id.should.equal(2);
+                done();
             });
 
         });
