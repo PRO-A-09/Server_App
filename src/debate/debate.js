@@ -100,7 +100,7 @@ export class Debate {
      * Starts handling for client events.
      */
     startSocketHandling() {
-        this.userNamespace.on('connection', (socket) => {
+        this.userNamespace.on('connection', async (socket) => {
             logger.debug(`New socket connected to namespace (${this.userNamespace.name}) id (${socket.id})`);
 
             if (this.clients[socket.uuid]) {
@@ -113,6 +113,18 @@ export class Debate {
                     socket: socket,
                     answers: []
                 };
+
+                dbManager.trySaveDevice(socket.uuid)
+                    .then(res => {
+                        if (res === true) {
+                            logger.info('Device saved to db');
+                        } else {
+                            logger.warn('Cannot save device to db');
+                        }
+                    })
+                    .catch(res => {
+                        logger.error(`saveDevice threw : ${res}.`)
+                    });
             }
 
             // Register socket functions

@@ -289,6 +289,33 @@ export class DataBaseManager {
     }
 
     /**
+     * Try to save a device to the database.
+     * @param uuid {String} represents the UUID of the device
+     * @returns {Promise<boolean>} true if the save worked or the device already exists, false otherwise
+     */
+    async trySaveDevice(uuid){
+        let saved = true;
+        const deviceSave = new Device({
+           _id: uuid
+        });
+
+        await deviceSave.save()
+            .then(deviceSaved => logger.debug(`Device saved ${deviceSaved}`))
+            .catch(err => {
+                if (err.name === 'MongoError' && err.code === 11000) {
+                    logger.debug('Device already exists');
+                    saved = true;
+                } else {
+                    logger.debug(`Error when saving device uuid = ${uuid}`);
+                    logger.debug(err);
+                    saved = false;
+                }
+            });
+
+        return saved;
+    }
+
+    /**
      * Get the id of the latest discussion
      */
     async getLastDiscussionId() {

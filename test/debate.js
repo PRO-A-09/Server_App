@@ -6,6 +6,7 @@ import {dbManager} from "../src/database/DatabaseManager.js";
 import {Discussion} from "../src/database/modele/Discussion.js";
 import {Question} from "../src/database/modele/Question.js";
 import {Response} from "../src/database/modele/Response.js";
+import {Device} from "../src/database/modele/Device.js";
 
 const expect = chai.expect;
 const should = chai.should();
@@ -571,6 +572,7 @@ describe('Debate test', () => {
     });
 
     describe("Database storage", () => {
+        const uuid = '2345675432';
         let client;
         let id;
         let debate;
@@ -602,7 +604,7 @@ describe('Debate test', () => {
                 path: SocketConfig.DEFAULT_PATH,
                 forceNew: true,
                 query: {
-                    uuid: '2345675432'
+                    uuid: uuid
                 }
             });
 
@@ -616,6 +618,14 @@ describe('Debate test', () => {
                 discussion.should.not.equal(null);
                 done();
             });
+        });
+
+        it('Device save', (done) => {
+            Device.findOne({_id: uuid}, (err, device) => {
+                should.exist(device);
+                should.not.exist(err);
+                done();
+            })
         });
 
         it('Question save', (done) => {
