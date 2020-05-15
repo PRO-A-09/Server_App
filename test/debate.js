@@ -666,6 +666,34 @@ describe('Debate test', () => {
                 });
             });
         });
+
+        it('Question response device save', (done) => {
+            let newQuestionObj = {
+                debateId: id,
+                title: 'Does this test work ?',
+                answers: ['Yes', 'No']
+            };
+
+            client.on('newQuestion', (questionObj) => {
+                client.emit('answerQuestion', {questionId : questionObj.id, answerId : 0}, (res) => {
+                    Response.findOne({
+                        id: 0,
+                        refQuestion: {
+                            refQuestion: questionObj.id,
+                            refDiscussion: id
+                        }
+                    }, (err, response) => {
+                        should.exist(response);
+                        should.not.exist(err);
+
+                        response.devices.some(d => d.refDevice === uuid).should.equal(true);
+                        done();
+                    });
+                });
+            });
+
+            debate.sendNewQuestion(new debate.Question('Does this test work ?', ['Yes', 'No']));
+        });
         
         afterEach(() => {
             client.close();

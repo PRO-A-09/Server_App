@@ -288,6 +288,36 @@ export class DataBaseManager {
         return saved;
     }
 
+    async saveResponseDevice(uuid, responseId, questionId, discussionId){
+        let responseObj = {
+            id: responseId,
+            refQuestion: {
+                refQuestion: questionId,
+                refDiscussion: discussionId
+            }
+        };
+
+        let response = await Response.findOne(responseObj);
+        if (response == null) {
+            logger.debug(`Response not found id = ${responseId}`)
+            return false;
+        }
+
+        let saved = true;
+        response.devices.push({refDevice: uuid});
+        await response.save()
+            .then(responseSaved => {
+                logger.debug(`Device (${uuid}) added to response id = ${responseId}`)
+            })
+            .catch(err => {
+                logger.debug(`Error when adding device (${uuid}) to response id = ${responseId}`);
+                logger.debug(err);
+                saved = false;
+            });
+
+        return saved;
+    }
+
     /**
      * Try to save a device to the database.
      * @param uuid {String} represents the UUID of the device

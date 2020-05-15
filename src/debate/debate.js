@@ -230,22 +230,20 @@ export class Debate {
             return;
         }
 
-        // Not necessary to store response here - we need to store the device instead.
-        // Will do later once uuid is implemented.
-        // //TODO: - Control if await slows down the app
-        // //      - If it slows down the app, remove it and modify tests
-        // //          (currently only pass with await otherwise they are executed too quickly)
-        // await dbManager.saveResponse(answerId, question.getAnswer(answerId), questionId, this.debateID)
-        // .then(res => {
-        //     if (res === true) {
-        //         logger.info('Response saved to db');
-        //     } else {
-        //         logger.warn('Cannot save response to db');
-        //     }
-        // })
-        // .catch(res => {
-        //     logger.error(`saveResponse threw : ${res}.`)
-        // });
+        //TODO: - Control if await slows down the app
+        //      - If it slows down the app, remove it and modify tests
+        //          (currently only pass with await otherwise they are executed too quickly)
+        await dbManager.saveResponseDevice(socket.uuid, answerId, questionId, this.debateID)
+            .then(res => {
+                if (res === true) {
+                    logger.info('Device response saved to db');
+                } else {
+                    logger.warn('Cannot save device response to db');
+                }
+            })
+            .catch(res => {
+                logger.error(`saveResponseDevice threw : ${res}.`)
+            });
 
         logger.info(`Socket (${socket.id}) replied ${answerId} to question (${questionId}).`);
         this.clients[socket.uuid].answers[questionId] = answerId;
