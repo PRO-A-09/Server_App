@@ -16,6 +16,7 @@ export class Debate {
     description;
     questions;
     admin;
+    clients;
 
     /**
      * Nested class Question that contains the question of the debate
@@ -83,6 +84,7 @@ export class Debate {
         this.adminRoomName = SocketConfig.ADMIN_ROOM_PREFIX + this.debateID;
         this.adminRoom = adminNamespace.to(this.adminRoomName);
         this.admin = ownerSocket.username;
+        this.clients = [];
         //For local tests
         //this.admin = "admin";
 
@@ -99,7 +101,19 @@ export class Debate {
      */
     startSocketHandling() {
         this.userNamespace.on('connection', (socket) => {
-            logger.debug(`New socket connected to namespace ${this.userNamespace.name} + ${socket.id}`);
+            logger.debug(`New socket connected to namespace (${this.userNamespace.name}) id (${socket.id})`);
+
+            if (this.clients[socket.uuid]) {
+                logger.debug(`Existing client uuid (${socket.uuid})`)
+                this.clients[socket.uuid].socket = socket;
+            } else {
+                logger.debug(`New client uuid (${socket.uuid})`)
+                // Store the socket and initialize attributes
+                this.clients[socket.uuid] = {
+                    socket: socket,
+                    answers: []
+                };
+            }
 
             // Register socket functions
             socket.on('getQuestions', this.getQuestions(socket));
@@ -131,6 +145,14 @@ export class Debate {
         logger.debug(`Sending new question with id ${question.id}`);
         this.questions.set(question.id, question);
         this.userNamespace.emit('newQuestion', question.format());
+    }
+
+    /**
+     * This function return the number of unique clients that connected to the debate
+     * @returns {Number} number of unique clients that connected to the debate
+     */
+    getNbUniqueClients() {
+        return Object.keys(this.clients).length;
     }
 
     // This section contains the different socket io functions
@@ -178,6 +200,18 @@ export class Debate {
             return;
         }
 
+        if (question.isOpenQuestion) {
+            logger.debug(`Question with id (${questionId}) is not an open question.`);
+            callback(false);
+            return;
+        }
+
+        if (this.clients[socket.uuid].answers[questionId] !== undefined) {
+            logger.debug(`Client with uuid (${socket.uuid}) already answered.`);
+            callback(false);
+            return;
+        }
+
         if (answerId >= question.answers.length) {
             logger.debug(`Question (${questionId}) with answer (${answerId}) invalid.`);
             callback(false);
@@ -202,6 +236,7 @@ export class Debate {
         // });
 
         logger.info(`Socket (${socket.id}) replied ${answerId} to question (${questionId}).`);
+        this.clients[socket.uuid].answers[questionId] = answerId;
 
         // Send the reply to the admin room.
         this.adminRoom.emit('questionAnswered', {questionId: questionId, answerId: answerId});
@@ -243,7 +278,15 @@ export class Debate {
             return;
         }
 
-        question.answers.push({answer: answer, uuid: socket.uuid});
+        if (this.clients[socket.uuid].answers[questionId] !== undefined) {
+            logger.debug(`Client with uuid (${socket.uuid}) already answered.`);
+            callback(false);
+            return;
+        }
+
+        let newLength = question.answers.push({answer: answer, uuid: socket.uuid});
+        this.clients[socket.uuid].answers[questionId] = newLength - 1;
+
         logger.info(`Socket (${socket.id}) replied (${answer}) to question (${questionId}).`);
         callback(true);
     };
