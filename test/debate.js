@@ -21,7 +21,7 @@ describe('Debate test', () => {
 
     describe("New debate", () => {
         before(() => {
-            admin = io.connect(`http://localhost:${SocketConfig.SOCKET_PORT}${SocketConfig.ADMIN_NAMESPACE}`, {
+            admin = io.connect(`http://localhost:${SocketConfig.SOCKET_PORT}${SocketConfig.PRIVILEGED_NAMESPACE}`, {
                 path: SocketConfig.DEFAULT_PATH,
                 forceNew: true,
                 query: {
@@ -64,7 +64,7 @@ describe('Debate test', () => {
         let id;
 
         before((done) => {
-            admin = io.connect(`http://localhost:${SocketConfig.SOCKET_PORT}${SocketConfig.ADMIN_NAMESPACE}`, {
+            admin = io.connect(`http://localhost:${SocketConfig.SOCKET_PORT}${SocketConfig.PRIVILEGED_NAMESPACE}`, {
                 path: SocketConfig.DEFAULT_PATH,
                 forceNew: true,
                 query: {
@@ -87,6 +87,9 @@ describe('Debate test', () => {
             client = io.connect(`http://localhost:${SocketConfig.SOCKET_PORT}${SocketConfig.DEBATE_NAMESPACE_PREFIX}${id}`, {
                 path: SocketConfig.DEFAULT_PATH,
                 forceNew: true,
+                query: {
+                    uuid: '2345675432'
+                }
             });
 
             client.on('connect', () => {
@@ -122,7 +125,7 @@ describe('Debate test', () => {
         let debate;
 
         before((done) => {
-            admin = io.connect(`http://localhost:${SocketConfig.SOCKET_PORT}${SocketConfig.ADMIN_NAMESPACE}`, {
+            admin = io.connect(`http://localhost:${SocketConfig.SOCKET_PORT}${SocketConfig.PRIVILEGED_NAMESPACE}`, {
                 path: SocketConfig.DEFAULT_PATH,
                 forceNew: true,
                 query: {
@@ -147,6 +150,9 @@ describe('Debate test', () => {
             client = io.connect(`http://localhost:${SocketConfig.SOCKET_PORT}${SocketConfig.DEBATE_NAMESPACE_PREFIX}${id}`, {
                 path: SocketConfig.DEFAULT_PATH,
                 forceNew: true,
+                query: {
+                    uuid: '2345675432'
+                }
             });
 
             client.on('connect', () => {
@@ -278,7 +284,7 @@ describe('Debate test', () => {
         let debate;
 
         before((done) => {
-            admin = io.connect(`http://localhost:${SocketConfig.SOCKET_PORT}${SocketConfig.ADMIN_NAMESPACE}`, {
+            admin = io.connect(`http://localhost:${SocketConfig.SOCKET_PORT}${SocketConfig.PRIVILEGED_NAMESPACE}`, {
                 path: SocketConfig.DEFAULT_PATH,
                 forceNew: true,
                 query: {
@@ -303,6 +309,9 @@ describe('Debate test', () => {
             client = io.connect(`http://localhost:${SocketConfig.SOCKET_PORT}${SocketConfig.DEBATE_NAMESPACE_PREFIX}${id}`, {
                 path: SocketConfig.DEFAULT_PATH,
                 forceNew: true,
+                query: {
+                    uuid: '2345675432'
+                }
             });
 
             client.on('connect', () => {
@@ -424,7 +433,7 @@ describe('Debate test', () => {
         let debate;
 
         before((done) => {
-            admin = io.connect(`http://localhost:${SocketConfig.SOCKET_PORT}${SocketConfig.ADMIN_NAMESPACE}`, {
+            admin = io.connect(`http://localhost:${SocketConfig.SOCKET_PORT}${SocketConfig.PRIVILEGED_NAMESPACE}`, {
                 path: SocketConfig.DEFAULT_PATH,
                 forceNew: true,
                 query: {
@@ -449,6 +458,9 @@ describe('Debate test', () => {
             client = io.connect(`http://localhost:${SocketConfig.SOCKET_PORT}${SocketConfig.DEBATE_NAMESPACE_PREFIX}${id}`, {
                 path: SocketConfig.DEFAULT_PATH,
                 forceNew: true,
+                query: {
+                    uuid: '2345675432'
+                }
             });
 
             client.on('connect', () => {
@@ -495,6 +507,7 @@ describe('Debate test', () => {
                         }
                     }, (err, response) => {
                         should.exist(response);
+                        should.not.exist(err);
                         done();
                     });
                 });

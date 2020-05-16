@@ -1,12 +1,13 @@
-import {logger, SocketConfig} from '../conf/config.js';
+import {logger, SocketConfig, DebateConfig} from '../conf/config.js';
 import {CustomNamespace} from './customnamespace.js'
 import {Debate} from "../debate/debate.js";
 import {dbManager} from "../database/DatabaseManager.js";
+import * as TypeCheck from '../utils/typecheck.js'
 
 /**
- * This class implements an AdminNamespace that extends a CustomNamespace
+ * This class implements an PrivilegedNamespace that extends a CustomNamespace
  */
-export class AdminNamespace extends CustomNamespace {
+export class PrivilegedNamespace extends CustomNamespace {
     io;
     activeDebates;
 
@@ -15,7 +16,7 @@ export class AdminNamespace extends CustomNamespace {
      * @param io Socket.io server
      */
     constructor(io) {
-        super(io.of(SocketConfig.ADMIN_NAMESPACE));
+        super(io.of(SocketConfig.PRIVILEGED_NAMESPACE));
         this.io = io;
         this.activeDebates = new Map();
     }
@@ -54,7 +55,7 @@ export class AdminNamespace extends CustomNamespace {
     getDebates = (socket) => (callback) => {
         logger.debug(`Get debate requested from ${socket.username}`);
 
-        if (!(callback instanceof Function)) {
+        if (!TypeCheck.isFunction(callback)) {
             logger.debug(`callback is not a function.`);
             return;
         }
@@ -77,12 +78,12 @@ export class AdminNamespace extends CustomNamespace {
     getDebateQuestions = (socket) => (debateId, callback) => {
         logger.info(`getDebateQuestions requested from ${socket.username}`);
 
-        if (!(callback instanceof Function)) {
+        if (!TypeCheck.isFunction(callback)) {
             logger.debug(`callback is not a function.`);
             return;
         }
 
-        if (debateId == null) {
+        if (!TypeCheck.isInteger(debateId)) {
             logger.debug('Invalid arguments for getQuestions.');
             callback(-1);
             return;
@@ -105,20 +106,19 @@ export class AdminNamespace extends CustomNamespace {
     newDebate = (socket) => async (newDebateObj, callback) => {
         logger.info(`New debate creation requested from ${socket.username}`);
 
-        if (!(callback instanceof Function)) {
+        if (!TypeCheck.isFunction(callback)) {
             logger.debug(`callback is not a function.`);
             return;
         }
 
         const title = newDebateObj.title;
         const description = newDebateObj.description;
-        if (!title || !description) {
+        if (!TypeCheck.isString(title, DebateConfig.MAX_TITLE_LENGTH) ||
+            !TypeCheck.isString(description, DebateConfig.MAX_DESCRIPTION_LENGTH)) {
             logger.debug('Invalid arguments for newDebate.');
             callback(-1);
             return;
         }
-
-        //TODO: Check title & description are valid strings
 
         // If this is the first debate, search the last debate in the database
         if (Debate.nb_debate === 0) {
@@ -183,7 +183,7 @@ export class AdminNamespace extends CustomNamespace {
     newQuestion = (socket) => async (newQuestionObj, callback) => {
         logger.debug(`newQuestion received from user (${socket.username}), id(${socket.id})`);
 
-        if (!(callback instanceof Function)) {
+        if (!TypeCheck.isFunction(callback)) {
             logger.debug(`callback is not a function.`);
             return;
         }
@@ -192,13 +192,12 @@ export class AdminNamespace extends CustomNamespace {
         const title = newQuestionObj.title;
         const answers = newQuestionObj.answers;
         // Check debateId, title, answers
-        if (!debateId || !title || !answers) {
+        if (!TypeCheck.isInteger(debateId) || !TypeCheck.isString(title) ||
+            !TypeCheck.isArrayOf(answers, TypeCheck.isString, DebateConfig.MAX_CLOSED_ANSWERS)) {
             logger.debug('Invalid arguments for newQuestion.');
             callback(-1);
             return;
         }
-
-        //TODO: Check title is string, answers are string
 
         const debate = this.getActiveDebate(debateId);
         if (debate == null) {
