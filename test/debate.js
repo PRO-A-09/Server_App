@@ -1,4 +1,4 @@
-import {SocketConfig} from '../src/conf/config.js'
+import {SocketConfig, logger} from '../src/conf/config.js'
 import {DebateManager} from "../src/debatemanager.js";
 import io from 'socket.io-client'
 import chai from 'chai';
@@ -33,7 +33,7 @@ describe('Debate test', () => {
 
         it("New debate creation", (done) => {
             let debateInfo = {
-                title: 'My new debate',
+                title: 'My first debate',
                 description: 'Test debate'
             };
 
@@ -41,6 +41,17 @@ describe('Debate test', () => {
                 debateID.should.above(1);
                 done();
             });
+        });
+
+        it("Close debate", async () => {
+            let idDebate = await dbManager.getLastDiscussionId();
+            admin.emit("closeDebate", idDebate, async (status) => {
+                status.should.equal(true);
+                let debate = await dbManager.getDiscussion(idDebate);
+                debate.hasOwnProperty('auditors').should.equal(true);
+                debate.hasOwnProperty('finishTime').should.equal(true);
+            });
+
         });
 
         after(() => {
@@ -101,7 +112,7 @@ describe('Debate test', () => {
         });
 
         after(() => {
-           admin.close();
+            admin.close();
         });
     });
 
@@ -489,7 +500,7 @@ describe('Debate test', () => {
                 });
             });
         });
-        
+
         afterEach(() => {
             client.close();
         });

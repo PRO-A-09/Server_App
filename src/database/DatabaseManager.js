@@ -216,12 +216,12 @@ export class DataBaseManager {
         });
         // Try to save the discussion in database
         await discussion1.save()
-              .then(discussionSaved => logger.debug(`Discussion saved ${discussionSaved}`))
-              .catch(err => {
-                            logger.debug(`Error when saving Disucssion`);
-                            console.log(err);
-                            saved = false
-              });
+            .then(discussionSaved => logger.debug(`Discussion saved ${discussionSaved}`))
+            .catch(err => {
+                logger.debug(`Error when saving Disucssion`);
+                console.log(err);
+                saved = false
+            });
         logger.debug(`saved = ${saved}`);
         // If the save function failed exit the function with false
         if(!saved){
@@ -241,13 +241,13 @@ export class DataBaseManager {
     /**
      * Update a discussion when the discussion is closed.
      * Save the finish time and the number of auditors.
-     * @param discussion object of the class Discussion
+     * @param aIdDiscussion integer that is the Id of the discussion to update
      * @returns {Promise<boolean>} true if the update in the database went well false otherwise
      */
-    async saveEndDiscussion(discussion){
-        if(discussion.id != null) {
+    async saveEndDiscussion(aIdDiscussion){
+        if(aIdDiscussion != null) {
             // Get the current state of the discussion in the database
-            let debate = await this.getDiscussion(discussion.id);
+            let debate = await this.getDiscussion(aIdDiscussion);
             // If debate is null the discussion does not exist in the database so we exit with error
             if(debate == null){
                 logger.alert(`Error when updating discussion. Discussion not found`);
@@ -261,13 +261,13 @@ export class DataBaseManager {
             let update = true;
             // Update the discussion in the database
             await debate.save()
-            .then(debateUpdated => {
-                logger.debug(`Discussion updated saved ${debateUpdated}`);
-            }).catch(err => {
-                logger.debug(`Error when updating discussion id = ${debate.id}`);
-                console.log(err);
-                update = false
-            });
+                .then(debateUpdated => {
+                    logger.debug(`Discussion updated saved ${debateUpdated}`);
+                }).catch(err => {
+                    logger.debug(`Error when updating discussion id = ${debate.id}`);
+                    console.log(err);
+                    update = false
+                });
             return update;
         }
         return false;

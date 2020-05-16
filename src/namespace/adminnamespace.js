@@ -71,27 +71,6 @@ export class AdminNamespace extends CustomNamespace {
     };
 
     /**
-     * Return the list of available debates to the callback function
-     */
-    closeDebate = (socket) => async (IdDiscussion, callback) => {
-        logger.debug(`Get debate requested from ${socket.username}`);
-
-        if (!(callback instanceof Function)) {
-            logger.debug(`callback is not a function.`);
-            return;
-        }
-
-        // Get the debate with the desired value
-        let debate = this.getActiveDebate(IdDiscussion);
-        // Delete debate from active debates
-        this.activeDebates.delete(IdDiscussion);
-
-        let update = dbManager.saveEndDiscussion(debate);
-
-        callback(update);
-    };
-
-    /**
      * Return the list of questions for a debate to the callback function
      * debateId contains the id of the debate
      */
@@ -166,6 +145,35 @@ export class AdminNamespace extends CustomNamespace {
 
         debate.startSocketHandling();
         callback(debate.debateID);
+    };
+
+    /**
+     * Return the true if the debate was closed correctly false otherwise in the callback function
+     */
+    closeDebate = (socket) => async (aIdDiscussion, callback) => {
+        logger.debug(`Close debate requested from ${socket.username}`);
+
+        if (!(callback instanceof Function)) {
+            logger.debug(`callback is not a function.`);
+            return;
+        }
+
+        // Get the debate with the desired id
+        let debate = this.getActiveDebate(aIdDiscussion);
+        logger.debug(`Debate given ${debate}`);
+        // If the debate does not exist it cannot be closed
+        if(debate == null){
+            callback(false);
+            return;
+        }
+        // Delete debate from active debates
+        this.activeDebates.delete(aIdDiscussion);
+        // Save in the database that the discussion is closed
+        let update = await dbManager.saveEndDiscussion(aIdDiscussion);
+
+        logger.debug(`result udpate: ${update}`);
+
+        callback(update);
     };
 
     /**

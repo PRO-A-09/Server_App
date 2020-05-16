@@ -180,17 +180,10 @@ describe('Data Base manager test', () => {
 
     describe('End a debate by saving it in database', () => {
         it('Saving end debate 2', (done) => {
-            class myDebate{
-                id;
-                constructor(id){
-                   this.id = id;
-                }
-            }
-            let debate = new myDebate(2);
-            db.saveEndDiscussion(debate).then(() => {
-                    let updatedDebate = db.getDiscussion(2);
-                    updatedDebate.auditeurs = 57;
-                    done();
+            db.saveEndDiscussion(2).then(() => {
+                let updatedDebate = db.getDiscussion(2);
+                updatedDebate.auditeurs = 57;
+                done();
             });
 
         });
