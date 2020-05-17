@@ -22,8 +22,8 @@ export class DebateManager {
         this.startWebServer();
         this.startSocketServer();
         this.startAdminNamespace();
-        dbManager.start();
 
+        await dbManager.start();
         await this.initializeDebates();
     }
 
@@ -89,15 +89,7 @@ export class DebateManager {
 
     async initializeDebates() {
         // Search the last debate in the database
-        await new Promise(resolve => setTimeout(resolve, 100));
-        await new Promise(resolve => {
-            dbManager.getLastDiscussionId()
-                .then(last_id => {
-                    logger.error(last_id);
-                    Debate.nb_debate = last_id;
-                    resolve();
-                });
-        });
+        Debate.nb_debate = await dbManager.getLastDiscussionId();
     }
 
     /**

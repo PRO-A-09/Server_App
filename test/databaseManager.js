@@ -14,7 +14,7 @@ describe('Data Base manager test', () => {
     const db = new DataBaseManager();
 
     before(async () => {
-        db.start();
+        await db.start();
         let user = null;
 
         const admin = new Administrator({
