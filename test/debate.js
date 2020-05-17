@@ -14,9 +14,9 @@ describe('Debate test', () => {
     let debateManager;
     let admin;
 
-    before(()  => {
+    before(async ()  => {
         debateManager = new DebateManager();
-        debateManager.start();
+        await debateManager.start();
     });
 
     describe("New debate", () => {

@@ -11,8 +11,8 @@ describe('Server connection test', () => {
     const debateManager = new DebateManager();
     const srvAddress = `http://localhost:${SocketConfig.SOCKET_PORT}`;
 
-    before(() => {
-        debateManager.start();
+    before(async () => {
+        await debateManager.start();
     });
 
     it('Server response body', (done) => {
