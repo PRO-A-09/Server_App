@@ -1,11 +1,11 @@
-import {SocketConfig} from '../src/conf/config.js'
-import {DebateManager} from "../src/debatemanager.js";
+import {SocketConfig} from '../../src/conf/config.js'
+import {DebateManager} from "../../src/debatemanager.js";
 import io from 'socket.io-client'
 import chai from 'chai';
-import {dbManager} from "../src/database/DatabaseManager.js";
-import {Discussion} from "../src/database/modele/Discussion.js";
-import {Question} from "../src/database/modele/Question.js";
-import {Response} from "../src/database/modele/Response.js";
+import {dbManager} from "../../src/database/DatabaseManager.js";
+import {Discussion} from "../../src/database/modele/Discussion.js";
+import {Question} from "../../src/database/modele/Question.js";
+import {Response} from "../../src/database/modele/Response.js";
 
 const expect = chai.expect;
 const should = chai.should();
@@ -17,95 +17,6 @@ describe('Debate test', () => {
     before(async ()  => {
         debateManager = new DebateManager();
         await debateManager.start();
-    });
-
-    describe("New debate", () => {
-        before(() => {
-            admin = io.connect(`http://localhost:${SocketConfig.SOCKET_PORT}${SocketConfig.PRIVILEGED_NAMESPACE}`, {
-                path: SocketConfig.DEFAULT_PATH,
-                forceNew: true,
-                query: {
-                    password: `${SocketConfig.ADMIN_PASSWORD}`,
-                    username: `admin`
-                }
-            });
-        });
-
-        it("New debate creation", (done) => {
-            let debateInfo = {
-                title: 'My new debate',
-                description: 'Test debate'
-            };
-
-            admin.emit("newDebate", debateInfo, (debateID) => {
-                debateID.should.above(1);
-                done();
-            });
-        });
-
-        after(() => {
-            admin.close();
-        });
-    });
-
-    describe("Debate client connection", () => {
-        let client;
-        let id;
-
-        before((done) => {
-            admin = io.connect(`http://localhost:${SocketConfig.SOCKET_PORT}${SocketConfig.PRIVILEGED_NAMESPACE}`, {
-                path: SocketConfig.DEFAULT_PATH,
-                forceNew: true,
-                query: {
-                    password: `${SocketConfig.ADMIN_PASSWORD}`,
-                    username: `admin`
-                }
-            });
-
-            let debateInfo = {
-                title: 'My new debate',
-                description: 'Test debate'
-            };
-            admin.emit("newDebate", debateInfo, (debateID) => {
-                id = debateID;
-                done();
-            });
-        });
-
-        beforeEach((done) => {
-            client = io.connect(`http://localhost:${SocketConfig.SOCKET_PORT}${SocketConfig.DEBATE_NAMESPACE_PREFIX}${id}`, {
-                path: SocketConfig.DEFAULT_PATH,
-                forceNew: true,
-                query: {
-                    uuid: '2345675432'
-                }
-            });
-
-            client.on('connect', () => {
-                done();
-            });
-        });
-
-        it('connection', (done) => {
-            client.connected.should.equal(true);
-            client.disconnected.should.equal(false);
-            done();
-        });
-
-        it('disconnect', (done) => {
-            client.disconnect();
-            client.disconnected.should.equal(true);
-            client.connected.should.equal(false);
-            done();
-        });
-
-        afterEach(() => {
-            client.close();
-        });
-
-        after(() => {
-           admin.close();
-        });
     });
 
     describe("Debate client functions", () => {

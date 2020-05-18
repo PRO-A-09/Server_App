@@ -1,5 +1,5 @@
-import {SocketConfig, ErrorMessage} from '../src/conf/config.js'
-import {DebateManager} from "../src/debatemanager.js";
+import {SocketConfig, ErrorMessage} from '../../src/conf/config.js'
+import {DebateManager} from "../../src/debatemanager.js";
 import io from 'socket.io-client'
 import request from 'request'
 import chai from 'chai';
