@@ -113,8 +113,37 @@ export class DataBaseManager {
         });
     }
 
-    // TODO : Get all accepted question
-    // TODO : Get all not yet accepted question
+    /**
+     * Get all the questions proposed by users and accepted by admin during a discussion
+     * @param anIdDiscussion integer that represents the id of the discussion related to questions that we want
+     * @returns {Promise<*>} an array of Questions or undefined if no questions with the id of the discussion passed are found
+     */
+    async getAcceptedQuestionsSuggestion(anIdDiscussion){
+        logger.debug(`Getting the Question in the debate ${anIdDiscussion}`);
+        // Get the discussions related to the id
+        return QuestionSuggestion.find({"id.refDiscussion": anIdDiscussion, approved: true}, function (err, questions) {
+            if (err || questions == null) logger.debug(`Error when requesting question : No questions were found`);
+            else {
+                logger.debug(questions);
+            }
+        });
+    }
+
+    /**
+     * Get all the questions proposed by users but that are not yet accepted
+     * @param anIdDiscussion integer that represents the id of the discussion related to questions that we want
+     * @returns {Promise<*>} an array of Questions or undefined if no questions with the id of the discussion passed are found
+     */
+    async getUnacceptedQuestionsSuggestion(anIdDiscussion){
+        logger.debug(`Getting the Question in the debate ${anIdDiscussion}`);
+        // Get the discussions related to the id
+        return QuestionSuggestion.find({"id.refDiscussion": anIdDiscussion, approved: undefined}, function (err, questions) {
+            if (err || questions == null) logger.debug(`Error when requesting question : No questions were found`);
+            else {
+                logger.debug(questions);
+            }
+        });
+    }
 
     /**
      * Get all the discussions started by an administrator
@@ -517,7 +546,41 @@ export class DataBaseManager {
         return saved;
     }
 
-    // TODO : Remove Question from DB if not accepted
+    /**
+     * Set the question as approved in the database
+     * @param aQuestionId integer that is the id of the question that has been approved
+     * @param aDiscussionId integer that is the id of teh discussion related to the question
+     * @returns {Promise<boolean>} true if the update went well false otherwise
+     */
+    async removeQuestionSuggestion(aQuestionId, aDiscussionId){
+        let questionUser = await this.getUserQuestion(aQuestionId, aDiscussionId);
+
+        if(questionUser == null){
+            logger.debug(`Error when removing question. Question not found`);
+            return false;
+        }
+        let remove = false;
+        // Remove the question in the database
+        remove = await Question.findOneAndDelete({id: aQuestionId, refDiscussion: aDiscussionId}, function (removed) {
+            if(removed == null){
+                logger.debug(`Question removed`);
+            }else{
+                logger.debug(`Problem removing the question`);
+            }
+        });
+        if(remove != null){
+            return false;
+        }
+        remove = await QuestionSuggestion.findOneAndDelete({"id.refQuestion": aQuestionId, "id.refDiscussion": aDiscussionId}, function (removed) {
+            if(removed == null || err){
+                logger.debug(`Question Suggestion removed ${removed}`);
+            }else{
+                logger.debug(`Problem removing the question suggestion`);
+            }
+        });
+        return remove == null;
+
+    }
 }
 
 export const dbManager = new DataBaseManager();

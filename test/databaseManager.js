@@ -263,9 +263,14 @@ describe('Data Base manager test', () => {
                 }
             }
             let question = new myQuestion(3, "My user question is good?");
+            let question2 = new myQuestion(4, "My user question is not good right?");
             db.saveQuestionUser(question, 1).then((statusSave) => {
-                if(statusSave){
-                    done();
+                if(statusSave) {
+                    db.saveQuestionUser(question2, 1).then((statusSave) => {
+                        if (statusSave) {
+                            done();
+                        }
+                    });
                 }
             });
 
@@ -276,6 +281,45 @@ describe('Data Base manager test', () => {
         it('Saving approved Question', (done) => {
             db.saveApprovedQuestion(3, 1).then((statusSave) => {
                 if(statusSave){
+                    done();
+                }
+            });
+
+        });
+    });
+
+    describe('Get questions that as been approved by admin', () => {
+        it('Getting approved Question', (done) => {
+            db.getAcceptedQuestionsSuggestion( 1).then((questions) => {
+                questions.length.should.above(0);
+                for(let question of questions){
+                    question.id.refDiscussion.should.equal(1);
+                    question.approved.should.equal(true);
+                }
+                done();
+            });
+
+        });
+    });
+
+    describe('Get questions that as not yet been approved by admin', () => {
+        it('Getting unapproved Question', (done) => {
+            db.getUnacceptedQuestionsSuggestion( 1).then((questions) => {
+                questions.length.should.above(0);
+                for(let question of questions){
+                    question.id.refDiscussion.should.equal(1);
+                    (question.approved === undefined).should.be.true;
+                }
+                done();
+            });
+
+        });
+    });
+
+    describe('Remove question unaccepted', () => {
+        it('Remove unapproved Question', (done) => {
+            db.removeQuestionSuggestion( 2, 1).then((remove) => {
+                if(remove) {
                     done();
                 }
             });
