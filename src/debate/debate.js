@@ -249,7 +249,7 @@ export class Debate {
         this.clients[socket.uuid].answers[questionId] = answerId;
 
         // Send the reply to the admin room.
-        this.adminRoom.emit('questionAnswered', {questionId: questionId, answerId: answerId});
+        this.adminRoom.emit('questionAnswered', {debateId: this.debateID, questionId: questionId, answerId: answerId});
         callback(true);
     };
 
