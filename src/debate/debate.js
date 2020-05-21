@@ -112,7 +112,22 @@ export class Debate {
      * Register a new question to the debate and transmit it to the clients.
      * @param question object from the nested class Question
      */
-    sendNewQuestion(question) {
+    async sendNewQuestion(question) {
+        //TODO: - Control if await slows down the app
+        //      - If it slows down the app, remove it and modify tests
+        //          (currently only pass with await otherwise they are executed too quickly)
+        await dbManager.saveQuestion(question, this.debateID)
+            .then(res => {
+                if (res === true) {
+                    logger.info('Question saved to db');
+                } else {
+                    logger.warn('Cannot save question to db');
+                }
+            })
+            .catch(res => {
+                logger.error(`saveQuestion threw : ${res}.`)
+            });
+
         logger.debug(`Sending new question with id ${question.id}`);
         this.questions.set(question.id, question);
         this.userNamespace.emit('newQuestion', question.format());
@@ -169,20 +184,22 @@ export class Debate {
             return;
         }
 
-        //TODO: - Control if await slows down the app
-        //      - If it slows down the app, remove it and modify tests
-        //          (currently only pass with await otherwise they are executed too quickly)
-        await dbManager.saveResponse(answerId, question.getAnswer(answerId), questionId, this.debateID)
-        .then(res => {
-            if (res === true) {
-                logger.info('Response saved to db');
-            } else {
-                logger.warn('Cannot save response to db');
-            }
-        })
-        .catch(res => {
-            logger.error(`saveResponse threw : ${res}.`)
-        });
+        // Not necessary to store response here - we need to store the device instead.
+        // Will do later once uuid is implemented.
+        // //TODO: - Control if await slows down the app
+        // //      - If it slows down the app, remove it and modify tests
+        // //          (currently only pass with await otherwise they are executed too quickly)
+        // await dbManager.saveResponse(answerId, question.getAnswer(answerId), questionId, this.debateID)
+        // .then(res => {
+        //     if (res === true) {
+        //         logger.info('Response saved to db');
+        //     } else {
+        //         logger.warn('Cannot save response to db');
+        //     }
+        // })
+        // .catch(res => {
+        //     logger.error(`saveResponse threw : ${res}.`)
+        // });
 
         logger.info(`Socket (${socket.id}) replied ${answerId} to question (${questionId}).`);
 

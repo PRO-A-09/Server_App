@@ -148,7 +148,7 @@ export class PrivilegedNamespace extends CustomNamespace {
 
     /**
      * Add a new question to the specified debate
-     * newQuestionObj contains the required information (debateId, title, answers)
+     * newQuestionObj contains the required information (debateId, title, answers, (optional) isOpenQuestion)
      */
     newQuestion = (socket) => async (newQuestionObj, callback) => {
         logger.debug(`newQuestion received from user (${socket.username}), id(${socket.id})`);
@@ -160,7 +160,16 @@ export class PrivilegedNamespace extends CustomNamespace {
 
         const debateId = newQuestionObj.debateId;
         const title = newQuestionObj.title;
-        const answers = newQuestionObj.answers;
+        let answers = newQuestionObj.answers;
+        let isOpenQuestion = newQuestionObj.isOpenQuestion;
+
+        // Check if this is an open question, if this is an open question, ignore answers
+        if (!TypeCheck.isBoolean(isOpenQuestion)) {
+            isOpenQuestion = false;
+        } else if (isOpenQuestion === true) {
+            answers = [];
+        }
+
         // Check debateId, title, answers
         if (!TypeCheck.isInteger(debateId) || !TypeCheck.isString(title) ||
             !TypeCheck.isArrayOf(answers, TypeCheck.isString, DebateConfig.MAX_CLOSED_ANSWERS)) {
@@ -176,24 +185,9 @@ export class PrivilegedNamespace extends CustomNamespace {
             return;
         }
 
-        const question = new debate.Question(title, answers);
+        const question = new debate.Question(title, answers, isOpenQuestion);
 
-        //TODO: - Control if await slows down the app
-        //      - If it slows down the app, remove it and modify tests
-        //          (currently only pass with await otherwise they are executed too quickly)
-        await dbManager.saveQuestion(question, debateId)
-            .then(res => {
-                if (res === true) {
-                    logger.info('Question saved to db');
-                } else {
-                    logger.warn('Cannot save question to db');
-                }
-            })
-            .catch(res => {
-                logger.error(`saveQuestion threw : ${res}.`)
-            });
-
-        debate.sendNewQuestion(question);
+        await debate.sendNewQuestion(question);
         callback(question.id);
     };
 }
