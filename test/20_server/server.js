@@ -1,5 +1,5 @@
-import {SocketConfig, ErrorMessage} from '../src/conf/config.js'
-import {DebateManager} from "../src/debatemanager.js";
+import {SocketConfig, ErrorMessage} from '../../src/conf/config.js'
+import {DebateManager} from "../../src/debatemanager.js";
 import io from 'socket.io-client'
 import request from 'request'
 import chai from 'chai';
@@ -11,8 +11,8 @@ describe('Server connection test', () => {
     const debateManager = new DebateManager();
     const srvAddress = `http://localhost:${SocketConfig.SOCKET_PORT}`;
 
-    before(() => {
-        debateManager.start();
+    before(async () => {
+        await debateManager.start();
     });
 
     it('Server response body', (done) => {
