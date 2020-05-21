@@ -120,14 +120,6 @@ export class PrivilegedNamespace extends CustomNamespace {
             return;
         }
 
-        // If this is the first debate, search the last debate in the database
-        if (Debate.nb_debate === 0) {
-            await dbManager.getLastDiscussionId()
-                .then(last_id => {
-                    Debate.nb_debate = last_id;
-                });
-        }
-
         // Create and start a new debate
         const debate = new Debate(title, description, socket, this.io, this.nsp);
         this.activeDebates.set(debate.debateID, debate);

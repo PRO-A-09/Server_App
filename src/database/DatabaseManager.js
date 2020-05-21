@@ -16,9 +16,19 @@ export class DataBaseManager {
     /**
      * Start the DataBaseManager by connecting to the mongoDB instance
      */
-    start() {
+    async start() {
         // Connection to the local database
-        mongoose.connect('mongodb://localhost:27017/PRO', {useNewUrlParser: true, useUnifiedTopology: true});
+        try {
+            await mongoose.connect('mongodb://localhost:27017/PRO', {
+                useNewUrlParser: true,
+                useUnifiedTopology: true
+            });
+            logger.info('Mongodb connection started');
+        } catch (err) {
+            logger.error(`Mongodb connection error : ${err.code}. Stack trace : ${err.stack}`);
+            throw(err);
+        }
+
         mongoose.set('useCreateIndex', true);
     }
 
