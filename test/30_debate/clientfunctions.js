@@ -63,6 +63,17 @@ describe("Debate client functions", () => {
         });
     });
 
+    describe('getDebateDetails', () => {
+        it('should send id, title and description', (done) => {
+            client.emit('getDebateDetails', (details) => {
+                details.debateId.should.equal(id);
+                details.title.should.equal('My new debate');
+                details.description.should.equal('Test debate');
+                done();
+            });
+        });
+    });
+
     describe('getQuestions', () => {
         it('should send empty array', (done) => {
             client.emit('getQuestions', (questions) => {
