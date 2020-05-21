@@ -1,11 +1,11 @@
-import {DataBaseManager} from "../src/database/DatabaseManager.js"
+import {DataBaseManager} from "../../src/database/DatabaseManager.js"
 import chai from 'chai';
-import {Administrator} from "../src/database/modele/Users.js";
-import {Discussion} from "../src/database/modele/Discussion.js";
-import {Question} from "../src/database/modele/Question.js";
-import {Device} from "../src/database/modele/Device.js";
-import {Response} from "../src/database/modele/Response.js";
-import {logger} from "../src/conf/config.js";
+import {Administrator} from "../../src/database/modele/Users.js";
+import {Discussion} from "../../src/database/modele/Discussion.js";
+import {Question} from "../../src/database/modele/Question.js";
+import {Device} from "../../src/database/modele/Device.js";
+import {Response} from "../../src/database/modele/Response.js";
+import {logger} from "../../src/conf/config.js";
 
 const expect = chai.expect;
 const should = chai.should();
@@ -14,7 +14,7 @@ describe('Data Base manager test', () => {
     const db = new DataBaseManager();
 
     before(async () => {
-        db.start();
+        await db.start();
         let user = null;
 
         const admin = new Administrator({
@@ -31,6 +31,7 @@ describe('Data Base manager test', () => {
             title: "Debate1",
             description: "My First Debate",
             startTime: new Date(),
+            auditors: 50,
             administrator: user._id
         });
         await discussion1.save().then((discussionSaved) => {
@@ -42,6 +43,7 @@ describe('Data Base manager test', () => {
             title: "Debate2",
             description: "My Second Debate",
             startTime: new Date(),
+            auditors: 0,
             administrator: user._id
         });
         await discussion2.save().then((discussionSaved) => {
@@ -173,6 +175,17 @@ describe('Data Base manager test', () => {
                     id.should.equal(2);
                     done();
                 });
+        });
+    });
+
+    describe('End a debate by saving it in database', () => {
+        it('Saving end debate 2', (done) => {
+            db.saveEndDiscussion(2).then(() => {
+                let updatedDebate = db.getDiscussion(2);
+                updatedDebate.auditeurs = 57;
+                done();
+            });
+
         });
     });
 

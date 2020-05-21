@@ -1,5 +1,5 @@
-import {SocketConfig, ErrorMessage} from '../src/conf/config.js'
-import {DebateManager} from "../src/debatemanager.js";
+import {SocketConfig, ErrorMessage} from '../../src/conf/config.js'
+import {DebateManager} from "../../src/debatemanager.js";
 import io from 'socket.io-client'
 import request from 'request'
 import chai from 'chai';
@@ -11,8 +11,8 @@ describe('Server connection test', () => {
     const debateManager = new DebateManager();
     const srvAddress = `http://localhost:${SocketConfig.SOCKET_PORT}`;
 
-    before(() => {
-        debateManager.start();
+    before(async () => {
+        await debateManager.start();
     });
 
     it('Server response body', (done) => {
@@ -56,7 +56,7 @@ describe('Server connection test', () => {
         let client;
 
         beforeEach(() => {
-            client = io.connect(`http://localhost:${SocketConfig.SOCKET_PORT}${SocketConfig.ADMIN_NAMESPACE}`, {
+            client = io.connect(`http://localhost:${SocketConfig.SOCKET_PORT}${SocketConfig.PRIVILEGED_NAMESPACE}`, {
                 path: SocketConfig.DEFAULT_PATH,
                 forceNew: true,
                 query: {
@@ -90,7 +90,7 @@ describe('Server connection test', () => {
         let client;
 
         beforeEach(() => {
-            client = io.connect(`http://localhost:${SocketConfig.SOCKET_PORT}${SocketConfig.ADMIN_NAMESPACE}`, {
+            client = io.connect(`http://localhost:${SocketConfig.SOCKET_PORT}${SocketConfig.PRIVILEGED_NAMESPACE}`, {
                 path: SocketConfig.DEFAULT_PATH,
                 forceNew: true,
                 query: {
@@ -102,7 +102,7 @@ describe('Server connection test', () => {
 
         it('Socket.io connection test', (done) => {
             client.on('error', (err) => {
-                err.should.equal(ErrorMessage.ADMIN_PASSWORD_INVALID);
+                err.should.equal(ErrorMessage.LOGIN_PASSWORD_INVALID);
                 done();
             })
         });

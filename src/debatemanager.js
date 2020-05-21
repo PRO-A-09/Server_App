@@ -1,10 +1,11 @@
 import {SocketConfig, logger} from './conf/config.js'
-import {AdminNamespace} from './namespace/adminnamespace.js';
-import {AdminMiddleware} from './adminmiddleware.js';
+import {PrivilegedNamespace} from './namespace/privilegednamespace.js';
+import {LoginMiddleware} from './middleware/loginmiddleware.js';
 import http from 'http'
 import http_terminator from 'http-terminator';
 import Server from 'socket.io'
 import {dbManager} from "./database/DatabaseManager.js";
+import {Debate} from "./debate/debate.js";
 
 /**
  * This class is used to manage the debate server.
@@ -17,11 +18,13 @@ export class DebateManager {
     /**
      * Start the DebateManager
      */
-    start() {
+    async start() {
         this.startWebServer();
         this.startSocketServer();
         this.startAdminNamespace();
-        dbManager.start();
+
+        await dbManager.start();
+        await this.initializeDebates();
     }
 
     /**
@@ -74,14 +77,19 @@ export class DebateManager {
     }
 
     /**
-     * Creates a new AdminNamespace and registers our middleware.
+     * Creates a new Privilegednamespace and registers our middleware.
      */
     startAdminNamespace() {
-        this.nspAdmin = new AdminNamespace(this.io);
-        const adminMiddleware = new AdminMiddleware();
+        this.nspAdmin = new PrivilegedNamespace(this.io);
+        const adminMiddleware = new LoginMiddleware();
 
         this.nspAdmin.registerMiddleware(adminMiddleware.middlewareFunction);
         this.nspAdmin.startSocketHandling();
+    }
+
+    async initializeDebates() {
+        // Search the last debate in the database
+        Debate.nb_debate = await dbManager.getLastDiscussionId();
     }
 
     /**
