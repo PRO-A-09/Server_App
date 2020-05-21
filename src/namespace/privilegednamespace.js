@@ -156,6 +156,7 @@ export class PrivilegedNamespace extends CustomNamespace {
         // If the debate does not exist it cannot be closed
         if(debate == null){
             callback(false);
+            logger.debug(`No active debate with the id ${aIdDiscussion} was found`);
             return;
         }
         // Delete debate from active debates
@@ -163,7 +164,7 @@ export class PrivilegedNamespace extends CustomNamespace {
         // Save in the database that the discussion is closed
         let update = await dbManager.saveEndDiscussion(aIdDiscussion);
 
-        logger.debug(`result udpate: ${update}`);
+        logger.debug(`result update: ${update}`);
 
         callback(update);
     };
