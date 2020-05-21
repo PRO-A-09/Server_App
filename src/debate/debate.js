@@ -258,7 +258,7 @@ export class Debate {
      * questionAnswer contains questionId and the answer
      * callback is a function that takes true on success, otherwise false.
      */
-    answerOpenQuestion = (socket) => (questionAnswer, callback) => {
+    answerOpenQuestion = (socket) => async (questionAnswer, callback) => {
         logger.debug(`answerOpenQuestion received from ${socket.id}`);
 
         if (!TypeCheck.isFunction(callback)) {
@@ -295,7 +295,23 @@ export class Debate {
         }
 
         let newLength = question.answers.push({answer: answer, uuid: socket.uuid});
-        this.clients[socket.uuid].answers[questionId] = newLength - 1;
+        let responseId = newLength - 1;
+        this.clients[socket.uuid].answers[questionId] = responseId;
+
+        //TODO: - Control if await slows down the app
+        //      - If it slows down the app, remove it and modify tests
+        //          (currently only pass with await otherwise they are executed too quickly)
+        await dbManager.saveResponse(responseId, answer, questionId, this.debateID, socket.uuid)
+            .then(res => {
+                if (res === true) {
+                    logger.info('Response saved to db');
+                } else {
+                    logger.warn('Response to db');
+                }
+            })
+            .catch(res => {
+                logger.error(`saveResponse threw : ${res}.`)
+            });
 
         logger.info(`Socket (${socket.id}) replied (${answer}) to question (${questionId}).`);
         callback(true);

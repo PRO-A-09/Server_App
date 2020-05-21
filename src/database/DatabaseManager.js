@@ -359,9 +359,10 @@ export class DataBaseManager {
      * @param response the response that need to be saved
      * @param questionId integer that is the id of the question related to the response
      * @param discussionId integer that is the id of the discussion related to the response
+     * @param uuid (optional) the uuid of the device that responded
      * @returns {Promise<boolean>} true if save went well false otherwise
      */
-    async saveResponse(responseId, response, questionId, discussionId){
+    async saveResponse(responseId, response, questionId, discussionId, uuid){
         let saved = true;
         const responseSave = new Response({
             id: responseId,
@@ -371,6 +372,12 @@ export class DataBaseManager {
                 refDiscussion: discussionId
             }
         });
+
+        if (uuid) {
+            logger.debug(`Saving device (${uuid}) to response id = ${responseId}`);
+            responseSave.devices.push({refDevice: uuid});
+        }
+
         // Save the response in database
         await responseSave.save()
             .then(responseSaved => logger.debug(`Response saved ${responseSaved}`))
