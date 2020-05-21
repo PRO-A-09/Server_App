@@ -119,6 +119,87 @@ describe('Debate test', () => {
         });
     });
 
+    describe("Debate class functions", () => {
+        let debate;
+        let id;
+        before(() => {
+            admin = io.connect(`http://localhost:${SocketConfig.SOCKET_PORT}${SocketConfig.PRIVILEGED_NAMESPACE}`, {
+                path: SocketConfig.DEFAULT_PATH,
+                forceNew: true,
+                query: {
+                    password: `${SocketConfig.ADMIN_PASSWORD}`,
+                    username: `admin`
+                }
+            });
+        });
+
+        beforeEach((done) => {
+            let debateInfo = {
+                title: 'My new debate',
+                description: 'Test debate'
+            };
+            admin.emit("newDebate", debateInfo, (debateID) => {
+                id = debateID;
+                debate = debateManager.nspAdmin.getActiveDebate(id);
+                done();
+            });
+        });
+
+        describe('getNbUniqueClients', () => {
+            it('3 unique clients', async () => {
+                const NB_CLIENTS = 3;
+                let clients = [];
+                for (let i = 0; i < NB_CLIENTS; ++i) {
+                    clients[i] = io.connect(`http://localhost:${SocketConfig.SOCKET_PORT}${SocketConfig.DEBATE_NAMESPACE_PREFIX}${id}`, {
+                        path: SocketConfig.DEFAULT_PATH,
+                        forceNew: true,
+                        query: {
+                            uuid: `${1000 + i}`
+                        }
+                    });
+
+                    await new Promise(resolve => {
+                        clients[i].on('connect', resolve);
+                    });
+                }
+
+                debate.getNbUniqueClients().should.equal(NB_CLIENTS);
+
+                for (let i = 0; i < NB_CLIENTS; ++i) {
+                    clients[i].close();
+                }
+            });
+
+            it('3 identical clients', async () => {
+                const NB_CLIENTS = 3;
+                let clients = [];
+                for (let i = 0; i < NB_CLIENTS; ++i) {
+                    clients[i] = io.connect(`http://localhost:${SocketConfig.SOCKET_PORT}${SocketConfig.DEBATE_NAMESPACE_PREFIX}${id}`, {
+                        path: SocketConfig.DEFAULT_PATH,
+                        forceNew: true,
+                        query: {
+                            uuid: '1000'
+                        }
+                    });
+
+                    await new Promise(resolve => {
+                        clients[i].on('connect', resolve);
+                    });
+                }
+
+                debate.getNbUniqueClients().should.equal(1);
+
+                for (let i = 0; i < NB_CLIENTS; ++i) {
+                    clients[i].close();
+                }
+            });
+        });
+
+        after(() => {
+            admin.close();
+        });
+    });
+
     describe("Debate client functions", () => {
         let client;
         let id;
@@ -168,18 +249,20 @@ describe('Debate test', () => {
                 });
             });
 
-            it('available questions', (done) => {
+            it('available questions', async () => {
                 const NB_QUESTIONS = 3;
                 for (let i = 0; i < NB_QUESTIONS; ++i)
-                    debate.sendNewQuestion(new debate.Question(`Question${i}`, ['...']));
+                    await debate.sendNewQuestion(new debate.Question(`Question${i}`, ['...']));
 
-                client.emit('getQuestions', (questions) => {
-                    questions.length.should.equal(NB_QUESTIONS);
-                    for (let i = 0; i < questions.length; ++i)
-                        questions[i].title.should.equal(`Question${i}`);
+                return new Promise(resolve => {
+                    client.emit('getQuestions', (questions) => {
+                        questions.length.should.equal(NB_QUESTIONS);
+                        for (let i = 0; i < questions.length; ++i)
+                            questions[i].title.should.equal(`Question${i}`);
 
-                    done();
-                })
+                        resolve();
+                    });
+                });
             });
         });
 
@@ -197,10 +280,39 @@ describe('Debate test', () => {
         });
 
         describe('answerQuestion', () => {
-            it('valid response', (done) => {
+            it('valid answer', (done) => {
                 client.on('newQuestion', (questionObj) => {
                     client.emit('answerQuestion', {questionId : questionObj.id, answerId : 0}, (res) => {
                         res.should.equal(true);
+                        done();
+                    });
+                });
+
+                debate.sendNewQuestion(new debate.Question('Does this test work ?', ['Yes', 'No']));
+            });
+
+            it('on open question', (done) => {
+                client.on('newQuestion', (questionObj) => {
+                    client.emit('answerQuestion', {questionId : questionObj.id, answerId : 0}, (res) => {
+                        res.should.equal(false);
+                        done();
+                    });
+                });
+
+                debate.sendNewQuestion(new debate.Question('Does this test work ?', null, true));
+            });
+
+            it('should not answer twice', (done) => {
+                client.on('newQuestion', async (questionObj) => {
+                    await new Promise(resolve => {
+                        client.emit('answerQuestion', {questionId: questionObj.id, answerId: 0}, (res) => {
+                            res.should.equal(true);
+                            resolve();
+                        });
+                    });
+
+                    client.emit('answerQuestion', {questionId: questionObj.id, answerId: 0}, (res) => {
+                        res.should.equal(false);
                         done();
                     });
                 });
@@ -239,6 +351,35 @@ describe('Debate test', () => {
 
                         let question = debate.questions.get(questionObj.id);
                         question.answers[0].answer.should.equal('Hopefully, yes');
+                        done();
+                    });
+                });
+
+                debate.sendNewQuestion(new debate.Question('Does this test work ?', null, true));
+            });
+
+            it('on closed question', (done) => {
+                client.on('newQuestion', (questionObj) => {
+                    client.emit('answerOpenQuestion', {questionId : questionObj.id, answer : 'Hopefully, yes'}, (res) => {
+                        res.should.equal(false);
+                        done();
+                    });
+                });
+
+                debate.sendNewQuestion(new debate.Question('Does this test work ?', ['Yes', 'No']));
+            });
+
+            it('invalid answering twice', (done) => {
+                client.on('newQuestion', async (questionObj) => {
+                    await new Promise(resolve => {
+                        client.emit('answerOpenQuestion', {questionId : questionObj.id, answer : 'Hopefully, yes'}, (res) => {
+                            res.should.equal(true);
+                            resolve();
+                        });
+                    });
+
+                    client.emit('answerOpenQuestion', {questionId : questionObj.id, answer : 'Hopefully, yes'}, (res) => {
+                        res.should.equal(false);
                         done();
                     });
                 });
@@ -345,6 +486,19 @@ describe('Debate test', () => {
                     debateId: id,
                     title: 'Does this test work ?',
                     answers: ['Yes', 'No']
+                };
+
+                admin.emit('newQuestion', newQuestionObj, (questionId) => {
+                    questionId.should.not.equal(-1);
+                    done();
+                });
+            });
+
+            it('open question', (done) => {
+                let newQuestionObj = {
+                    debateId: id,
+                    title: 'Does this test work ?',
+                    isOpenQuestion: true
                 };
 
                 admin.emit('newQuestion', newQuestionObj, (questionId) => {
