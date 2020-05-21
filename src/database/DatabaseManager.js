@@ -225,7 +225,7 @@ export class DataBaseManager {
      */
     async saveDiscussion(discussion){
         // Show the Disucssion that will be saved
-        console.log(discussion);
+        logger.debug(`Discussion : ${discussion}`);
         let saved = true;
         // Search for the admin id of the discussion
         let idAdmin = await this.getAdminId(discussion.admin);
@@ -253,7 +253,7 @@ export class DataBaseManager {
               .then(discussionSaved => logger.debug(`Discussion saved ${discussionSaved}`))
               .catch(err => {
                             logger.debug(`Error when saving Disucssion`);
-                            console.log(err);
+                            logger.debug(err);
                             saved = false
               });
         logger.debug(`saved = ${saved}`);
@@ -326,7 +326,7 @@ export class DataBaseManager {
             .then(questionSaved => logger.debug(`Question saved ${questionSaved}`))
             .catch(err => {
                 logger.debug(`Error when saving Question id = ${question.id}`);
-                console.log(err);
+                logger.debug(err);
                 saved = false;
             });
         // If the save went wrong we exit the function and return false;
@@ -366,7 +366,7 @@ export class DataBaseManager {
             .then(responseSaved => logger.debug(`Response saved ${responseSaved}`))
             .catch(err => {
                 logger.debug(`Error when saving Response id = ${responseId}`);
-                console.log(err);
+                logger.debug(err);
                 saved = false;
             });
         return saved;
