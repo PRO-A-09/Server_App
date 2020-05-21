@@ -119,12 +119,6 @@ describe("Debate database storage test", () => {
     });
 
     it('should save device to question response', (done) => {
-        let newQuestionObj = {
-            debateId: id,
-            title: 'Does this test work ?',
-            answers: ['Yes', 'No']
-        };
-
         client.on('newQuestion', (questionObj) => {
             client.emit('answerQuestion', {questionId : questionObj.id, answerId : 0}, (res) => {
                 Response.findOne({
@@ -144,6 +138,28 @@ describe("Debate database storage test", () => {
         });
 
         debate.sendNewQuestion(new debate.Question('Does this test work ?', ['Yes', 'No']));
+    });
+
+    it('should save open question response', (done) => {
+        client.on('newQuestion', (questionObj) => {
+            client.emit('answerOpenQuestion', {questionId: questionObj.id, answer: 'Hopefully yes!'}, (res) => {
+                Response.findOne({
+                    response: 'Hopefully yes!',
+                    refQuestion: {
+                        refQuestion: questionObj.id,
+                        refDiscussion: id
+                    }
+                }, (err, response) => {
+                    should.exist(response);
+                    should.not.exist(err);
+
+                    response.devices.some(d => d.refDevice === uuid).should.equal(true);
+                    done();
+                });
+            });
+        });
+
+        debate.sendNewQuestion(new debate.Question('Does this test work ?', null, true));
     });
 
     afterEach(() => {
