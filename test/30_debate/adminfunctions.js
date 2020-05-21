@@ -2,10 +2,6 @@ import {SocketConfig} from '../../src/conf/config.js'
 import {DebateManager} from "../../src/debatemanager.js";
 import io from 'socket.io-client'
 import chai from 'chai';
-import {dbManager} from "../../src/database/DatabaseManager.js";
-import {Discussion} from "../../src/database/modele/Discussion.js";
-import {Question} from "../../src/database/modele/Question.js";
-import {Response} from "../../src/database/modele/Response.js";
 
 const expect = chai.expect;
 const should = chai.should();
