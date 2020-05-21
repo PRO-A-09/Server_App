@@ -48,13 +48,14 @@ export class DataBaseManager {
     async getAdminPassword(username){
         let password = null;
         logger.debug(`Getting the password of the user ${username}`);
-        let user = await Administrator.findOne({login:username},function(err,username) {
-            if (err || username == null) logger.debug(`Impossible to find username`);
-            else{
+        let user = await Administrator.findOne({login: username}, function (err,username) {
+            if (err || username == null) {
+                logger.debug(`Impossible to find username`);
+            } else {
                 logger.debug(`User found: ${username}`);
             }
         });
-        if(user != null){
+        if (user != null){
             password = user.password;
         }
         return password;
@@ -68,11 +69,36 @@ export class DataBaseManager {
     async getAdminId(username){
         let id = null;
         logger.debug(`Getting the id of the user ${username}`);
-        await Administrator.findOne({login:username},function(err,username) {
-            if (err || username == null) logger.debug(`Impossible to find username`);
-            else id = username._id;
+        let user = await Administrator.findOne({login: username}, function (err,username) {
+            if (err || username == null) {
+                logger.debug(`Impossible to find username`);
+            } else {
+                logger.debug(`User found: ${username}`);
+            }
         });
+        logger.info(user);
+        if (user != null) {
+            id = user._id;
+        }
+        logger.info(id);
         return id;
+    }
+
+    /**
+     * Get a discussion stored in the database with the corresponding id
+     * @param anIdDiscussion integer that reprents the id of the discussion desires
+     * @returns {Promise<Query|void>} A Discussion or null if not found
+     */
+    async getDiscussion(anIdDiscussion){
+        logger.debug(`Getting the Discussions with id ${anIdDiscussion}`);
+        // Get the discussions related to the id
+        return Discussion.findOne({_id: anIdDiscussion}, function (err, discussion) {
+            if (err || discussion == null) {
+                logger.debug(`Error when requesting discussion`);
+            } else {
+                console.log(discussion);
+            }
+        });
     }
 
     /**
@@ -85,16 +111,45 @@ export class DataBaseManager {
         // Get the id of the username passed in parameter
         let adminId = await this.getAdminId(username);
         // If the adminId is null the username is unknown
-        if(adminId == null){
+        if (adminId == null) {
             logger.debug(`Error when looking for username id`);
-        }
-        else {
+        } else {
             logger.debug(`Getting the Discussions from ${username}`);
             // Get all the discussions related to the user
             discussions = await Discussion.find({administrator: adminId}, function (err, discussions) {
-                if (err || discussions == null) logger.debug(`Error when requesting discussions`);
-                else{
-                    logger.debug(discussions);
+                if (err || discussions == null) {
+                    logger.debug(`Error when requesting discussions`);
+                } else {
+                    console.log(discussions);
+                }
+            });
+        }
+        return discussions;
+    }
+
+    // TODO: Test for the function will do it in the next PR
+    /**
+     * Get the closed discussions of an administrator
+     * @param username String that is the username of the administrator
+     * @returns a Array of Discussion that represents the discussions started by an user
+     */
+    async getClosedDiscussionsAdmin(username){
+        let discussions = null;
+        // Get the id of the username passed in parameter
+        let adminId = await this.getAdminId(username);
+        // If the adminId is null the username is unknown
+        if (adminId == null) {
+            logger.debug(`Error when looking for username id`);
+        } else {
+            logger.debug(`Getting the Discussions from ${username}`);
+            // Get all the discussions related to the user
+            discussions = await Discussion.find({administrator: adminId, finishTime: {$exists: true}}, function (err, discussions) {
+                if (err) {
+                    logger.debug(`Error when requesting discussions`);
+                } else if (discussions == null) {
+                    logger.debug(`No debates were found`);
+                } else {
+                    console.log(discussions);
                 }
             });
         }
@@ -109,15 +164,15 @@ export class DataBaseManager {
     async getQuestionsDiscussion(anIDDebate){
         let questions = null;
         // If id is null error
-        if(anIDDebate == null){
+        if (anIDDebate == null) {
             logger.debug(`Error Debate ID cannot be null`);
-        }
-        else {
+        } else {
             logger.debug(`Getting the Questions from discussions ${anIDDebate}`);
             // Get all the questions from the DB from the desired debate
             questions = await Question.find({refDiscussion: anIDDebate}, function (err, questions) {
-                if (err || questions == null) logger.debug(`Error when requesting questions`);
-                else{
+                if (err || questions == null) {
+                    logger.debug(`Error when requesting questions`);
+                } else {
                     logger.debug(questions);
                 }
             });
@@ -133,15 +188,15 @@ export class DataBaseManager {
     async getResponsesDevice(aUUID){
         let responses = null;
         // If id is null error
-        if(aUUID == null){
+        if (aUUID == null) {
             logger.debug(`Error UUID cannot be null`);
-        }
-        else {
+        } else {
             logger.debug(`Getting the Responses from Device ${aUUID}`);
             // Get all the responses from the DB from the desired device
             responses = await Response.find({"devices.refDevice": aUUID}, function (err, responses) {
-                if (err || responses == null) logger.debug(`Error when requesting responses`);
-                else{
+                if (err || responses == null) {
+                    logger.debug(`Error when requesting responses`);
+                } else {
                     logger.debug(responses);
                 }
             });
@@ -157,15 +212,15 @@ export class DataBaseManager {
     async getResponsesQuestion(aIDQuestion){
         let responses = null;
         // If id is null error
-        if(aIDQuestion == null){
+        if (aIDQuestion == null) {
             logger.debug(`Error Question ID cannot be null`);
-        }
-        else {
+        } else {
             logger.debug(`Getting the Responses from Question ${aIDQuestion}`);
             // Get all the responses from the DB from the desired device
             responses = await Response.find({refQuestion: aIDQuestion}, function (err, responses) {
-                if (err || responses == null) logger.debug(`Error when requesting responses`);
-                else{
+                if (err || responses == null) {
+                    logger.debug(`Error when requesting responses`);
+                } else {
                     logger.debug(responses);
                 }
             });
@@ -184,7 +239,7 @@ export class DataBaseManager {
         let saved = true;
         // Search for the admin id of the discussion
         let idAdmin = await this.getAdminId(discussion.admin);
-        if(idAdmin == null){
+        if (idAdmin == null) {
             logger.debug(`Error when looking for username id`);
             return false;
         }
@@ -200,6 +255,7 @@ export class DataBaseManager {
             title: discussion.title,
             description: discussion.description,
             startTime: new Date(),
+            auditors: 0,
             administrator: idAdmin
         });
         // Try to save the discussion in database
@@ -212,23 +268,53 @@ export class DataBaseManager {
               });
         logger.debug(`saved = ${saved}`);
         // If the save function failed exit the function with false
-        if(!saved){
+        if (!saved) {
             return saved;
         }
         // Save all the questions related to the discussion
         for(let key of discussion.questions.keys()){
             let savedState = await this.saveQuestion(discussion.questions.get(key), discussion.debateID);
             // If one of the questions fail to save exit the function with false
-            if(!savedState){
+            if (!savedState) {
                 return false;
             }
         }
-
-        // Add finishTime to the discussion not implemented yet
-        /* discussion1.finishTime = new Date();
-        await discussion1.save(); */
-
         return saved;
+    }
+
+    /**
+     * Update a discussion when the discussion is closed.
+     * Save the finish time and the number of auditors.
+     * @param discussion object of the class Discussion
+     * @returns {Promise<boolean>} true if the update in the database went well false otherwise
+     */
+    async saveEndDiscussion(discussion){
+        if (discussion.id != null) {
+            // Get the current state of the discussion in the database
+            let debate = await this.getDiscussion(discussion.id);
+            // If debate is null the discussion does not exist in the database so we exit with error
+            if (debate == null) {
+                logger.alert(`Error when updating discussion. Discussion not found`);
+                return false;
+            }
+            logger.debug(`Updating discussion : ${debate}`);
+            // Update the field finishTime and auditors
+            debate.finishTime = new Date();
+            // Will be changed by an attribute in the debate class
+            debate.auditors = 57;
+            let update = true;
+            // Update the discussion in the database
+            await debate.save()
+            .then(debateUpdated => {
+                logger.debug(`Discussion updated saved ${debateUpdated}`);
+            }).catch(err => {
+                logger.debug(`Error when updating discussion id = ${debate.id}`);
+                console.log(err);
+                update = false
+            });
+            return update;
+        }
+        return false;
     }
 
     /**
@@ -254,17 +340,16 @@ export class DataBaseManager {
                 saved = false;
             });
         // If the save went wrong we exit the function and return false;
-        if(!saved){
+        if (!saved) {
             return false;
         }
         // Save all the responses related to the question
         for (let i = 0; i < question.answers.length; ++i) {
             let savedState = await this.saveResponse(i, question.answers[i].answer, question.id, idDiscussion);
-            if(!savedState){
+            if (!savedState) {
                 return false;
             }
         }
-
         return saved;
     }
 
@@ -294,7 +379,6 @@ export class DataBaseManager {
                 logger.debug(err);
                 saved = false;
             });
-
         return saved;
     }
 

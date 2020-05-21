@@ -201,7 +201,7 @@ export class Debate {
         }
 
         if (question.isOpenQuestion) {
-            logger.debug(`Question with id (${questionId}) is not an open question.`);
+            logger.debug(`Question with id (${questionId}) is an open question and not a closed question.`);
             callback(false);
             return;
         }
