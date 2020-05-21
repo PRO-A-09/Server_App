@@ -32,6 +32,10 @@ const DiscussionSchema = new mongoose.Schema({
     finishTime: {
         type: Date
     },
+    auditors: {
+        type: Number,
+        required: true
+    },
     //Multiple participants can be part of a discussion so declaration of an array
     participants: [{
         refParticipant: {

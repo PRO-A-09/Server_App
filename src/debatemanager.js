@@ -5,6 +5,7 @@ import http from 'http'
 import http_terminator from 'http-terminator';
 import Server from 'socket.io'
 import {dbManager} from "./database/DatabaseManager.js";
+import {Debate} from "./debate/debate.js";
 
 /**
  * This class is used to manage the debate server.
@@ -17,11 +18,13 @@ export class DebateManager {
     /**
      * Start the DebateManager
      */
-    start() {
+    async start() {
         this.startWebServer();
         this.startSocketServer();
         this.startAdminNamespace();
-        dbManager.start();
+
+        await dbManager.start();
+        await this.initializeDebates();
     }
 
     /**
@@ -82,6 +85,11 @@ export class DebateManager {
 
         this.nspAdmin.registerMiddleware(adminMiddleware.middlewareFunction);
         this.nspAdmin.startSocketHandling();
+    }
+
+    async initializeDebates() {
+        // Search the last debate in the database
+        Debate.nb_debate = await dbManager.getLastDiscussionId();
     }
 
     /**
