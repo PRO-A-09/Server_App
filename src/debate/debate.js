@@ -310,8 +310,7 @@ export class Debate {
             return;
         }
 
-        // TODO: Remove ternary once uuid is set in middleware
-        this.suggestedQuestions.set(socket.uuid ? socket.uuid : 1, question);
+        this.suggestedQuestions.set(socket.uuid, question);
         this.adminRoom.emit('questionSuggested', {
             question: question,
             uuid: socket.uuid
