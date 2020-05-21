@@ -84,7 +84,7 @@ describe("Debate admin functions", () => {
     });
 
     describe('newQuestion', () => {
-        it('should return questionId', (done) => {
+        it('should return questionId with closed question', (done) => {
             let newQuestionObj = {
                 debateId: id,
                 title: 'Does this test work ?',
@@ -96,6 +96,20 @@ describe("Debate admin functions", () => {
                 done();
             });
         });
+
+        it('should return questionId with open question', (done) => {
+            let newQuestionObj = {
+                debateId: id,
+                title: 'Does this test work ?',
+                isOpenQuestion: true
+            };
+
+            admin.emit('newQuestion', newQuestionObj, (questionId) => {
+                questionId.should.not.equal(-1);
+                done();
+            });
+        });
+
 
         it('should not work with invalid object', (done) => {
             let newQuestionObj = {
