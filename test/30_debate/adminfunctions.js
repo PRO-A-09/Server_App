@@ -2,6 +2,7 @@ import {SocketConfig} from '../../src/conf/config.js'
 import {DebateManager} from "../../src/debatemanager.js";
 import io from 'socket.io-client'
 import chai from 'chai';
+import {dbManager} from "../../src/database/DatabaseManager.js";
 
 const expect = chai.expect;
 const should = chai.should();
@@ -168,6 +169,18 @@ describe("Debate admin functions", () => {
             admin.emit('getDebateQuestions', -1, (res) => {
                 res.should.equal(-1);
                 done();
+            });
+        });
+    });
+
+    describe("closeDebate", () =>{
+        it("Close debate", async () => {
+            let idDebate = await dbManager.getLastDiscussionId();
+            admin.emit("closeDebate", idDebate, async (status) => {
+                status.should.equal(true);
+                let debate = await dbManager.getDiscussion(idDebate);
+                debate.hasOwnProperty('auditors').should.equal(true);
+                debate.hasOwnProperty('finishTime').should.equal(true);
             });
         });
     });

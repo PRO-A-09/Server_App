@@ -32,6 +32,7 @@ export class PrivilegedNamespace extends CustomNamespace {
             socket.on('getDebates', this.getDebates(socket));
             socket.on('getDebateQuestions', this.getDebateQuestions(socket));
             socket.on('newDebate', this.newDebate(socket));
+            socket.on('closeDebate', this.closeDebate(socket));
             socket.on('newQuestion', this.newQuestion(socket));
         });
     }
@@ -136,6 +137,36 @@ export class PrivilegedNamespace extends CustomNamespace {
 
         debate.startSocketHandling();
         callback(debate.debateID);
+    };
+
+    /**
+     * Return the true if the debate was closed correctly false otherwise in the callback function
+     */
+    closeDebate = (socket) => async (aIdDiscussion, callback) => {
+        logger.debug(`Close debate requested from ${socket.username}`);
+
+        if (!(callback instanceof Function)) {
+            logger.debug(`callback is not a function.`);
+            return;
+        }
+
+        // Get the debate with the desired id
+        let debate = this.getActiveDebate(aIdDiscussion);
+        logger.debug(`Debate given ${debate}`);
+        // If the debate does not exist it cannot be closed
+        if(debate == null){
+            callback(false);
+            logger.debug(`No active debate with the id ${aIdDiscussion} was found`);
+            return;
+        }
+        // Delete debate from active debates
+        this.activeDebates.delete(aIdDiscussion);
+        // Save in the database that the discussion is closed
+        let update = await dbManager.saveEndDiscussion(aIdDiscussion);
+
+        logger.debug(`result update: ${update}`);
+
+        callback(update);
     };
 
     /**
