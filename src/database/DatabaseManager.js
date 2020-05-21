@@ -559,9 +559,8 @@ export class DataBaseManager {
             logger.debug(`Error when removing question. Question not found`);
             return false;
         }
-        let remove = false;
         // Remove the question in the database
-        remove = await Question.findOneAndDelete({id: aQuestionId, refDiscussion: aDiscussionId}, function (removed) {
+        let remove = await Question.findOneAndDelete({id: aQuestionId, refDiscussion: aDiscussionId}, function (removed) {
             if(removed == null){
                 logger.debug(`Question removed`);
             }else{
