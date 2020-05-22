@@ -1,10 +1,11 @@
 import {SocketConfig, logger} from './conf/config.js'
 import {PrivilegedNamespace} from './namespace/privilegednamespace.js';
-import {LoginMiddleware} from './loginmiddleware.js';
+import {LoginMiddleware} from './middleware/loginmiddleware.js';
 import http from 'http'
 import http_terminator from 'http-terminator';
 import Server from 'socket.io'
 import {dbManager} from "./database/DatabaseManager.js";
+import {Debate} from "./debate/debate.js";
 
 /**
  * This class is used to manage the debate server.
@@ -17,11 +18,13 @@ export class DebateManager {
     /**
      * Start the DebateManager
      */
-    start() {
+    async start() {
         this.startWebServer();
         this.startSocketServer();
         this.startAdminNamespace();
-        dbManager.start();
+
+        await dbManager.start();
+        await this.initializeDebates();
     }
 
     /**
@@ -34,6 +37,14 @@ export class DebateManager {
         this.webServer = http.createServer((req, res) => {
             res.write('Socket.io server');
             res.end();
+        });
+
+        this.webServer.on('error', (e) => {
+            logger.error(`Web server error : ${e.code}. Stack trace : ${e.stack}`);
+            if (e.code === 'EADDRINUSE') {
+                logger.error('Forcefully exiting application...');
+                process.exit(-1);
+            }
         });
 
         // Listen on the specified port
@@ -52,8 +63,12 @@ export class DebateManager {
         });
 
         // Setup handlers
-        this.io.on('connect', (socket) => {
+        this.io.on('connection', (socket) => {
             logger.debug(`New socket (${socket.id}) connected to server`);
+
+            socket.on('error', (error) => {
+                logger.warn(`Socket error from (${socket.id}): ${error}`);
+            });
 
             socket.on('disconnect', (reason) => {
                 logger.debug(`Socket (${socket.id}) disconnected`);
@@ -70,6 +85,11 @@ export class DebateManager {
 
         this.nspAdmin.registerMiddleware(adminMiddleware.middlewareFunction);
         this.nspAdmin.startSocketHandling();
+    }
+
+    async initializeDebates() {
+        // Search the last debate in the database
+        Debate.nb_debate = await dbManager.getLastDiscussionId();
     }
 
     /**
