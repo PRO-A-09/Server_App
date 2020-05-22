@@ -129,11 +129,11 @@ export class DataBaseManager {
      * @returns {Promise<*>} an array of Questions or undefined if no questions with the id of the discussion passed are found
      */
     async getAcceptedQuestionsSuggestion(anIdDiscussion){
-        logger.debug(`Getting the Question in the debate ${anIdDiscussion}`);
+        logger.debug(`Getting the Question accepted by the admin of the debate ${anIdDiscussion}`);
         // Get the discussions related to the id
         return QuestionSuggestion.find({"id.refDiscussion": anIdDiscussion, approved: true}, function (err, questions) {
             if (err || questions == null) {
-                logger.debug(`Error when requesting question : No questions were found`);
+                logger.debug(`Error when requesting accepted question : No questions were found`);
             } else {
                 logger.debug(questions);
             }
@@ -146,11 +146,11 @@ export class DataBaseManager {
      * @returns {Promise<*>} an array of Questions or undefined if no questions with the id of the discussion passed are found
      */
     async getNotYetAcceptedQuestionsSuggestion(anIdDiscussion){
-        logger.debug(`Getting the Question in the debate ${anIdDiscussion}`);
+        logger.debug(`Getting the Question not yet accepted by the admin of the debate ${anIdDiscussion}`);
         // Get the discussions related to the id and the approved status
         return QuestionSuggestion.find({"id.refDiscussion": anIdDiscussion, approved: undefined}, function (err, questions) {
             if (err || questions == null) {
-                logger.debug(`Error when requesting question : No questions were found`);
+                logger.debug(`Error when requesting not yet accepted question : No questions were found`);
             } else {
                 logger.debug(questions);
             }
@@ -413,7 +413,7 @@ export class DataBaseManager {
                 logger.debug(err);
                 saved = false;
             });
-        // If the save went wrong we exit the function and return false;
+        // If the save went wrong we exit the function and return false
         if (!saved) {
             return false;
         }
@@ -461,10 +461,6 @@ export class DataBaseManager {
                 console.log(err);
                 saved = false;
             });
-        // If the save went wrong we exit the function and return false
-        if(!saved){
-            return false;
-        }
         return saved;
     }
 
@@ -496,10 +492,7 @@ export class DataBaseManager {
                 console.log(err);
                 saved = false;
             });
-        // If the save went wrong we exit the function and return false;
-        if(!saved){
-            return false;
-        }
+        // If the save went wrong we exit the function and return false
         return saved;
     }
 
@@ -509,7 +502,7 @@ export class DataBaseManager {
      * @param aDiscussionId integer that is the id of teh discussion related to the question
      * @returns {Promise<boolean>} true if the update went well false otherwise
      */
-    async saveApprovedQuestion(aQuestionId, aDiscussionId){
+    async approveQuestion(aQuestionId, aDiscussionId){
         let questionUser = await this.getUserQuestion(aQuestionId, aDiscussionId);
 
         if(questionUser == null){
@@ -538,9 +531,10 @@ export class DataBaseManager {
      * @param aResponse the response that need to be saved
      * @param aQuestionId integer that is the id of the question related to the response
      * @param aDiscussionId integer that is the id of the discussion related to the response
+     * @param aUuid (optional) the uuid of the device that responded
      * @returns {Promise<boolean>} true if save went well false otherwise
      */
-    async saveResponse(aResponseId, aResponse, aQuestionId, aDiscussionId){
+    async saveResponse(aResponseId, aResponse, aQuestionId, aDiscussionId, aUuid){
         let saved = true;
         const responseSave = new Response({
             id: aResponseId,
@@ -550,6 +544,12 @@ export class DataBaseManager {
                 refDiscussion: aDiscussionId
             }
         });
+
+        if (aUuid) {
+            logger.debug(`Saving device (${aUuid}) to response id = ${aResponseId}`);
+            responseSave.devices.push({refDevice: aUuid});
+        }
+
         // Save the response in database
         await responseSave.save()
             .then(responseSaved => logger.debug(`Response saved ${responseSaved}`))
@@ -561,13 +561,70 @@ export class DataBaseManager {
         return saved;
     }
 
+    async saveResponseDevice(uuid, responseId, questionId, discussionId){
+        let responseObj = {
+            id: responseId,
+            refQuestion: {
+                refQuestion: questionId,
+                refDiscussion: discussionId
+            }
+        };
+
+        let response = await Response.findOne(responseObj);
+        if (response == null) {
+            logger.debug(`Response not found id = ${responseId}`)
+            return false;
+        }
+
+        let saved = true;
+        response.devices.push({refDevice: uuid});
+        await response.save()
+            .then(responseSaved => {
+                logger.debug(`Device (${uuid}) added to response id = ${responseId}`)
+            })
+            .catch(err => {
+                logger.debug(`Error when adding device (${uuid}) to response id = ${responseId}`);
+                logger.debug(err);
+                saved = false;
+            });
+
+        return saved;
+    }
+
+    /**
+     * Try to save a device to the database.
+     * @param uuid {String} represents the UUID of the device
+     * @returns {Promise<boolean>} true if the save worked or the device already exists, false otherwise
+     */
+    async trySaveDevice(uuid){
+        let saved = true;
+        const deviceSave = new Device({
+           _id: uuid
+        });
+
+        await deviceSave.save()
+            .then(deviceSaved => logger.debug(`Device saved ${deviceSaved}`))
+            .catch(err => {
+                if (err.name === 'MongoError' && err.code === 11000) {
+                    logger.debug('Device already exists');
+                    saved = true;
+                } else {
+                    logger.debug(`Error when saving device uuid = ${uuid}`);
+                    logger.debug(err);
+                    saved = false;
+                }
+            });
+
+        return saved;
+    }
+
     /**
      * Remove a question unapproved by the admin from the database
      * @param aQuestionId integer that is the id of the question that has been approved
      * @param aDiscussionId integer that is the id of teh discussion related to the question
      * @returns {Promise<boolean>} true if the remove went well false otherwise
      */
-    async removeQuestionSuggestion(aQuestionId, aDiscussionId){
+    async unapproveQuestion(aQuestionId, aDiscussionId){
         let questionUser = await this.getUserQuestion(aQuestionId, aDiscussionId);
 
         // If the question was not found in the database error
