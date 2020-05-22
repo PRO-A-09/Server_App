@@ -8,7 +8,6 @@ const should = chai.should();
 
 const SERVER_ADDRESS = `http://localhost:${SocketConfig.SOCKET_PORT}`;
 const PRIVILEGED_NAMESPACE = `${SERVER_ADDRESS}${SocketConfig.PRIVILEGED_NAMESPACE}`;
-const DEBATE_NAMESPACE = `${SERVER_ADDRESS}${SocketConfig.DEBATE_NAMESPACE_PREFIX}`;
 
 describe('Statistic functions test', () => {
     let debateManager;
