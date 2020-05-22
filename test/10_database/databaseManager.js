@@ -272,7 +272,7 @@ describe('Data Base manager test', () => {
 
     describe('Save a question that as been approved by admin', () => {
         it('Saving approved Question', (done) => {
-            db.saveApprovedQuestion(3, 1).then((statusSave) => {
+            db.approveQuestion(3, 1).then((statusSave) => {
                 if(statusSave){
                     done();
                 }
@@ -283,7 +283,7 @@ describe('Data Base manager test', () => {
 
     describe('Get questions that as been approved by admin', () => {
         it('Getting approved Question', (done) => {
-            db.getAcceptedQuestionsSuggestion( 1).then((questions) => {
+            db.getAcceptedQuestionsSuggestion(1).then((questions) => {
                 questions.length.should.above(0);
                 for(let question of questions){
                     question.id.refDiscussion.should.equal(1);
@@ -297,7 +297,7 @@ describe('Data Base manager test', () => {
 
     describe('Get questions that as not yet been approved by admin', () => {
         it('Getting unapproved Question', (done) => {
-            db.getNotYetAcceptedQuestionsSuggestion( 1).then((questions) => {
+            db.getNotYetAcceptedQuestionsSuggestion(1).then((questions) => {
                 questions.length.should.above(0);
                 for(let question of questions){
                     question.id.refDiscussion.should.equal(1);
@@ -311,7 +311,7 @@ describe('Data Base manager test', () => {
 
     describe('Remove question unaccepted', () => {
         it('Remove unapproved Question', (done) => {
-            db.removeQuestionSuggestion( 2, 1).then((remove) => {
+            db.unapproveQuestion(2, 1).then((remove) => {
                 if(remove) {
                     done();
                 }

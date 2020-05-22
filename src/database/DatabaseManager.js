@@ -133,11 +133,11 @@ export class DataBaseManager {
      * @returns {Promise<*>} an array of Questions or undefined if no questions with the id of the discussion passed are found
      */
     async getAcceptedQuestionsSuggestion(anIdDiscussion){
-        logger.debug(`Getting the Question in the debate ${anIdDiscussion}`);
+        logger.debug(`Getting the Question accepted by the admin of the debate ${anIdDiscussion}`);
         // Get the discussions related to the id
         return QuestionSuggestion.find({"id.refDiscussion": anIdDiscussion, approved: true}, function (err, questions) {
             if (err || questions == null) {
-                logger.debug(`Error when requesting question : No questions were found`);
+                logger.debug(`Error when requesting accepted question : No questions were found`);
             } else {
                 logger.debug(questions);
             }
@@ -150,11 +150,11 @@ export class DataBaseManager {
      * @returns {Promise<*>} an array of Questions or undefined if no questions with the id of the discussion passed are found
      */
     async getNotYetAcceptedQuestionsSuggestion(anIdDiscussion){
-        logger.debug(`Getting the Question in the debate ${anIdDiscussion}`);
+        logger.debug(`Getting the Question not yet accepted by the admin of the debate ${anIdDiscussion}`);
         // Get the discussions related to the id and the approved status
         return QuestionSuggestion.find({"id.refDiscussion": anIdDiscussion, approved: undefined}, function (err, questions) {
             if (err || questions == null) {
-                logger.debug(`Error when requesting question : No questions were found`);
+                logger.debug(`Error when requesting not yet accepted question : No questions were found`);
             } else {
                 logger.debug(questions);
             }
@@ -416,7 +416,7 @@ export class DataBaseManager {
                 logger.debug(err);
                 saved = false;
             });
-        // If the save went wrong we exit the function and return false;
+        // If the save went wrong we exit the function and return false
         if (!saved) {
             return false;
         }
@@ -464,10 +464,6 @@ export class DataBaseManager {
                 console.log(err);
                 saved = false;
             });
-        // If the save went wrong we exit the function and return false
-        if(!saved){
-            return false;
-        }
         return saved;
     }
 
@@ -499,10 +495,7 @@ export class DataBaseManager {
                 console.log(err);
                 saved = false;
             });
-        // If the save went wrong we exit the function and return false;
-        if(!saved){
-            return false;
-        }
+        // If the save went wrong we exit the function and return false
         return saved;
     }
 
@@ -512,7 +505,7 @@ export class DataBaseManager {
      * @param aDiscussionId integer that is the id of teh discussion related to the question
      * @returns {Promise<boolean>} true if the update went well false otherwise
      */
-    async saveApprovedQuestion(aQuestionId, aDiscussionId){
+    async approveQuestion(aQuestionId, aDiscussionId){
         let questionUser = await this.getUserQuestion(aQuestionId, aDiscussionId);
 
         if(questionUser == null){
@@ -570,7 +563,7 @@ export class DataBaseManager {
      * @param aDiscussionId integer that is the id of teh discussion related to the question
      * @returns {Promise<boolean>} true if the remove went well false otherwise
      */
-    async removeQuestionSuggestion(aQuestionId, aDiscussionId){
+    async unapproveQuestion(aQuestionId, aDiscussionId){
         let questionUser = await this.getUserQuestion(aQuestionId, aDiscussionId);
 
         // If the question was not found in the database error
