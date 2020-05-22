@@ -306,7 +306,7 @@ export class Debate {
                 if (res === true) {
                     logger.info('Response saved to db');
                 } else {
-                    logger.warn('Response to db');
+                    logger.warn('Cannot save response to db');
                 }
             })
             .catch(res => {
