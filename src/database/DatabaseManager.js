@@ -6,6 +6,7 @@
 * Description: Implement all the functions that have an interaction with the database
 */
 import mongoose from 'mongoose';
+import {Device} from './modele/Device.js';
 import {Discussion} from './modele/Discussion.js';
 import {Question} from './modele/Question.js';
 import {Response} from './modele/Response.js';
@@ -572,14 +573,14 @@ export class DataBaseManager {
 
         let response = await Response.findOne(responseObj);
         if (response == null) {
-            logger.debug(`Response not found id = ${responseId}`)
+            logger.debug(`Response not found id = ${responseId}`);
             return false;
         }
 
         let saved = true;
         response.devices.push({refDevice: uuid});
         await response.save()
-            .then(responseSaved => {
+            .then(() => {
                 logger.debug(`Device (${uuid}) added to response id = ${responseId}`)
             })
             .catch(err => {
