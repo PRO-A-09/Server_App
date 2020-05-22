@@ -32,7 +32,7 @@ const DiscussionSchema = new mongoose.Schema({
     finishTime: {
         type: Date
     },
-    auditeurs: {
+    auditors: {
         type: Number,
         required: true
     },
