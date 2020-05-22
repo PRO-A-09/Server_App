@@ -8,17 +8,25 @@ import {ClientBlacklistMiddleware} from "../middleware/clientblacklistmiddleware
  */
 export class Debate {
     static nb_debate = 0;
+
+    // Debate information
     debateID;
-    adminRoomName;
-    adminRoom;
-    userNamespace;
     title;
     description;
+
+    // Admin information
+    adminRoomName;
+    adminRoom;
+    admin;
+
+    // User information
+    userNamespace;
+    clients;
+
+    // User data
     questions;
     approvedSuggestedQuestions;
     suggestedQuestions;
-    admin;
-    clients;
 
     /**
      * Nested class Question that contains the question of the debate
@@ -79,18 +87,21 @@ export class Debate {
      * @param adminNamespace admin namespace to create the room communicate with the admins
      */
     constructor(title, description, ownerSocket, io, adminNamespace) {
+        // Initialize detailts
         this.title = title;
         this.description = description;
-        this.questions = new Map();
-        this.suggestedQuestions = new Map();
-        this.approvedSuggestedQuestions = new Map();
         this.debateID = ++Debate.nb_debate;
+
+        // Initialize data
+        this.clients = [];
+        this.questions = new Map();
+        this.suggestedQuestions = [];
+        this.approvedSuggestedQuestions = [];
+
+        // Initialize admin settings
         this.adminRoomName = SocketConfig.ADMIN_ROOM_PREFIX + this.debateID;
         this.adminRoom = adminNamespace.to(this.adminRoomName);
         this.admin = ownerSocket.username;
-        this.clients = [];
-        //For local tests
-        //this.admin = "admin";
 
         // Join the admin room
         ownerSocket.join(this.adminRoomName);
@@ -115,7 +126,8 @@ export class Debate {
                 // Store the socket and initialize attributes
                 this.clients[socket.uuid] = {
                     socket: socket,
-                    answers: []
+                    answers: [],
+                    suggestions: new Set()
                 };
             }
 
@@ -296,7 +308,7 @@ export class Debate {
         callback(true);
     };
 
-    suggestQuestion = (socket) => (question, callback) => {
+    suggestQuestion = (socket) => (suggestion, callback) => {
         logger.debug(`suggestQuestion received from ${socket.id}`);
 
         if (!TypeCheck.isFunction(callback)) {
@@ -304,19 +316,28 @@ export class Debate {
             return;
         }
 
-        if (!TypeCheck.isString(question, DebateConfig.MAX_QUESTION_LENGTH)) {
+        if (!TypeCheck.isString(suggestion, DebateConfig.MAX_QUESTION_LENGTH)) {
             logger.debug('Invalid arguments for suggestQuestion.');
             callback(false);
             return;
         }
 
-        this.suggestedQuestions.set(socket.uuid, question);
-        this.adminRoom.emit('questionSuggested', {
-            question: question,
+        let size = this.suggestedQuestions.push({
+            question: suggestion,
             uuid: socket.uuid
         });
+        let suggestionId = size - 1;
 
-        logger.info(`Socket (${socket.id}) suggested (${question}).`);
+        socket.suggestions.add(suggestionId);
+
+        // TODO: - Send suggestion to moderator
+        // this.adminRoom.emit('questionSuggested', {
+        //     suggestionId: suggestionId,
+        //     question: suggestion,
+        //     uuid: socket.uuid
+        // });
+
+        logger.info(`Socket (${socket.id}) suggested (${suggestion}).`);
         callback(true);
     };
 }
