@@ -128,6 +128,7 @@ export class Debate {
             }
 
             // Register socket functions
+            socket.on('getDebateDetails', this.getDebateDetails(socket));
             socket.on('getQuestions', this.getQuestions(socket));
             socket.on('answerQuestion', this.answerQuestion(socket));
             socket.on('answerOpenQuestion', this.answerOpenQuestion(socket));
@@ -168,6 +169,27 @@ export class Debate {
     }
 
     // This section contains the different socket io functions
+
+    /**
+     * Return the details of the debate
+     */
+    getDebateDetails = (socket) => (callback) => {
+        logger.debug(`getDebateDetails received from ${socket.id}`);
+
+        if (!TypeCheck.isFunction(callback)) {
+            logger.debug(`callback is not a function.`);
+            return;
+        }
+
+        // Store details in an object before sending it
+        let details = {
+            debateId: this.debateID,
+            title: this.title,
+            description: this.description
+        }
+
+        callback(details);
+    }
 
     /**
      * Return the list of questions to the callback function
