@@ -534,9 +534,10 @@ export class DataBaseManager {
      * @param aResponse the response that need to be saved
      * @param aQuestionId integer that is the id of the question related to the response
      * @param aDiscussionId integer that is the id of the discussion related to the response
+     * @param aUuid (optional) the uuid of the device that responded
      * @returns {Promise<boolean>} true if save went well false otherwise
      */
-    async saveResponse(aResponseId, aResponse, aQuestionId, aDiscussionId){
+    async saveResponse(aResponseId, aResponse, aQuestionId, aDiscussionId, aUuid){
         let saved = true;
         const responseSave = new Response({
             id: aResponseId,
@@ -546,6 +547,12 @@ export class DataBaseManager {
                 refDiscussion: aDiscussionId
             }
         });
+
+        if (aUuid) {
+            logger.debug(`Saving device (${aUuid}) to response id = ${aResponseId}`);
+            responseSave.devices.push({refDevice: aUuid});
+        }
+
         // Save the response in database
         await responseSave.save()
             .then(responseSaved => logger.debug(`Response saved ${responseSaved}`))
@@ -554,6 +561,63 @@ export class DataBaseManager {
                 logger.debug(err);
                 saved = false;
             });
+        return saved;
+    }
+
+    async saveResponseDevice(uuid, responseId, questionId, discussionId){
+        let responseObj = {
+            id: responseId,
+            refQuestion: {
+                refQuestion: questionId,
+                refDiscussion: discussionId
+            }
+        };
+
+        let response = await Response.findOne(responseObj);
+        if (response == null) {
+            logger.debug(`Response not found id = ${responseId}`)
+            return false;
+        }
+
+        let saved = true;
+        response.devices.push({refDevice: uuid});
+        await response.save()
+            .then(responseSaved => {
+                logger.debug(`Device (${uuid}) added to response id = ${responseId}`)
+            })
+            .catch(err => {
+                logger.debug(`Error when adding device (${uuid}) to response id = ${responseId}`);
+                logger.debug(err);
+                saved = false;
+            });
+
+        return saved;
+    }
+
+    /**
+     * Try to save a device to the database.
+     * @param uuid {String} represents the UUID of the device
+     * @returns {Promise<boolean>} true if the save worked or the device already exists, false otherwise
+     */
+    async trySaveDevice(uuid){
+        let saved = true;
+        const deviceSave = new Device({
+           _id: uuid
+        });
+
+        await deviceSave.save()
+            .then(deviceSaved => logger.debug(`Device saved ${deviceSaved}`))
+            .catch(err => {
+                if (err.name === 'MongoError' && err.code === 11000) {
+                    logger.debug('Device already exists');
+                    saved = true;
+                } else {
+                    logger.debug(`Error when saving device uuid = ${uuid}`);
+                    logger.debug(err);
+                    saved = false;
+                }
+            });
+
         return saved;
     }
 

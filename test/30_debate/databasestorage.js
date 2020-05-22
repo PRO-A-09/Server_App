@@ -5,6 +5,7 @@ import chai from 'chai';
 import {Discussion} from "../../src/database/modele/Discussion.js";
 import {Question} from "../../src/database/modele/Question.js";
 import {Response} from "../../src/database/modele/Response.js";
+import {Device} from "../../src/database/modele/Device.js";
 
 const expect = chai.expect;
 const should = chai.should();
@@ -19,6 +20,7 @@ describe("Debate database storage test", () => {
     let client;
     let id;
     let debate;
+    const uuid = '2345675432';
 
     before(async () => {
         debateManager = new DebateManager();
@@ -53,7 +55,7 @@ describe("Debate database storage test", () => {
             path: SocketConfig.DEFAULT_PATH,
             forceNew: true,
             query: {
-                uuid: '2345675432'
+                uuid: uuid
             }
         });
 
@@ -62,14 +64,22 @@ describe("Debate database storage test", () => {
         });
     });
 
-    it("Debate save", (done) => {
+    it("should save debate", (done) => {
         Discussion.findOne({_id: id}, (err, discussion) => {
             discussion.should.not.equal(null);
             done();
         });
     });
 
-    it('Question save', (done) => {
+    it('should save device save', (done) => {
+        Device.findOne({_id: uuid}, (err, device) => {
+            should.exist(device);
+            should.not.exist(err);
+            done();
+        })
+    });
+
+    it('should save question', (done) => {
         let newQuestionObj = {
             debateId: id,
             title: 'Does this test work ?',
@@ -84,7 +94,7 @@ describe("Debate database storage test", () => {
         });
     });
 
-    it('Question response save', (done) => {
+    it('should save question responses', (done) => {
         let newQuestionObj = {
             debateId: id,
             title: 'Does this test work ?',
@@ -106,6 +116,50 @@ describe("Debate database storage test", () => {
                 });
             });
         });
+    });
+
+    it('should save device to question response', (done) => {
+        client.on('newQuestion', (questionObj) => {
+            client.emit('answerQuestion', {questionId : questionObj.id, answerId : 0}, (res) => {
+                Response.findOne({
+                    id: 0,
+                    refQuestion: {
+                        refQuestion: questionObj.id,
+                        refDiscussion: id
+                    }
+                }, (err, response) => {
+                    should.exist(response);
+                    should.not.exist(err);
+
+                    response.devices.some(d => d.refDevice === uuid).should.equal(true);
+                    done();
+                });
+            });
+        });
+
+        debate.sendNewQuestion(new debate.Question('Does this test work ?', ['Yes', 'No']));
+    });
+
+    it('should save open question response', (done) => {
+        client.on('newQuestion', (questionObj) => {
+            client.emit('answerOpenQuestion', {questionId: questionObj.id, answer: 'Hopefully yes!'}, (res) => {
+                Response.findOne({
+                    response: 'Hopefully yes!',
+                    refQuestion: {
+                        refQuestion: questionObj.id,
+                        refDiscussion: id
+                    }
+                }, (err, response) => {
+                    should.exist(response);
+                    should.not.exist(err);
+
+                    response.devices.some(d => d.refDevice === uuid).should.equal(true);
+                    done();
+                });
+            });
+        });
+
+        debate.sendNewQuestion(new debate.Question('Does this test work ?', null, true));
     });
 
     afterEach(() => {
