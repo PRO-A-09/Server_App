@@ -2,6 +2,7 @@ import {SocketConfig} from '../../src/conf/config.js'
 import {DebateManager} from "../../src/debatemanager.js";
 import io from 'socket.io-client'
 import chai from 'chai';
+import {DebateConfig} from "../../src/conf/config.js";
 
 const expect = chai.expect;
 const should = chai.should();
@@ -256,6 +257,39 @@ describe("Debate client functions", () => {
                 res.should.equal(true);
                 done();
             });
+        });
+
+        it('should not make unlimited suggestions', async () => {
+            // Connect a new client for an unique uuid
+            let uniqueClient = io.connect(`${DEBATE_NAMESPACE}${id}`, {
+                path: SocketConfig.DEFAULT_PATH,
+                forceNew: true,
+                query: {
+                    uuid: '2143erdv32ew'
+                }
+            });
+            await new Promise(resolve => uniqueClient.on('connect', resolve));
+
+            // Generate the max number of suggestions
+            let promises = [];
+            for (let i = 0; i < DebateConfig.MAX_SUGGESTIONS; ++i) {
+                promises.push(new Promise(resolve => {
+                    uniqueClient.emit('suggestQuestion', `Suggestion${i}`, res => {
+                        res.should.equal(true);
+                        resolve();
+                    });
+                }));
+            }
+            await Promise.all(promises);
+
+            await new Promise(resolve => {
+                uniqueClient.emit('suggestQuestion', `My last of too many suggestions`, res => {
+                    res.should.equal(false);
+                    resolve();
+                });
+            });
+
+            uniqueClient.close();
         });
 
         it('should not accept suggestion with too many chars', (done) => {

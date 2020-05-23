@@ -66,16 +66,20 @@ export class QuestionSuggestion {
             return false;
         }
 
+        let client = this.debate.getClient(uuid);
+        if (client.suggestions.size >= DebateConfig.MAX_SUGGESTIONS) {
+            logger.debug('Too many suggestions have been submitted');
+            return false;
+        }
+
         // Add the suggestion to the client & the list
         let suggestedQuestion = new this.SuggestedQuestion(uuid, suggestion);
-        this.debate.getClient(uuid).suggestions.add(suggestedQuestion.id);
+        client.suggestions.add(suggestedQuestion.id);
         this.suggestedQuestions.set(suggestedQuestion.id, suggestedQuestion);
 
         logger.info(`Device with uuid (${uuid}) suggested (${suggestion}) id (${suggestedQuestion.id})`);
 
         // TODO: - Integration with moderator rooms
-        //       - Remove automatic approval.
-
         if (!this.approvalRequired) {
             logger.info('Approval not required... Calling approveSuggestion.')
             this.approveSuggestion(suggestedQuestion.id);
