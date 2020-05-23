@@ -26,7 +26,7 @@ export class DataBaseManager {
     async start() {
         // Connection to the local database
         try {
-            await mongoose.connect('mongodb://192.168.99.100:27017/PRO', {
+            await mongoose.connect('mongodb://localhost:27017/PRO', {
                 useNewUrlParser: true,
                 useUnifiedTopology: true
             });
