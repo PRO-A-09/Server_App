@@ -251,6 +251,31 @@ describe("Debate client functions", () => {
         });
     });
 
+    describe('getSuggestedQuestions', () => {
+        it('should return empty array', (done) => {
+            client.emit('getSuggestedQuestions', (suggestions) => {
+                suggestions.length.should.equal(0);
+                done();
+            });
+        });
+
+        it('should return one suggestion', async () => {
+            await new Promise(resolve => {
+                client.emit('suggestQuestion', 'This is my suggestion', res => {
+                    res.should.equal(true);
+                    resolve();
+                });
+            });
+
+            await new Promise(resolve => {
+                client.emit('getSuggestedQuestions', (suggestions) => {
+                    suggestions.length.should.equal(1);
+                    resolve();
+                });
+            });
+        });
+    });
+
     describe('suggestQuestion', () => {
         it('should accept a valid suggestion', (done) => {
             client.emit('suggestQuestion', 'This is my suggestion', res => {
@@ -335,7 +360,7 @@ describe("Debate client functions", () => {
 
         beforeEach((done) => {
             client.on('suggestedQuestion', (suggestionObj) => {
-                suggestionId = suggestionObj.id;
+                suggestionId = suggestionObj.suggestionId;
                 suggestion = debate.questionSuggestion.approvedSuggestedQuestions.get(suggestionId);
                 done();
             });

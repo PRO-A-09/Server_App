@@ -124,6 +124,7 @@ export class Debate {
             socket.on('getQuestions', this.getQuestions(socket));
             socket.on('answerQuestion', this.answerQuestion(socket));
             socket.on('answerOpenQuestion', this.answerOpenQuestion(socket));
+            socket.on('getSuggestedQuestions', this.getSuggestedQuestions(socket));
             socket.on('suggestQuestion', this.suggestQuestion(socket));
             socket.on('voteSuggestedQuestion', this.voteSuggestedQuestion(socket));
         });
@@ -371,6 +372,17 @@ export class Debate {
 
         logger.info(`Socket (${socket.id}) replied (${answer}) to question (${questionId}).`);
         callback(true);
+    };
+
+    getSuggestedQuestions = (socket) => (callback) => {
+        logger.debug(`getSuggestedQuestions received from ${socket.id}`);
+
+        if (!TypeCheck.isFunction(callback)) {
+            logger.debug(`callback is not a function.`);
+            return;
+        }
+
+        callback(this.questionSuggestion.getApprovedSuggestions());
     };
 
     suggestQuestion = (socket) => (suggestion, callback) => {

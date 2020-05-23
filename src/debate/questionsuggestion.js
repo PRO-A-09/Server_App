@@ -14,13 +14,13 @@ export class QuestionSuggestion {
     SuggestedQuestion = class SuggestedQuestion {
         static nb_suggestions = 0;
 
-        id;
+        suggestionId;
         uuid;
         suggestion;
         voters;
 
         constructor(uuid, suggestion) {
-            this.id = ++SuggestedQuestion.nb_suggestions;
+            this.suggestionId = ++SuggestedQuestion.nb_suggestions;
             this.uuid = uuid;
             this.suggestion = suggestion;
             this.voters = new Set();
@@ -28,7 +28,7 @@ export class QuestionSuggestion {
 
         format() {
             return {
-                id: this.id,
+                suggestionId: this.suggestionId,
                 suggestion: this.suggestion,
                 votes: this.getNbVotes()
             };
@@ -49,6 +49,14 @@ export class QuestionSuggestion {
         this.debate = debate;
         this.suggestedQuestions = new Map();
         this.approvedSuggestedQuestions = new Map();
+    }
+
+    /**
+     * Return the list of approved suggestions
+     * @returns {*[]} array of approved suggested questions
+     */
+    getApprovedSuggestions() {
+        return Array.from(this.approvedSuggestedQuestions.values(), s => s.format());
     }
 
     /**
@@ -75,17 +83,17 @@ export class QuestionSuggestion {
         // Add the suggestion to the client & the list
         let suggestedQuestion = new this.SuggestedQuestion(uuid, suggestion);
         suggestedQuestion.voters.add(uuid);
-        client.suggestions.add(suggestedQuestion.id);
-        this.suggestedQuestions.set(suggestedQuestion.id, suggestedQuestion);
+        client.suggestions.add(suggestedQuestion.suggestionId);
+        this.suggestedQuestions.set(suggestedQuestion.suggestionId, suggestedQuestion);
 
-        logger.info(`Device with uuid (${uuid}) suggested (${suggestion}) id (${suggestedQuestion.id})`);
+        logger.info(`Device with uuid (${uuid}) suggested (${suggestion}) id (${suggestedQuestion.suggestionId})`);
 
         // TODO: - Integration with moderator rooms
         if (!this.approvalRequired) {
             logger.info('Approval not required... Calling approveSuggestion.')
-            this.approveSuggestion(suggestedQuestion.id);
+            this.approveSuggestion(suggestedQuestion.suggestionId);
         }
-        return suggestedQuestion.id;
+        return suggestedQuestion.suggestionId;
     }
 
     /**
