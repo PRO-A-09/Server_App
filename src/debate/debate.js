@@ -93,7 +93,7 @@ export class Debate {
         this.debateID = ++Debate.nb_debate;
 
         // Initialize data
-        this.clients = [];
+        this.clients = new Map();
         this.questions = new Map();
         this.questionSuggestion = new QuestionSuggestion(this, false);
 
@@ -117,17 +117,17 @@ export class Debate {
         this.userNamespace.on('connection', async (socket) => {
             logger.debug(`New socket connected to namespace (${this.userNamespace.name}) id (${socket.id})`);
 
-            if (this.clients[socket.uuid]) {
+            if (this.clients.has(socket.uuid)) {
                 logger.debug(`Existing client uuid (${socket.uuid})`)
-                this.clients[socket.uuid].socket = socket;
+                this.getClient(socket.uuid).socket = socket;
             } else {
                 logger.debug(`New client uuid (${socket.uuid})`)
                 // Store the socket and initialize attributes
-                this.clients[socket.uuid] = {
+                this.clients.set(socket.uuid, {
                     socket: socket,
                     answers: [],
                     suggestions: new Set()
-                };
+                });
 
                 dbManager.trySaveDevice(socket.uuid)
                     .then(res => {
@@ -181,7 +181,16 @@ export class Debate {
      * @returns {Number} number of unique clients that connected to the debate
      */
     getNbUniqueClients() {
-        return Object.keys(this.clients).length;
+        return this.clients.size;
+    }
+
+    /**
+     * Return a client based on the uuid
+     * @param uuid uuid of the client
+     * @returns {*} client
+     */
+    getClient(uuid) {
+        return this.clients.get(uuid);
     }
 
     // This section contains the different socket io functions
@@ -256,7 +265,7 @@ export class Debate {
             return;
         }
 
-        if (this.clients[socket.uuid].answers[questionId] !== undefined) {
+        if (this.getClient(socket.uuid).answers[questionId] !== undefined) {
             logger.debug(`Client with uuid (${socket.uuid}) already answered.`);
             callback(false);
             return;
@@ -284,7 +293,7 @@ export class Debate {
             });
 
         logger.info(`Socket (${socket.id}) replied ${answerId} to question (${questionId}).`);
-        this.clients[socket.uuid].answers[questionId] = answerId;
+        this.getClient(socket.uuid).answers[questionId] = answerId;
 
         // Send the reply to the admin room.
         this.adminRoom.emit('questionAnswered', {debateId: this.debateID, questionId: questionId, answerId: answerId});
@@ -326,7 +335,7 @@ export class Debate {
             return;
         }
 
-        if (this.clients[socket.uuid].answers[questionId] !== undefined) {
+        if (this.getClient(socket.uuid).answers[questionId] !== undefined) {
             logger.debug(`Client with uuid (${socket.uuid}) already answered.`);
             callback(false);
             return;
@@ -334,7 +343,7 @@ export class Debate {
 
         let newLength = question.answers.push({answer: answer, uuid: socket.uuid});
         let responseId = newLength - 1;
-        this.clients[socket.uuid].answers[questionId] = responseId;
+        this.getClient(socket.uuid).answers[questionId] = responseId;
 
         //TODO: - Control if await slows down the app
         //      - If it slows down the app, remove it and modify tests
@@ -370,7 +379,7 @@ export class Debate {
             return;
         }
 
-        this.clients[socket.uuid].suggestions.add(suggestionId);
+        this.getClient(socket.uuid).suggestions.add(suggestionId);
 
         logger.info(`Socket (${socket.id}) suggested (${suggestion}).`);
         callback(true);
