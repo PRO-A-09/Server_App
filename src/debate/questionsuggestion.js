@@ -9,6 +9,7 @@ export class QuestionSuggestion {
     debate;
     suggestedQuestions;         // Question not yet approved
     approvedSuggestedQuestions; // Approved suggested questions
+    approvalRequired;           // Whether an approval is required or not
 
     SuggestedQuestion = class SuggestedQuestion {
         static nb_suggestions = 0;
@@ -37,8 +38,10 @@ export class QuestionSuggestion {
     /**
      * Constructor of QuestionSuggestion that takes a debate
      * @param debate debate with which the QuestionSuggestion should interact
+     * @param approvalRequired {boolean} whether an approval is required or not
      */
-    constructor(debate) {
+    constructor(debate, approvalRequired) {
+        this.approvalRequired = approvalRequired;
         this.debate = debate;
         this.suggestedQuestions = new Map();
         this.approvedSuggestedQuestions = new Map();
@@ -66,8 +69,10 @@ export class QuestionSuggestion {
         // TODO: - Integration with moderator rooms
         //       - Remove automatic approval.
 
-        // Approve the question immediately
-        this.approveSuggestion(suggestedQuestion.id);
+        if (!this.approvalRequired) {
+            logger.info('Approval not required... Calling approveSuggestion.')
+            this.approveSuggestion(suggestedQuestion.id);
+        }
         return true;
     }
 
