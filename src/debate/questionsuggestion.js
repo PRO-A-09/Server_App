@@ -17,21 +17,25 @@ export class QuestionSuggestion {
         id;
         uuid;
         suggestion;
-        votes;
+        voters;
 
         constructor(uuid, suggestion) {
             this.id = ++SuggestedQuestion.nb_suggestions;
             this.uuid = uuid;
             this.suggestion = suggestion;
-            this.votes = 0;
+            this.voters = new Set();
         }
 
         format() {
             return {
                 id: this.id,
                 suggestion: this.suggestion,
-                votes: this.votes
+                votes: this.getNbVotes()
             };
+        }
+
+        getNbVotes() {
+            return this.voters.size;
         }
     }
 
@@ -79,17 +83,23 @@ export class QuestionSuggestion {
     /**
      * Add a vote to a suggested question
      * @param suggestionId id of the suggestion to vote for
+     * @param uuid uuid of the device voting for the suggestion
      * @returns {boolean} true if the vote was added, false otherwise
      */
-    voteSuggestion(suggestionId) {
+    voteSuggestion(suggestionId, uuid) {
         if (!this.approvedSuggestedQuestions.has(suggestionId)) {
             logger.debug(`Suggestion with id (${suggestionId}) does not exist or is not approved`);
             return false;
         }
 
-        logger.debug(`Device with uuid (${uuid}) voted for suggestion with id (${suggestionId})`);
         let suggestion = this.approvedSuggestedQuestions.get(suggestionId);
-        ++suggestion.votes;
+        if (suggestion.voters.has(uuid)) {
+            logger.debug(`Device with uuid (${uuid}) has already voted for suggestion with id (${suggestionId})`);
+            return false;
+        }
+
+        logger.debug(`Device with uuid (${uuid}) voted for suggestion with id (${suggestionId})`);
+        suggestion.voters.add(uuid);
         return true;
     }
 
