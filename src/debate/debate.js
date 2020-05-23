@@ -385,7 +385,7 @@ export class Debate {
         callback(this.questionSuggestion.getApprovedSuggestions());
     };
 
-    suggestQuestion = (socket) => (suggestion, callback) => {
+    suggestQuestion = (socket) => (question, callback) => {
         logger.debug(`suggestQuestion received from ${socket.id}`);
 
         if (!TypeCheck.isFunction(callback)) {
@@ -393,14 +393,14 @@ export class Debate {
             return;
         }
 
-        let suggestionId = this.questionSuggestion.newSuggestion(socket.uuid, suggestion);
+        let suggestionId = this.questionSuggestion.newSuggestion(socket.uuid, question);
         if (suggestionId === false) {
             logger.debug('Cannot create suggestion.');
             callback(false);
             return;
         }
 
-        logger.info(`Socket (${socket.id}) suggested (${suggestion}).`);
+        logger.info(`Socket (${socket.id}) suggested (${question}).`);
         callback(true);
     };
 

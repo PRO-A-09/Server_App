@@ -71,7 +71,7 @@ describe('Question suggestion class test', () => {
 
     it('should save suggestion', () => {
         let s = questionSuggestion.suggestedQuestions.get(suggestionId);
-        s.suggestion.should.equal(`Suggestion ${suggestionId}`);
+        s.question.should.equal(`Suggestion ${suggestionId}`);
     });
 
     describe('approveSuggestion', () => {
@@ -80,7 +80,7 @@ describe('Question suggestion class test', () => {
             res.should.equal(true);
 
             let s = questionSuggestion.approvedSuggestedQuestions.get(suggestionId);
-            s.suggestion.should.equal(`Suggestion ${suggestionId}`);
+            s.question.should.equal(`Suggestion ${suggestionId}`);
         });
 
         it('should not approve invalid suggestion', () => {

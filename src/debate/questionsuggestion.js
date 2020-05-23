@@ -16,20 +16,20 @@ export class QuestionSuggestion {
 
         suggestionId;
         uuid;
-        suggestion;
+        question;
         voters;
 
         constructor(uuid, suggestion) {
             this.suggestionId = ++SuggestedQuestion.nb_suggestions;
             this.uuid = uuid;
-            this.suggestion = suggestion;
+            this.question = suggestion;
             this.voters = new Set();
         }
 
         format() {
             return {
                 suggestionId: this.suggestionId,
-                suggestion: this.suggestion,
+                suggestion: this.question,
                 votes: this.getNbVotes()
             };
         }
@@ -62,14 +62,14 @@ export class QuestionSuggestion {
     /**
      * Register a new suggestion
      * @param uuid uuid of the device making the suggestion
-     * @param suggestion suggestion made by the device
+     * @param question suggestion made by the device
      * @returns {boolean|Number} true if the suggestion was added, false otherwise
      */
-    newSuggestion(uuid, suggestion) {
+    newSuggestion(uuid, question) {
         logger.debug(`New suggestion from uuid (${uuid})`);
 
         // Check suggestion
-        if (!TypeCheck.isString(suggestion, DebateConfig.MAX_SUGGESTION_LENGTH)) {
+        if (!TypeCheck.isString(question, DebateConfig.MAX_SUGGESTION_LENGTH)) {
             logger.debug('Suggestion is not a valid string');
             return false;
         }
@@ -81,12 +81,12 @@ export class QuestionSuggestion {
         }
 
         // Add the suggestion to the client & the list
-        let suggestedQuestion = new this.SuggestedQuestion(uuid, suggestion);
+        let suggestedQuestion = new this.SuggestedQuestion(uuid, question);
         suggestedQuestion.voters.add(uuid);
         client.suggestions.add(suggestedQuestion.suggestionId);
         this.suggestedQuestions.set(suggestedQuestion.suggestionId, suggestedQuestion);
 
-        logger.info(`Device with uuid (${uuid}) suggested (${suggestion}) id (${suggestedQuestion.suggestionId})`);
+        logger.info(`Device with uuid (${uuid}) suggested (${question}) id (${suggestedQuestion.suggestionId})`);
 
         // TODO: - Integration with moderator rooms
         if (!this.approvalRequired) {
