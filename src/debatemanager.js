@@ -21,7 +21,7 @@ export class DebateManager {
     async start() {
         this.startWebServer();
         this.startSocketServer();
-        this.startAdminNamespace();
+        this.startPrivilegedNamespace();
 
         await dbManager.start();
         await this.initializeDebates();
@@ -79,7 +79,7 @@ export class DebateManager {
     /**
      * Creates a new Privilegednamespace and registers our middleware.
      */
-    startAdminNamespace() {
+    startPrivilegedNamespace() {
         this.nspAdmin = new PrivilegedNamespace(this.io);
         const adminMiddleware = new LoginMiddleware();
 
