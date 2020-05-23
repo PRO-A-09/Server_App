@@ -55,13 +55,13 @@ export class QuestionSuggestion {
      * Register a new suggestion
      * @param uuid uuid of the device making the suggestion
      * @param suggestion suggestion made by the device
-     * @returns {boolean} true if the suggestion was added, false otherwise
+     * @returns {boolean|Number} true if the suggestion was added, false otherwise
      */
     newSuggestion(uuid, suggestion) {
         logger.debug(`New suggestion from uuid (${uuid})`);
 
         // Check suggestion
-        if (!TypeCheck.isString(suggestion, DebateConfig.MAX_QUESTION_LENGTH)) {
+        if (!TypeCheck.isString(suggestion, DebateConfig.MAX_SUGGESTION_LENGTH)) {
             logger.debug('Suggestion is not a valid string');
             return false;
         }
@@ -77,7 +77,7 @@ export class QuestionSuggestion {
             logger.info('Approval not required... Calling approveSuggestion.')
             this.approveSuggestion(suggestedQuestion.id);
         }
-        return true;
+        return suggestedQuestion.id;
     }
 
     /**

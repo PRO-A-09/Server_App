@@ -21,6 +21,7 @@ export class DebateConfig {
     static MAX_CLOSED_ANSWERS = 20;
     static MAX_OPEN_ANSWER_LENGTH = 50;
     static MAX_QUESTION_LENGTH = 50;
+    static MAX_SUGGESTION_LENGTH = 50;
 }
 
 // Create a winston logger that logs to console

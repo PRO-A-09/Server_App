@@ -2,6 +2,7 @@ import {SocketConfig, logger, DebateConfig} from '../conf/config.js';
 import * as TypeCheck from '../utils/typecheck.js'
 import {dbManager} from "../database/DatabaseManager.js";
 import {ClientBlacklistMiddleware} from "../middleware/clientblacklistmiddleware.js";
+import {QuestionSuggestion} from "./questionsuggestion.js";
 
 /**
  * This class implements a new Debate and the communication with the clients.
@@ -25,8 +26,7 @@ export class Debate {
 
     // User data
     questions;
-    approvedSuggestedQuestions;
-    suggestedQuestions;
+    questionSuggestion
 
     /**
      * Nested class Question that contains the question of the debate
@@ -95,8 +95,7 @@ export class Debate {
         // Initialize data
         this.clients = [];
         this.questions = new Map();
-        this.suggestedQuestions = [];
-        this.approvedSuggestedQuestions = [];
+        this.questionSuggestion = new QuestionSuggestion(this, false);
 
         // Initialize admin settings
         this.adminRoomName = SocketConfig.ADMIN_ROOM_PREFIX + this.debateID;
@@ -364,26 +363,14 @@ export class Debate {
             return;
         }
 
-        if (!TypeCheck.isString(suggestion, DebateConfig.MAX_QUESTION_LENGTH)) {
-            logger.debug('Invalid arguments for suggestQuestion.');
+        let suggestionId = this.questionSuggestion.newSuggestion(socket.uuid, suggestion);
+        if (suggestionId === false) {
+            logger.debug('Cannot create suggestion.');
             callback(false);
             return;
         }
 
-        let size = this.suggestedQuestions.push({
-            question: suggestion,
-            uuid: socket.uuid
-        });
-        let suggestionId = size - 1;
-
-        socket.suggestions.add(suggestionId);
-
-        // TODO: - Send suggestion to moderator
-        // this.adminRoom.emit('questionSuggested', {
-        //     suggestionId: suggestionId,
-        //     question: suggestion,
-        //     uuid: socket.uuid
-        // });
+        this.clients[socket.uuid].suggestions.add(suggestionId);
 
         logger.info(`Socket (${socket.id}) suggested (${suggestion}).`);
         callback(true);
