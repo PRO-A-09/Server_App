@@ -11,7 +11,7 @@ import {Device} from "./Device.js";
 import {Question} from "./Question.js";
 import {Discussion} from "./Discussion.js";
 
-//create a simple schema to define how the primary is checked in a question
+// Create a simple schema to define how the primary is checked in a question
 let PrimaryKeyQuestionSchema = {
     refQuestion: {
         type: Number,
@@ -65,6 +65,6 @@ const ResponseSchema = new mongoose.Schema({
         }
     ]
 });
-ResponseSchema.index({id: 1, refQuestion:1, refDiscussion: 1}, {unique: true});
+ResponseSchema.index({id: 1, refQuestion:1}, {unique: true});
 //Instantiation of the model for Question so it can be used
 export const Response = mongoose.model('Response', ResponseSchema);

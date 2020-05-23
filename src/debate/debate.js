@@ -115,7 +115,7 @@ export class Debate {
      * Starts handling for client events.
      */
     startSocketHandling() {
-        this.userNamespace.on('connection', (socket) => {
+        this.userNamespace.on('connection', async (socket) => {
             logger.debug(`New socket connected to namespace (${this.userNamespace.name}) id (${socket.id})`);
 
             if (this.clients[socket.uuid]) {
@@ -129,9 +129,22 @@ export class Debate {
                     answers: [],
                     suggestions: new Set()
                 };
+
+                dbManager.trySaveDevice(socket.uuid)
+                    .then(res => {
+                        if (res === true) {
+                            logger.info('Device saved to db');
+                        } else {
+                            logger.warn('Cannot save device to db');
+                        }
+                    })
+                    .catch(res => {
+                        logger.error(`saveDevice threw : ${res}.`)
+                    });
             }
 
             // Register socket functions
+            socket.on('getDebateDetails', this.getDebateDetails(socket));
             socket.on('getQuestions', this.getQuestions(socket));
             socket.on('answerQuestion', this.answerQuestion(socket));
             socket.on('answerOpenQuestion', this.answerOpenQuestion(socket));
@@ -173,6 +186,27 @@ export class Debate {
     }
 
     // This section contains the different socket io functions
+
+    /**
+     * Return the details of the debate
+     */
+    getDebateDetails = (socket) => (callback) => {
+        logger.debug(`getDebateDetails received from ${socket.id}`);
+
+        if (!TypeCheck.isFunction(callback)) {
+            logger.debug(`callback is not a function.`);
+            return;
+        }
+
+        // Store details in an object before sending it
+        let details = {
+            debateId: this.debateID,
+            title: this.title,
+            description: this.description
+        }
+
+        callback(details);
+    }
 
     /**
      * Return the list of questions to the callback function
@@ -235,28 +269,26 @@ export class Debate {
             return;
         }
 
-        // Not necessary to store response here - we need to store the device instead.
-        // Will do later once uuid is implemented.
-        // //TODO: - Control if await slows down the app
-        // //      - If it slows down the app, remove it and modify tests
-        // //          (currently only pass with await otherwise they are executed too quickly)
-        // await dbManager.saveResponse(answerId, question.getAnswer(answerId), questionId, this.debateID)
-        // .then(res => {
-        //     if (res === true) {
-        //         logger.info('Response saved to db');
-        //     } else {
-        //         logger.warn('Cannot save response to db');
-        //     }
-        // })
-        // .catch(res => {
-        //     logger.error(`saveResponse threw : ${res}.`)
-        // });
+        //TODO: - Control if await slows down the app
+        //      - If it slows down the app, remove it and modify tests
+        //          (currently only pass with await otherwise they are executed too quickly)
+        await dbManager.saveResponseDevice(socket.uuid, answerId, questionId, this.debateID)
+            .then(res => {
+                if (res === true) {
+                    logger.info('Device response saved to db');
+                } else {
+                    logger.warn('Cannot save device response to db');
+                }
+            })
+            .catch(res => {
+                logger.error(`saveResponseDevice threw : ${res}.`)
+            });
 
         logger.info(`Socket (${socket.id}) replied ${answerId} to question (${questionId}).`);
         this.clients[socket.uuid].answers[questionId] = answerId;
 
         // Send the reply to the admin room.
-        this.adminRoom.emit('questionAnswered', {questionId: questionId, answerId: answerId});
+        this.adminRoom.emit('questionAnswered', {debateId: this.debateID, questionId: questionId, answerId: answerId});
         callback(true);
     };
 
@@ -265,7 +297,7 @@ export class Debate {
      * questionAnswer contains questionId and the answer
      * callback is a function that takes true on success, otherwise false.
      */
-    answerOpenQuestion = (socket) => (questionAnswer, callback) => {
+    answerOpenQuestion = (socket) => async (questionAnswer, callback) => {
         logger.debug(`answerOpenQuestion received from ${socket.id}`);
 
         if (!TypeCheck.isFunction(callback)) {
@@ -302,7 +334,23 @@ export class Debate {
         }
 
         let newLength = question.answers.push({answer: answer, uuid: socket.uuid});
-        this.clients[socket.uuid].answers[questionId] = newLength - 1;
+        let responseId = newLength - 1;
+        this.clients[socket.uuid].answers[questionId] = responseId;
+
+        //TODO: - Control if await slows down the app
+        //      - If it slows down the app, remove it and modify tests
+        //          (currently only pass with await otherwise they are executed too quickly)
+        await dbManager.saveResponse(responseId, answer, questionId, this.debateID, socket.uuid)
+            .then(res => {
+                if (res === true) {
+                    logger.info('Response saved to db');
+                } else {
+                    logger.warn('Cannot save response to db');
+                }
+            })
+            .catch(res => {
+                logger.error(`saveResponse threw : ${res}.`)
+            });
 
         logger.info(`Socket (${socket.id}) replied (${answer}) to question (${questionId}).`);
         callback(true);

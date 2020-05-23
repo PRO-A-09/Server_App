@@ -3,6 +3,8 @@ import chai from 'chai';
 import {Administrator} from "../../src/database/modele/Users.js";
 import {Discussion} from "../../src/database/modele/Discussion.js";
 import {Question} from "../../src/database/modele/Question.js";
+import {QuestionAdmin} from "../../src/database/modele/QuestionAdmin.js";
+import {QuestionSuggestion} from "../../src/database/modele/QuestionSuggestion.js";
 import {Device} from "../../src/database/modele/Device.js";
 import {Response} from "../../src/database/modele/Response.js";
 import {logger} from "../../src/conf/config.js";
@@ -60,6 +62,17 @@ describe('Data Base manager test', () => {
             logger.debug(`question saved : ${questionSaved}`);
         });
 
+        const questionAdmin = new QuestionAdmin({
+           id:{
+               refQuestion: question1.id,
+               refDiscussion: discussion1._id
+           },
+            administrator: user._id
+        });
+        await questionAdmin.save().then((questionSaved) => {
+            logger.debug(`question of admin saved : ${questionSaved}`);
+        });
+
         const question2 = new Question({
             id: 2,
             titreQuestion: "Question 2 for debate 1",
@@ -68,6 +81,16 @@ describe('Data Base manager test', () => {
         });
         await question2.save().then((questionSaved) => {
             logger.debug(`question saved : ${questionSaved}`);
+        });
+
+        const questionSuggestion = new QuestionSuggestion({
+            id:{
+                refQuestion: question2.id,
+                refDiscussion: discussion1._id
+            }
+        });
+        await questionSuggestion.save().then((questionSaved) => {
+            logger.debug(`question of user saved : ${questionSaved}`);
         });
 
         const device = new Device({
@@ -184,6 +207,114 @@ describe('Data Base manager test', () => {
                 let updatedDebate = db.getDiscussion(2);
                 updatedDebate.auditeurs = 57;
                 done();
+            });
+
+        });
+    });
+
+    describe('Get ended debate of an admin', () => {
+        it('Get ended debates', (done) => {
+            db.getClosedDiscussionsAdmin("admin").then((discussions) => {
+                discussions.length.should.equal(1);
+                discussions[0]._id.should.equal(2);
+                done();
+            });
+
+        });
+    });
+
+    describe('Save a question of an admin', () => {
+        it('Saving new Question', (done) => {
+            class myQuestion{
+                id;
+                title;
+                answers;
+                constructor(id, title){
+                    this.id = id;
+                    this.title = title;
+                    this.answers = [];
+                }
+            }
+            let question = new myQuestion(3, "My admin question is good?");
+            db.saveQuestionAdmin(question, 2, "admin").then(async () => {
+                done();
+            });
+
+        });
+    });
+
+    describe('Save a question of a user', () => {
+        it('Saving new Question', (done) => {
+            class myQuestion{
+                id;
+                title;
+                answers;
+                constructor(id, title){
+                    this.id = id;
+                    this.title = title;
+                    this.answers = [];
+                }
+            }
+            let question = new myQuestion(3, "My user question is good?");
+            let question2 = new myQuestion(4, "My user question is not good right?");
+            db.saveQuestionUser(question, 1).then((statusSave) => {
+                if(statusSave) {
+                    db.saveQuestionUser(question2, 1).then((statusSave) => {
+                        if (statusSave) {
+                            done();
+                        }
+                    });
+                }
+            });
+
+        });
+    });
+
+    describe('Save a question that as been approved by admin', () => {
+        it('Saving approved Question', (done) => {
+            db.approveQuestion(3, 1).then((statusSave) => {
+                if(statusSave){
+                    done();
+                }
+            });
+
+        });
+    });
+
+    describe('Get questions that as been approved by admin', () => {
+        it('Getting approved Question', (done) => {
+            db.getAcceptedQuestionsSuggestion(1).then((questions) => {
+                questions.length.should.above(0);
+                for(let question of questions){
+                    question.id.refDiscussion.should.equal(1);
+                    question.approved.should.equal(true);
+                }
+                done();
+            });
+
+        });
+    });
+
+    describe('Get questions that as not yet been approved by admin', () => {
+        it('Getting unapproved Question', (done) => {
+            db.getNotYetAcceptedQuestionsSuggestion(1).then((questions) => {
+                questions.length.should.above(0);
+                for(let question of questions){
+                    question.id.refDiscussion.should.equal(1);
+                    (question.approved === undefined).should.be.true;
+                }
+                done();
+            });
+
+        });
+    });
+
+    describe('Remove question unaccepted', () => {
+        it('Remove unapproved Question', (done) => {
+            db.unapproveQuestion(2, 1).then((remove) => {
+                if(remove) {
+                    done();
+                }
             });
 
         });
