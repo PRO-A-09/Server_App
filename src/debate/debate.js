@@ -110,6 +110,23 @@ export class Debate {
         this.userNamespace.use(new ClientBlacklistMiddleware().middlewareFunction);
     }
 
+    close(io) {
+        logger.info(`Closing debate with id (${this.debateID})`);
+
+        logger.debug(`Disconnecting clients...`);
+        for (let [uuid, client] of this.clients) {
+            client.socket.disconnect(true);
+        }
+
+        logger.debug('Removing listeners...');
+        this.userNamespace.removeAllListeners();
+
+        logger.debug('Deleting namespace reference...');
+        delete io.nsps[`${SocketConfig.DEBATE_NAMESPACE_PREFIX}${this.debateID}`];
+
+        logger.info('Debate has been closed.');
+    }
+
     /**
      * Starts handling for client events.
      */
