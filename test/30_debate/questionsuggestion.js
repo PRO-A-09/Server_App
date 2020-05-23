@@ -50,7 +50,7 @@ describe('Question suggestion class test', () => {
 
     beforeEach(() => {
         let res = questionSuggestion.newSuggestion(1000, `Suggestion ${suggestionId + 1}`);
-        res.should.equal(true);
+        res.should.not.equal(false);
 
         let suggestedQuestions = Array.from(questionSuggestion.suggestedQuestions.values());
         suggestionId = suggestedQuestions[suggestedQuestions.length - 1].id;
