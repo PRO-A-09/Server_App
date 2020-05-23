@@ -117,30 +117,7 @@ export class Debate {
         this.userNamespace.on('connection', async (socket) => {
             logger.debug(`New socket connected to namespace (${this.userNamespace.name}) id (${socket.id})`);
 
-            if (this.clients.has(socket.uuid)) {
-                logger.debug(`Existing client uuid (${socket.uuid})`)
-                this.getClient(socket.uuid).socket = socket;
-            } else {
-                logger.debug(`New client uuid (${socket.uuid})`)
-                // Store the socket and initialize attributes
-                this.clients.set(socket.uuid, {
-                    socket: socket,
-                    answers: [],
-                    suggestions: new Set()
-                });
-
-                dbManager.trySaveDevice(socket.uuid)
-                    .then(res => {
-                        if (res === true) {
-                            logger.info('Device saved to db');
-                        } else {
-                            logger.warn('Cannot save device to db');
-                        }
-                    })
-                    .catch(res => {
-                        logger.error(`saveDevice threw : ${res}.`)
-                    });
-            }
+            this.initializeClient(socket);
 
             // Register socket functions
             socket.on('getDebateDetails', this.getDebateDetails(socket));
@@ -149,6 +126,37 @@ export class Debate {
             socket.on('answerOpenQuestion', this.answerOpenQuestion(socket));
             socket.on('suggestQuestion', this.suggestQuestion(socket));
         });
+    }
+
+    /**
+     * Initialize the client and his attributes
+     * @param socket client socket to initialize
+     */
+    initializeClient(socket) {
+        if (this.clients.has(socket.uuid)) {
+            logger.debug(`Existing client uuid (${socket.uuid})`)
+            this.getClient(socket.uuid).socket = socket;
+        } else {
+            logger.debug(`New client uuid (${socket.uuid})`)
+            // Store the socket and initialize attributes
+            this.clients.set(socket.uuid, {
+                socket: socket,
+                answers: [],
+                suggestions: new Set()
+            });
+
+            dbManager.trySaveDevice(socket.uuid)
+                .then(res => {
+                    if (res === true) {
+                        logger.info('Device saved to db');
+                    } else {
+                        logger.warn('Cannot save device to db');
+                    }
+                })
+                .catch(res => {
+                    logger.error(`saveDevice threw : ${res}.`)
+                });
+        }
     }
 
     /**
