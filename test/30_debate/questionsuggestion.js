@@ -14,10 +14,12 @@ const DEBATE_NAMESPACE = `${SERVER_ADDRESS}${SocketConfig.DEBATE_NAMESPACE_PREFI
 describe('Question suggestion class test', () => {
     let debateManager;
     let admin;
+    let client;
     let id;
     let debate;
     let questionSuggestion;
     let suggestionId = 0;
+    let uuid = 1000;
 
     before(async ()  => {
         debateManager = new DebateManager();
@@ -48,12 +50,20 @@ describe('Question suggestion class test', () => {
         questionSuggestion = new QuestionSuggestion(debate, true);
     });
 
-    beforeEach(() => {
-        let res = questionSuggestion.newSuggestion(1000, `Suggestion ${suggestionId + 1}`);
-        res.should.not.equal(false);
+    beforeEach(async () => {
+        // Connect the client to the debate first
+        ++uuid;
+        client = io.connect(`${DEBATE_NAMESPACE}${id}`, {
+            path: SocketConfig.DEFAULT_PATH,
+            forceNew: true,
+            query: {
+                uuid: `${uuid}`
+            }
+        });
+        await new Promise(resolve => client.on('connect', resolve));
 
-        let suggestedQuestions = Array.from(questionSuggestion.suggestedQuestions.values());
-        suggestionId = suggestedQuestions[suggestedQuestions.length - 1].id;
+        suggestionId = questionSuggestion.newSuggestion(`${uuid}`, `Suggestion ${suggestionId + 1}`);
+        suggestionId.should.not.equal(false);
     });
 
     it('should save suggestion', () => {
@@ -96,7 +106,7 @@ describe('Question suggestion class test', () => {
             let res = questionSuggestion.approveSuggestion(suggestionId);
             res.should.equal(true);
 
-            res = questionSuggestion.voteSuggestion(suggestionId, 1000);
+            res = questionSuggestion.voteSuggestion(suggestionId, `${uuid}`);
             res.should.equal(true);
 
             let s = questionSuggestion.approvedSuggestedQuestions.get(suggestionId);
@@ -107,10 +117,10 @@ describe('Question suggestion class test', () => {
             let res = questionSuggestion.approveSuggestion(suggestionId);
             res.should.equal(true);
 
-            res = questionSuggestion.voteSuggestion(suggestionId, 2000);
+            res = questionSuggestion.voteSuggestion(suggestionId, `${uuid}`);
             res.should.equal(true);
 
-            res = questionSuggestion.voteSuggestion(suggestionId, 2000);
+            res = questionSuggestion.voteSuggestion(suggestionId, `${uuid}`);
             res.should.equal(false)
 
             let s = questionSuggestion.approvedSuggestedQuestions.get(suggestionId);
@@ -118,19 +128,23 @@ describe('Question suggestion class test', () => {
         });
 
         it('should not vote for a non-approved suggestion', () => {
-            let res = questionSuggestion.voteSuggestion(suggestionId, 3000);
+            let res = questionSuggestion.voteSuggestion(suggestionId, `${uuid}`);
             res.should.equal(false);
         });
 
         it('should not vote for an invalid suggestion', () => {
-            let res = questionSuggestion.voteSuggestion(-1, 4000);
+            let res = questionSuggestion.voteSuggestion(-1, `${uuid}`);
             res.should.equal(false);
         });
 
         it('should not vote for an invalid suggestion', () => {
-            let res = questionSuggestion.voteSuggestion(-1, 1003);
+            let res = questionSuggestion.voteSuggestion(-1, `${uuid}`);
             res.should.equal(false);
         });
+    });
+
+    afterEach(() => {
+        client.close();
     });
 
     after(() => {
