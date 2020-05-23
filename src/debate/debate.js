@@ -387,8 +387,6 @@ export class Debate {
             return;
         }
 
-        this.getClient(socket.uuid).suggestions.add(suggestionId);
-
         logger.info(`Socket (${socket.id}) suggested (${suggestion}).`);
         callback(true);
     };

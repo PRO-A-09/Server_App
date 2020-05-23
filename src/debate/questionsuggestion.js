@@ -66,8 +66,11 @@ export class QuestionSuggestion {
             return false;
         }
 
+        // Add the suggestion to the client & the list
         let suggestedQuestion = new this.SuggestedQuestion(uuid, suggestion);
+        this.debate.getClient(uuid).suggestions.add(suggestedQuestion.id);
         this.suggestedQuestions.set(suggestedQuestion.id, suggestedQuestion);
+
         logger.info(`Device with uuid (${uuid}) suggested (${suggestion}) id (${suggestedQuestion.id})`);
 
         // TODO: - Integration with moderator rooms
@@ -143,8 +146,12 @@ export class QuestionSuggestion {
             return false;
         }
 
-        logger.info(`Suggestion with id (${suggestionId}) has been rejected`);
+        // Remove the suggestion from the client & the list
+        let suggestion = this.suggestedQuestions.get(suggestionId);
+        this.debate.getClient(suggestion.uuid).suggestions.delete(suggestionId);
         this.suggestedQuestions.delete(suggestionId);
+
+        logger.info(`Suggestion with id (${suggestionId}) has been rejected`);
 
         // TODO: Emit suggestion deletion to moderator room
         return true;
