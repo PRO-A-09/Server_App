@@ -13,10 +13,13 @@ const DEBATE_NAMESPACE = `${SERVER_ADDRESS}${SocketConfig.DEBATE_NAMESPACE_PREFI
 
 describe('Question suggestion class test', () => {
     let debateManager;
+
     let admin;
     let client;
+
     let id;
     let debate;
+
     let questionSuggestion;
     let suggestionId = 0;
     let uuid = 1000;
@@ -86,7 +89,7 @@ describe('Question suggestion class test', () => {
         });
     });
 
-    describe('approveSuggestion', () => {
+    describe('rejectSuggestion', () => {
         it('should reject suggestion', () => {
             let res = questionSuggestion.rejectSuggestion(suggestionId);
             res.should.equal(true);
@@ -102,44 +105,57 @@ describe('Question suggestion class test', () => {
     });
 
     describe('voteSuggestion', () => {
+        let votingClient;
+        const votingClientUUID = '34221345241331';
+
+        before((done) => {
+            votingClient = io.connect(`${DEBATE_NAMESPACE}${id}`, {
+                path: SocketConfig.DEFAULT_PATH,
+                forceNew: true,
+                query: {
+                    uuid: votingClientUUID
+                }
+            });
+            votingClient.on('connect', done);
+        });
+
         it('should vote for a suggestion', () => {
             let res = questionSuggestion.approveSuggestion(suggestionId);
             res.should.equal(true);
 
-            res = questionSuggestion.voteSuggestion(suggestionId, `${uuid}`);
+            res = questionSuggestion.voteSuggestion(suggestionId, votingClientUUID);
             res.should.equal(true);
 
             let s = questionSuggestion.approvedSuggestedQuestions.get(suggestionId);
-            s.getNbVotes().should.equal(1);
+            s.getNbVotes().should.equal(2); // 2 : because client who suggested it + us
         });
 
         it('should not vote more than once with same uuid', () => {
             let res = questionSuggestion.approveSuggestion(suggestionId);
             res.should.equal(true);
 
-            res = questionSuggestion.voteSuggestion(suggestionId, `${uuid}`);
+            res = questionSuggestion.voteSuggestion(suggestionId, votingClientUUID);
             res.should.equal(true);
 
-            res = questionSuggestion.voteSuggestion(suggestionId, `${uuid}`);
+            res = questionSuggestion.voteSuggestion(suggestionId, votingClientUUID);
             res.should.equal(false)
 
             let s = questionSuggestion.approvedSuggestedQuestions.get(suggestionId);
-            s.getNbVotes().should.equal(1);
+            s.getNbVotes().should.equal(2);
         });
 
         it('should not vote for a non-approved suggestion', () => {
-            let res = questionSuggestion.voteSuggestion(suggestionId, `${uuid}`);
+            let res = questionSuggestion.voteSuggestion(suggestionId, votingClientUUID);
             res.should.equal(false);
         });
 
         it('should not vote for an invalid suggestion', () => {
-            let res = questionSuggestion.voteSuggestion(-1, `${uuid}`);
+            let res = questionSuggestion.voteSuggestion(-1, votingClientUUID);
             res.should.equal(false);
         });
 
-        it('should not vote for an invalid suggestion', () => {
-            let res = questionSuggestion.voteSuggestion(-1, `${uuid}`);
-            res.should.equal(false);
+        after(() => {
+            votingClient.close();
         });
     });
 

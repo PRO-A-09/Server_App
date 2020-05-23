@@ -306,7 +306,7 @@ describe("Debate client functions", () => {
                 let {id, suggestion, votes} = suggestionObj
 
                 suggestion.should.equal(suggestionText);
-                votes.should.equal(0);
+                votes.should.equal(1);
                 done();
             });
 

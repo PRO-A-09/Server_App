@@ -74,6 +74,7 @@ export class QuestionSuggestion {
 
         // Add the suggestion to the client & the list
         let suggestedQuestion = new this.SuggestedQuestion(uuid, suggestion);
+        suggestedQuestion.voters.add(uuid);
         client.suggestions.add(suggestedQuestion.id);
         this.suggestedQuestions.set(suggestedQuestion.id, suggestedQuestion);
 

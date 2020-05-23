@@ -125,6 +125,7 @@ export class Debate {
             socket.on('answerQuestion', this.answerQuestion(socket));
             socket.on('answerOpenQuestion', this.answerOpenQuestion(socket));
             socket.on('suggestQuestion', this.suggestQuestion(socket));
+            socket.on('voteSuggestedQuestion', this.voteSuggestedQuestion(socket));
         });
     }
 
@@ -388,6 +389,31 @@ export class Debate {
         }
 
         logger.info(`Socket (${socket.id}) suggested (${suggestion}).`);
+        callback(true);
+    };
+
+    voteSuggestedQuestion = (socket) => (suggestionId, callback) => {
+        logger.debug(`voteSuggestedQuestion received from ${socket.id}`);
+
+        if (!TypeCheck.isFunction(callback)) {
+            logger.debug(`callback is not a function.`);
+            return;
+        }
+
+        if (!TypeCheck.isInteger(suggestionId)) {
+            logger.debug('Invalid arguments for voteSuggestedQuestion');
+            callback(false);
+            return;
+        }
+
+        let res = this.questionSuggestion.voteSuggestion(suggestionId, socket.uuid);
+        if (res === false) {
+            logger.debug(`Cannot vote for suggestion with id (${suggestionId})`);
+            callback(false);
+            return;
+        }
+
+        logger.info(`Socket (${socket.id}) voted for suggestion id (${suggestionId})`);
         callback(true);
     };
 }
