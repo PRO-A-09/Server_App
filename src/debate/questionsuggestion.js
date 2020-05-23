@@ -11,6 +11,10 @@ export class QuestionSuggestion {
     approvedSuggestedQuestions; // Approved suggested questions
     approvalRequired;           // Whether an approval is required or not
 
+    /**
+     * Nested class that represents a suggestion
+     * @type {QuestionSuggestion.SuggestedQuestion}
+     */
     SuggestedQuestion = class SuggestedQuestion {
         static nb_suggestions = 0;
 
@@ -19,13 +23,23 @@ export class QuestionSuggestion {
         question;
         voters;
 
-        constructor(uuid, suggestion) {
+        /**
+         * Default constructor of SuggestedQuestion that stores the question and the uuid
+         * of the suggester
+         * @param uuid uuid of the device
+         * @param question question being suggested
+         */
+        constructor(uuid, question) {
             this.suggestionId = ++SuggestedQuestion.nb_suggestions;
             this.uuid = uuid;
-            this.question = suggestion;
+            this.question = question;
             this.voters = new Set();
         }
 
+        /**
+         * Format the SuggestedQuestion into a format that can be sent with socket.io
+         * @returns {{suggestionId: Number, suggestion: String, votes: Number}} object
+         */
         format() {
             return {
                 suggestionId: this.suggestionId,
@@ -34,6 +48,10 @@ export class QuestionSuggestion {
             };
         }
 
+        /**
+         * Returns the number of votes for this suggestion
+         * @returns {Number} number of votes
+         */
         getNbVotes() {
             return this.voters.size;
         }

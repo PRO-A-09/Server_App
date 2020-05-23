@@ -374,6 +374,10 @@ export class Debate {
         callback(true);
     };
 
+    /**
+     * Returns the list of suggested questions.
+     * callback is a function that takes an array of suggestions.
+     */
     getSuggestedQuestions = (socket) => (callback) => {
         logger.debug(`getSuggestedQuestions received from ${socket.id}`);
 
@@ -385,6 +389,11 @@ export class Debate {
         callback(this.questionSuggestion.getApprovedSuggestions());
     };
 
+    /**
+     * Suggest a new question to the participants of the debate.
+     * question is a String that contains the question
+     * callback is a function that takes true on success, otherwise false.
+     */
     suggestQuestion = (socket) => (question, callback) => {
         logger.debug(`suggestQuestion received from ${socket.id}`);
 
@@ -404,6 +413,11 @@ export class Debate {
         callback(true);
     };
 
+    /**
+     * Vote for a suggested question.
+     * suggestionId is the id of the suggestion to vote for
+     * callback is a function that takes true on success, otherwise false.
+     */
     voteSuggestedQuestion = (socket) => (suggestionId, callback) => {
         logger.debug(`voteSuggestedQuestion received from ${socket.id}`);
 
