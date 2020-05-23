@@ -2,21 +2,31 @@ import {SocketConfig, logger, DebateConfig} from '../conf/config.js';
 import * as TypeCheck from '../utils/typecheck.js'
 import {dbManager} from "../database/DatabaseManager.js";
 import {ClientBlacklistMiddleware} from "../middleware/clientblacklistmiddleware.js";
+import {QuestionSuggestion} from "./questionsuggestion.js";
 
 /**
  * This class implements a new Debate and the communication with the clients.
  */
 export class Debate {
     static nb_debate = 0;
+
+    // Debate information
     debateID;
-    adminRoomName;
-    adminRoom;
-    userNamespace;
     title;
     description;
-    questions;
+
+    // Admin information
+    adminRoomName;
+    adminRoom;
     admin;
+
+    // User information
+    userNamespace;
     clients;
+
+    // User data
+    questions;
+    questionSuggestion
 
     /**
      * Nested class Question that contains the question of the debate
@@ -77,16 +87,20 @@ export class Debate {
      * @param adminNamespace admin namespace to create the room communicate with the admins
      */
     constructor(title, description, ownerSocket, io, adminNamespace) {
+        // Initialize detailts
         this.title = title;
         this.description = description;
-        this.questions = new Map();
         this.debateID = ++Debate.nb_debate;
+
+        // Initialize data
+        this.clients = new Map();
+        this.questions = new Map();
+        this.questionSuggestion = new QuestionSuggestion(this, false);
+
+        // Initialize admin settings
         this.adminRoomName = SocketConfig.ADMIN_ROOM_PREFIX + this.debateID;
         this.adminRoom = adminNamespace.to(this.adminRoomName);
         this.admin = ownerSocket.username;
-        this.clients = [];
-        //For local tests
-        //this.admin = "admin";
 
         // Join the admin room
         ownerSocket.join(this.adminRoomName);
@@ -103,36 +117,48 @@ export class Debate {
         this.userNamespace.on('connection', async (socket) => {
             logger.debug(`New socket connected to namespace (${this.userNamespace.name}) id (${socket.id})`);
 
-            if (this.clients[socket.uuid]) {
-                logger.debug(`Existing client uuid (${socket.uuid})`)
-                this.clients[socket.uuid].socket = socket;
-            } else {
-                logger.debug(`New client uuid (${socket.uuid})`)
-                // Store the socket and initialize attributes
-                this.clients[socket.uuid] = {
-                    socket: socket,
-                    answers: []
-                };
-
-                dbManager.trySaveDevice(socket.uuid)
-                    .then(res => {
-                        if (res === true) {
-                            logger.info('Device saved to db');
-                        } else {
-                            logger.warn('Cannot save device to db');
-                        }
-                    })
-                    .catch(res => {
-                        logger.error(`saveDevice threw : ${res}.`)
-                    });
-            }
+            this.initializeClient(socket);
 
             // Register socket functions
             socket.on('getDebateDetails', this.getDebateDetails(socket));
             socket.on('getQuestions', this.getQuestions(socket));
             socket.on('answerQuestion', this.answerQuestion(socket));
             socket.on('answerOpenQuestion', this.answerOpenQuestion(socket));
+            socket.on('getSuggestedQuestions', this.getSuggestedQuestions(socket));
+            socket.on('suggestQuestion', this.suggestQuestion(socket));
+            socket.on('voteSuggestedQuestion', this.voteSuggestedQuestion(socket));
         });
+    }
+
+    /**
+     * Initialize the client and his attributes
+     * @param socket client socket to initialize
+     */
+    initializeClient(socket) {
+        if (this.clients.has(socket.uuid)) {
+            logger.debug(`Existing client uuid (${socket.uuid})`)
+            this.getClient(socket.uuid).socket = socket;
+        } else {
+            logger.debug(`New client uuid (${socket.uuid})`)
+            // Store the socket and initialize attributes
+            this.clients.set(socket.uuid, {
+                socket: socket,
+                answers: [],
+                suggestions: new Set()
+            });
+
+            dbManager.trySaveDevice(socket.uuid)
+                .then(res => {
+                    if (res === true) {
+                        logger.info('Device saved to db');
+                    } else {
+                        logger.warn('Cannot save device to db');
+                    }
+                })
+                .catch(res => {
+                    logger.error(`saveDevice threw : ${res}.`)
+                });
+        }
     }
 
     /**
@@ -165,7 +191,16 @@ export class Debate {
      * @returns {Number} number of unique clients that connected to the debate
      */
     getNbUniqueClients() {
-        return Object.keys(this.clients).length;
+        return this.clients.size;
+    }
+
+    /**
+     * Return a client based on the uuid
+     * @param uuid uuid of the client
+     * @returns {*} client
+     */
+    getClient(uuid) {
+        return this.clients.get(uuid);
     }
 
     // This section contains the different socket io functions
@@ -240,7 +275,7 @@ export class Debate {
             return;
         }
 
-        if (this.clients[socket.uuid].answers[questionId] !== undefined) {
+        if (this.getClient(socket.uuid).answers[questionId] !== undefined) {
             logger.debug(`Client with uuid (${socket.uuid}) already answered.`);
             callback(false);
             return;
@@ -268,7 +303,7 @@ export class Debate {
             });
 
         logger.info(`Socket (${socket.id}) replied ${answerId} to question (${questionId}).`);
-        this.clients[socket.uuid].answers[questionId] = answerId;
+        this.getClient(socket.uuid).answers[questionId] = answerId;
 
         // Send the reply to the admin room.
         this.adminRoom.emit('questionAnswered', {debateId: this.debateID, questionId: questionId, answerId: answerId});
@@ -310,7 +345,7 @@ export class Debate {
             return;
         }
 
-        if (this.clients[socket.uuid].answers[questionId] !== undefined) {
+        if (this.getClient(socket.uuid).answers[questionId] !== undefined) {
             logger.debug(`Client with uuid (${socket.uuid}) already answered.`);
             callback(false);
             return;
@@ -318,7 +353,7 @@ export class Debate {
 
         let newLength = question.answers.push({answer: answer, uuid: socket.uuid});
         let responseId = newLength - 1;
-        this.clients[socket.uuid].answers[questionId] = responseId;
+        this.getClient(socket.uuid).answers[questionId] = responseId;
 
         //TODO: - Control if await slows down the app
         //      - If it slows down the app, remove it and modify tests
@@ -336,6 +371,75 @@ export class Debate {
             });
 
         logger.info(`Socket (${socket.id}) replied (${answer}) to question (${questionId}).`);
+        callback(true);
+    };
+
+    /**
+     * Returns the list of suggested questions.
+     * callback is a function that takes an array of suggestions.
+     */
+    getSuggestedQuestions = (socket) => (callback) => {
+        logger.debug(`getSuggestedQuestions received from ${socket.id}`);
+
+        if (!TypeCheck.isFunction(callback)) {
+            logger.debug(`callback is not a function.`);
+            return;
+        }
+
+        callback(this.questionSuggestion.getApprovedSuggestions());
+    };
+
+    /**
+     * Suggest a new question to the participants of the debate.
+     * question is a String that contains the question
+     * callback is a function that takes true on success, otherwise false.
+     */
+    suggestQuestion = (socket) => (question, callback) => {
+        logger.debug(`suggestQuestion received from ${socket.id}`);
+
+        if (!TypeCheck.isFunction(callback)) {
+            logger.debug(`callback is not a function.`);
+            return;
+        }
+
+        let suggestionId = this.questionSuggestion.newSuggestion(socket.uuid, question);
+        if (suggestionId === false) {
+            logger.debug('Cannot create suggestion.');
+            callback(false);
+            return;
+        }
+
+        logger.info(`Socket (${socket.id}) suggested (${question}).`);
+        callback(true);
+    };
+
+    /**
+     * Vote for a suggested question.
+     * suggestionId is the id of the suggestion to vote for
+     * callback is a function that takes true on success, otherwise false.
+     */
+    voteSuggestedQuestion = (socket) => (suggestionId, callback) => {
+        logger.debug(`voteSuggestedQuestion received from ${socket.id}`);
+
+        if (!TypeCheck.isFunction(callback)) {
+            logger.debug(`callback is not a function.`);
+            return;
+        }
+
+        if (!TypeCheck.isInteger(suggestionId)) {
+            logger.debug('Invalid arguments for voteSuggestedQuestion');
+            callback(false);
+            return;
+        }
+
+        let res = this.questionSuggestion.voteSuggestion(suggestionId, socket.uuid);
+        if (res === false) {
+            logger.debug(`Cannot vote for suggestion with id (${suggestionId})`);
+            callback(false);
+            return;
+        }
+
+        logger.info(`Socket (${socket.id}) voted for suggestion id (${suggestionId})`);
         callback(true);
     };
 }
