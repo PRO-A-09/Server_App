@@ -316,6 +316,73 @@ describe("Debate client functions", () => {
         });
     });
 
+    describe('voteSuggestedQuestion', () => {
+        let votingClient;
+        let suggestion;
+        let suggestionId;
+
+        before((done) => {
+            votingClient = io.connect(`${DEBATE_NAMESPACE}${id}`, {
+                path: SocketConfig.DEFAULT_PATH,
+                forceNew: true,
+                query: {
+                    uuid: '2345671312325432'
+                }
+            });
+
+            votingClient.on('connect', done);
+        });
+
+        beforeEach((done) => {
+            client.on('suggestedQuestion', (suggestionObj) => {
+                suggestionId = suggestionObj.id;
+                suggestion = debate.questionSuggestion.approvedSuggestedQuestions.get(suggestionId);
+                done();
+            });
+
+            client.emit('suggestQuestion', 'This is my new suggestion.', res => {
+                res.should.equal(true);
+            });
+        });
+
+        it('should be able to vote', (done) => {
+            votingClient.emit('voteSuggestedQuestion', suggestionId, res => {
+                res.should.equal(true);
+                suggestion.getNbVotes().should.equal(2);
+                done();
+            });
+        });
+
+        it('should not vote twice', async () => {
+            await new Promise(resolve => {
+                votingClient.emit('voteSuggestedQuestion', suggestionId, res => {
+                    res.should.equal(true);
+                    suggestion.getNbVotes().should.equal(2);
+                    resolve();
+                });
+            });
+
+            await new Promise(resolve => {
+                votingClient.emit('voteSuggestedQuestion', suggestionId, res => {
+                    res.should.equal(false);
+                    suggestion.getNbVotes().should.equal(2);
+                    resolve();
+                });
+            });
+        });
+
+        it('should not vote with an invalid suggestion id', (done) => {
+            votingClient.emit('voteSuggestedQuestion', -1, (res) => {
+                res.should.equal(false);
+                done();
+            });
+        });
+
+        after(() => {
+            votingClient.close();
+        });
+    });
+
     afterEach(() => {
         client.close();
     });
