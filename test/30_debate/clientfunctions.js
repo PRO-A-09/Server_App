@@ -250,6 +250,38 @@ describe("Debate client functions", () => {
         });
     });
 
+    describe('suggestQuestion', () => {
+        it('should accept a valid suggestion', (done) => {
+            client.emit('suggestQuestion', 'This is my suggestion', res => {
+                res.should.equal(true);
+                done();
+            });
+        });
+
+        it('should not accept suggestion with too many chars', (done) => {
+            let suggestion = 'a'.repeat(255);
+            client.emit('suggestQuestion', suggestion, res => {
+                res.should.equal(false);
+                done();
+            });
+        });
+
+        it('should emit suggestion once approved', (done) => {
+            let suggestionText = 'This is my personal suggestion.'
+            client.on('suggestedQuestion', (suggestionObj) => {
+                let {id, suggestion, votes} = suggestionObj
+
+                suggestion.should.equal(suggestionText);
+                votes.should.equal(0);
+                done();
+            });
+
+            client.emit('suggestQuestion', suggestionText, res => {
+                res.should.equal(true);
+            });
+        });
+    });
+
     afterEach(() => {
         client.close();
     });
