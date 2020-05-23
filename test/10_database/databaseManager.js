@@ -296,6 +296,16 @@ describe('Data Base manager test', () => {
         });
     });
 
+    describe('Get unknown questions that as been approved by admin', () => {
+        it('Getting approved unknown Question', (done) => {
+            db.getAcceptedQuestionsSuggestion(10).then((questions) => {
+                questions.length.should.equal(0);
+                done();
+            });
+
+        });
+    });
+
     describe('Get questions that as not yet been approved by admin', () => {
         it('Getting unapproved Question', (done) => {
             db.getNotYetAcceptedQuestionsSuggestion(1).then((questions) => {

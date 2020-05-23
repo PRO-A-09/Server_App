@@ -67,6 +67,23 @@ describe('Statistic functions test', () => {
             });
         });
 
+        it("Get stats of unknown debate", (done) => {
+            let debateID = 100;
+            admin.emit("getDebateStats", debateID, (debateStats) => {
+                debateStats.length.should.equal(0);
+                done();
+            });
+        });
+
+        it("Get stats of unknown question", (done) => {
+            let debateID = 4;
+            let questionID = 100;
+            admin.emit("getQuestionStats", questionID, debateID, (questionStats) => {
+                questionStats.length.should.equal(0);
+                done();
+            });
+        });
+
         after(() => {
             admin.close();
         });

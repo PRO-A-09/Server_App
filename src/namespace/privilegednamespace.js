@@ -234,6 +234,12 @@ export class PrivilegedNamespace extends CustomNamespace {
         // Ask for the stats for an admin user in the statistic class
         let allDiscussions = await this.statistic.adminStats(socket.username);
 
+        if (allDiscussions.length !== 2) {
+            logger.debug('Invalid username.');
+            callback([]);
+            return;
+        }
+
         callback([allDiscussions[0], allDiscussions[1]]);
     };
 
@@ -250,6 +256,12 @@ export class PrivilegedNamespace extends CustomNamespace {
 
         let allQuestions = await this.statistic.debateStats(debateId);
 
+        if (allQuestions.length !== 3) {
+            logger.debug('Invalid debate.');
+            callback([]);
+            return;
+        }
+
         callback([allQuestions[0], allQuestions[1], allQuestions[2]]);
     };
 
@@ -265,6 +277,12 @@ export class PrivilegedNamespace extends CustomNamespace {
         }
 
         let allResponses = await this.statistic.questionStats(questionId, debateId);
+
+        if (allResponses.length !== 3) {
+            logger.debug('Invalid question.');
+            callback([]);
+            return;
+        }
 
         callback([allResponses[0], allResponses[1], allResponses[2]]);
 

@@ -26,7 +26,7 @@ export class DataBaseManager {
     async start() {
         // Connection to the local database
         try {
-            await mongoose.connect('mongodb://localhost:27017/PRO', {
+            await mongoose.connect('mongodb://192.168.99.100:27017/PRO', {
                 useNewUrlParser: true,
                 useUnifiedTopology: true
             });
@@ -127,13 +127,13 @@ export class DataBaseManager {
     /**
      * Get all the questions proposed by users and accepted by admin during a discussion
      * @param anIdDiscussion integer that represents the id of the discussion related to questions that we want
-     * @returns {Promise<*>} an array of Questions or undefined if no questions with the id of the discussion passed are found
+     * @returns {Promise<*>} an array of Questions or empty array if no questions with the id of the discussion passed are found
      */
     async getAcceptedQuestionsSuggestion(anIdDiscussion){
         logger.debug(`Getting the Question accepted by the admin of the debate ${anIdDiscussion}`);
         // Get the discussions related to the id
         return QuestionSuggestion.find({"id.refDiscussion": anIdDiscussion, approved: true}, function (err, questions) {
-            if (err || questions == null) {
+            if (err || questions == null || questions.length === 0) {
                 logger.debug(`Error when requesting accepted question : No questions were found`);
             } else {
                 logger.debug(questions);
@@ -144,13 +144,13 @@ export class DataBaseManager {
     /**
      * Get all the questions proposed by users but that are not yet accepted
      * @param anIdDiscussion integer that represents the id of the discussion related to questions that we want
-     * @returns {Promise<*>} an array of Questions or undefined if no questions with the id of the discussion passed are found
+     * @returns {Promise<*>} an array of Questions or empty array if no questions with the id of the discussion passed are found
      */
     async getNotYetAcceptedQuestionsSuggestion(anIdDiscussion){
         logger.debug(`Getting the Question not yet accepted by the admin of the debate ${anIdDiscussion}`);
         // Get the discussions related to the id and the approved status
         return QuestionSuggestion.find({"id.refDiscussion": anIdDiscussion, approved: undefined}, function (err, questions) {
-            if (err || questions == null) {
+            if (err || questions == null || questions.length === 0) {
                 logger.debug(`Error when requesting not yet accepted question : No questions were found`);
             } else {
                 logger.debug(questions);
@@ -174,12 +174,16 @@ export class DataBaseManager {
             logger.debug(`Getting the Discussions from ${aUsername}`);
             // Get all the discussions related to the user
             discussions = await Discussion.find({administrator: adminId}, function (err, discussions) {
-                if (err || discussions == null) {
+                if (err || discussions == null || discussions.length === 0) {
                     logger.debug(`Error when requesting discussions`);
                 } else {
-                    console.log(discussions);
+                    logger.debug(discussions);
                 }
             });
+            // With function find the request doesn't return null if the value was not found it simply returns an empty array
+            if (discussions.length === 0) {
+                discussions = null;
+            }
         }
         return discussions;
     }
@@ -203,12 +207,17 @@ export class DataBaseManager {
             discussions = await Discussion.find({administrator: adminId, finishTime: {$exists: true}}, function (err, discussions) {
                 if (err) {
                     logger.debug(`Error when requesting discussions`);
-                } else if (discussions == null) {
+                } else if (discussions == null || discussions.length === 0) {
                     logger.debug(`No debates were found`);
                 } else {
                     logger.debug(discussions);
                 }
             });
+
+            // With function find the request doesn't return null if the value was not found it simply returns an empty array
+            if (discussions.length === 0) {
+                discussions = null;
+            }
         }
         return discussions;
     }
@@ -227,12 +236,17 @@ export class DataBaseManager {
             logger.debug(`Getting the Questions from discussions ${anIdDebate}`);
             // Get all the questions from the DB from the desired debate
             questions = await Question.find({refDiscussion: anIdDebate}, function (err, questions) {
-                if (err || questions == null) {
+                if (err || questions == null || questions.length === 0) {
                     logger.debug(`Error when requesting questions`);
                 } else {
                     logger.debug(questions);
                 }
             });
+
+            // With function find the request doesn't return null if the value was not found it simply returns an empty array
+            if (questions.length === 0) {
+                questions = null;
+            }
         }
         return questions;
     }
@@ -251,12 +265,17 @@ export class DataBaseManager {
             logger.debug(`Getting the Responses from Device ${aUUID}`);
             // Get all the responses from the DB from the desired device
             responses = await Response.find({"devices.refDevice": aUUID}, function (err, responses) {
-                if (err || responses == null) {
+                if (err || responses == null || responses.length === 0) {
                     logger.debug(`Error when requesting responses`);
                 } else {
                     logger.debug(responses);
                 }
             });
+
+            // With function find the request doesn't return null if the value was not found it simply returns an empty array
+            if (responses.length === 0) {
+                responses = null;
+            }
         }
         return responses;
     }
@@ -276,12 +295,17 @@ export class DataBaseManager {
             logger.debug(`Getting the Responses from Question ${aIdQuestion} from debate ${aIdDiscussion}`);
             // Get all the responses from the DB from the desired device
             responses = await Response.find({"refQuestion.refQuestion": aIdQuestion, "refQuestion.refDiscussion": aIdDiscussion}, function (err, responses) {
-                if (err || responses == null) {
+                if (err || responses == null || responses.length === 0) {
                     logger.debug(`Error when requesting responses`);
                 } else {
                     logger.debug(responses);
                 }
             });
+
+            // With function find the request doesn't return null if the value was not found it simply returns an empty array
+            if (responses.length === 0) {
+                responses = null;
+            }
         }
         return responses;
     }

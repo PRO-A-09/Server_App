@@ -62,10 +62,15 @@ export class Statistic {
     /**
      * Return all the informations desired when we want to make stats for an admin
      * @param aUsername String that represents the username of the admin
-     * @returns {Promise<*[]>} an Array containing all the stats of the admin
+     * @returns {Promise<*[]>} an Array containing all the stats of the admin or an empty one if it fails
      */
     async adminStats(aUsername){
         let allDiscussions = await dbManager.getDiscussionsAdmin(aUsername);
+
+        if (allDiscussions == null) {
+            logger.warn(`No discussions found for admin ${aUsername}`);
+            return [];
+        }
 
         return [allDiscussions.length, Array.from(allDiscussions.values(), d => this.discussionFormat(d))];
     };
@@ -77,27 +82,38 @@ export class Statistic {
      * @returns {Promise<number>} an integer that is the number of votes
      */
     async getNumberVotesQuestion(aQuestionId, aDiscussionId) {
+        let numberTotalVotes = 0;
         // Get all the responses related to the question desired
         let allResponses = await dbManager.getResponsesQuestion(aQuestionId, aDiscussionId);
-        let numberTotalVotes = 0;
-        // Get all the votes for all the responses
-        for (let i = 0; i < allResponses.length; ++i) {
-            numberTotalVotes += allResponses[i].devices.length;
+        if (allResponses == null) {
+            logger.warn(`No Responses found for question with id ${aQuestionId} and debate id ${aDiscussionId}`);
+        } else {
+            // Get all the votes for all the responses
+            for (let i = 0; i < allResponses.length; ++i) {
+                numberTotalVotes += allResponses[i].devices.length;
+            }
         }
-        logger.info(`The number of votes : ${numberTotalVotes}`);
         return numberTotalVotes;
     }
 
     /**
      * Get all the stats for a debate
      * @param aDiscussionId the id of the discussion to get the stats from
-     * @returns {Promise<*[]>} an array containing the stats wanted for a debate
+     * @returns {Promise<*[]>} an array containing the stats wanted for a debate or an empty one if it fails
      */
     async debateStats(aDiscussionId){
         // Get the discussion in the database
         let debate = await dbManager.getDiscussion(aDiscussionId);
+        if (debate == null) {
+            logger.warn(`No debate found with id ${aDiscussionId}`);
+            return [];
+        }
         // Get all the questions related to the debate
         let allQuestions = await dbManager.getQuestionsDiscussion(aDiscussionId);
+        if (allQuestions == null) {
+            logger.warn(`No questions found for debate with id ${aDiscussionId}`);
+            return [];
+        }
         // Get the number of votes for all the Questions
         for(let i = 0; i < allQuestions.length; ++i) {
             allQuestions[i].numberVotes = await this.getNumberVotesQuestion(allQuestions[i].id, aDiscussionId);
@@ -120,12 +136,20 @@ export class Statistic {
      * Get all the stats a the question
      * @param aQuestionId integer that is the id of the question
      * @param aDiscussionId integer that is the id of the discussion
-     * @returns {Promise<*[]>} Array that contains the stats wanted for a question
+     * @returns {Promise<*[]>} Array that contains the stats wanted for a question or an empty one if it fails
      */
    async questionStats(aQuestionId, aDiscussionId){
-       let debate = await dbManager.getDiscussion(aDiscussionId);
-       let allResponses = await dbManager.getResponsesQuestion(aQuestionId, aDiscussionId);
+        let debate = await dbManager.getDiscussion(aDiscussionId);
+        if (debate == null) {
+            logger.warn(`No debate found with id ${aDiscussionId}`);
+            return [];
+        }
+        let allResponses = await dbManager.getResponsesQuestion(aQuestionId, aDiscussionId);
+        if (allResponses == null) {
+            logger.warn(`No responses found for question ${aQuestionId} with debate id ${aDiscussionId}`);
+            return [];
+        }
        let numberTotalVotes = await this.getNumberVotesQuestion(aQuestionId,aDiscussionId);
-       return[allResponses.length, Math.round((numberTotalVotes/debate.auditors) * 100), Array.from(allResponses.values(), r => this.responseFormat(r, numberTotalVotes))];
+       return [allResponses.length, Math.round((numberTotalVotes/debate.auditors) * 100), Array.from(allResponses.values(), r => this.responseFormat(r, numberTotalVotes))];
    }
 }
