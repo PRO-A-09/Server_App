@@ -143,7 +143,7 @@ export class Debate {
             // Store the socket and initialize attributes
             this.clients.set(socket.uuid, {
                 socket: socket,
-                answers: [],
+                answers: new Map(),
                 suggestions: new Set()
             });
 
@@ -275,7 +275,7 @@ export class Debate {
             return;
         }
 
-        if (this.getClient(socket.uuid).answers[questionId] !== undefined) {
+        if (this.getClient(socket.uuid).answers.has(questionId)) {
             logger.debug(`Client with uuid (${socket.uuid}) already answered.`);
             callback(false);
             return;
@@ -303,7 +303,7 @@ export class Debate {
             });
 
         logger.info(`Socket (${socket.id}) replied ${answerId} to question (${questionId}).`);
-        this.getClient(socket.uuid).answers[questionId] = answerId;
+        this.getClient(socket.uuid).answers.set(questionId, answerId);
 
         // Send the reply to the admin room.
         this.adminRoom.emit('questionAnswered', {debateId: this.debateID, questionId: questionId, answerId: answerId});
@@ -345,7 +345,7 @@ export class Debate {
             return;
         }
 
-        if (this.getClient(socket.uuid).answers[questionId] !== undefined) {
+        if (this.getClient(socket.uuid).answers.has(questionId)) {
             logger.debug(`Client with uuid (${socket.uuid}) already answered.`);
             callback(false);
             return;
@@ -353,7 +353,7 @@ export class Debate {
 
         let newLength = question.answers.push({answer: answer, uuid: socket.uuid});
         let responseId = newLength - 1;
-        this.getClient(socket.uuid).answers[questionId] = responseId;
+        this.getClient(socket.uuid).answers.set(questionId, responseId);
 
         //TODO: - Control if await slows down the app
         //      - If it slows down the app, remove it and modify tests
