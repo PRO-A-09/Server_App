@@ -398,7 +398,7 @@ export class Debate {
     /**
      * Suggest a new question to the participants of the debate.
      * question is a String that contains the question
-     * callback is a function that takes true on success, otherwise false.
+     * callback is a function that takes the id of the suggestion on success, otherwise false.
      */
     suggestQuestion = (socket) => (question, callback) => {
         logger.debug(`suggestQuestion received from ${socket.id}`);
@@ -416,7 +416,7 @@ export class Debate {
         }
 
         logger.info(`Socket (${socket.id}) suggested (${question}).`);
-        callback(true);
+        callback(suggestionId);
     };
 
     /**
