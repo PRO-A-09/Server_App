@@ -237,8 +237,14 @@ export class Debate {
             return;
         }
 
+        // Mark the question that were answered
+        const questions = Array.from(this.questions.values(), q => (q.format()));
+        for (let [questionId, answerId] of this.getClient(socket.uuid).answers) {
+            questions[questionId].answered = true;
+        }
+
         // Format the questions before sending them
-        callback(Array.from(this.questions.values(), q => (q.format())));
+        callback(questions);
     };
 
     /**
@@ -386,7 +392,7 @@ export class Debate {
             return;
         }
 
-        callback(this.questionSuggestion.getApprovedSuggestions());
+        callback(this.questionSuggestion.getApprovedSuggestions(socket.uuid));
     };
 
     /**
