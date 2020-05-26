@@ -36,6 +36,10 @@ export class PrivilegedNamespace extends CustomNamespace {
             socket.on('closeDebate', this.closeDebate(socket));
             socket.on('newQuestion', this.newQuestion(socket));
 
+            // Moderator functions
+            socket.on('banUser', this.banUser(socket));
+            // socket.on('unbanUser', this.unbanUser(socket));
+
             socket.on('approveQuestion', this.approveQuestion(socket));
             socket.on('rejectQuestion', this.rejectQuestion(socket));
         });
@@ -65,7 +69,6 @@ export class PrivilegedNamespace extends CustomNamespace {
         }
 
         // TODO: Only return debates available for this user
-
         let debates = Array.from(this.activeDebates.values(), d => ({
             debateId: d.debateID,
             title: d.title,
@@ -244,6 +247,40 @@ export class PrivilegedNamespace extends CustomNamespace {
 
         await debate.sendNewQuestion(question);
         callback(question.id);
+    };
+
+    /**
+     * Ban a user from all admin future debates and kick him immediately if debateId is specified
+     * banObj contains the required information (uuid and debateId)
+     */
+    banUser = (socket) => (banObj, callback) => {
+        logger.debug(`banUser received from user (${socket.username}), id(${socket.id})`);
+
+        if (!TypeCheck.isFunction(callback)) {
+            logger.debug(`callback is not a function.`);
+            return;
+        }
+
+        let {uuid, debateId} = banObj;
+        if (!TypeCheck.isString(uuid) || !TypeCheck.isInteger(debateId)) {
+            logger.debug('Invalid arguments for banUser');
+            callback(false);
+            return;
+        }
+
+        const debate = this.getActiveDebate(debateId);
+        if (debate == null) {
+            logger.warn(`Debate with id (${debateId}) not found.`);
+            callback(false);
+            return;
+        }
+
+        // ban user to db
+
+        // kick him
+
+        logger.info(`User (${socket.username}) approved suggestion with id (${suggestionId})`);
+        callback(true);
     };
 
     /**
