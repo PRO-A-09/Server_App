@@ -1,4 +1,4 @@
-import {logger, SocketConfig, DebateConfig} from '../conf/config.js';
+import {logger, SocketConfig, DebateConfig, ErrorMessage} from '../conf/config.js';
 import {CustomNamespace} from './customnamespace.js'
 import {Debate} from "../debate/debate.js";
 import {dbManager} from "../database/DatabaseManager.js";
@@ -310,7 +310,7 @@ export class PrivilegedNamespace extends CustomNamespace {
 
         const debate = this.getActiveDebate(debateId);
         if (debate == null) {
-            logger.warn(`Debate with id (${debateId}) not found.`);
+            logger.warn(`Debate with id (${debateId}) not found. Can't ban properly.`);
             callback(false);
             return;
         }
@@ -328,6 +328,8 @@ export class PrivilegedNamespace extends CustomNamespace {
         if (client == null) {
             logger.debug(`Client with uuid (${uuid}) is not connected`)
         } else {
+            // Inform the client he is banned
+            client.socket.emit('banned', ErrorMessage.BAN_MESSAGE);
             client.socket.disconnect();
         }
 
