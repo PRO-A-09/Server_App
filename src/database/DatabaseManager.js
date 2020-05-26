@@ -674,6 +674,35 @@ export class DataBaseManager {
     }
 
     /**
+     * Check if the device is banned. If user is specified, it checks if the device has been
+     * banned by the user.
+     * @param uuid uuid of the device to check
+     * @param user optional, username that banned the device
+     * @returns {Promise<boolean>} true if it has been banned, false otherwise
+     */
+    async isDeviceBanned(uuid, user) {
+        let device = await Device.findOne({_id: uuid});
+        if (device == null) {
+            logger.debug(`Cannot find device with uuid ${uuid} in the database`);
+            return false;
+        }
+
+        let adminId = await this.getAdminId(user);
+        if (adminId == null) {
+            logger.debug(`Username (${user}) not found`);
+            return false;
+        }
+
+        if (device.refModerator == null) {
+            logger.debug(`Device with uuid (${uuid}) is not banned`);
+            return false;
+        }
+
+        logger.debug(`Device with uuid (${uuid}) has been banned by user ${user}`);
+        return device.refModerator === adminId;
+    }
+
+    /**
      * Try to save a device to the database.
      * @param uuid {String} represents the UUID of the device
      * @returns {Promise<boolean>} true if the save worked or the device already exists, false otherwise
