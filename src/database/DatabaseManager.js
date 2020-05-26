@@ -653,7 +653,7 @@ export class DataBaseManager {
             return false;
         }
 
-        if (device.refModerator !== adminId) {
+        if (!device.refModerator.equals(adminId)) {
             logger.debug(`Cannot unban a device banned by another user`);
             return false;
         }
@@ -698,8 +698,8 @@ export class DataBaseManager {
             return false;
         }
 
-        logger.debug(`Device with uuid (${uuid}) has been banned by user ${user}`);
-        return device.refModerator === adminId;
+        logger.debug(`Device with uuid (${uuid}) has been banned by user ref ${device.refModerator}`);
+        return device.refModerator.equals(adminId);
     }
 
     /**
