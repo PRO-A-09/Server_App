@@ -240,7 +240,11 @@ export class Debate {
         // Mark the question that were answered
         const questions = Array.from(this.questions.values(), q => (q.format()));
         for (let [questionId, answerId] of this.getClient(socket.uuid).answers) {
-            questions[questionId].answered = true;
+            try {
+                questions[questionId - 1].answered = true;
+            } catch {
+                logger.error(`Question ID (${questionId - 1}) not found in questions list`);
+            }
         }
 
         // Format the questions before sending them

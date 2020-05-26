@@ -144,6 +144,8 @@ export class QuestionSuggestion {
 
         logger.debug(`Device with uuid (${uuid}) voted for suggestion with id (${suggestionId})`);
         suggestion.voters.add(uuid);
+        this.debate.userNamespace.emit('newVote', suggestion.suggestionId);
+
         return true;
     }
 
