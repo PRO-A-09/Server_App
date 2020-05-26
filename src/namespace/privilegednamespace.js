@@ -293,7 +293,7 @@ export class PrivilegedNamespace extends CustomNamespace {
      * Ban a user from all admin future debates and kick him immediately if debateId is specified
      * banObj contains the required information (uuid and debateId)
      */
-    banUser = (socket) => (banObj, callback) => {
+    banUser = (socket) => async (banObj, callback) => {
         logger.debug(`banUser received from user (${socket.username}), id(${socket.id})`);
 
         if (!TypeCheck.isFunction(callback)) {
@@ -315,11 +315,23 @@ export class PrivilegedNamespace extends CustomNamespace {
             return;
         }
 
-        // ban user to db
+        // Ban the device in the database
+        let res = await dbManager.banDevice(socket.username, uuid);
+        if (res === false) { // A ban should always work.. We add an uuid to the database if not found.
+            logger.error(`Cannot ban device with uuid ${uuid}`);
+            callback(false);
+            return;
+        }
 
-        // kick him
+        // Disconnect the client
+        let client = debate.getClient(uuid);
+        if (client == null) {
+            logger.debug(`Client with uuid (${uuid}) is not connected`)
+        } else {
+            client.socket.disconnect();
+        }
 
-        logger.info(`User (${socket.username}) approved suggestion with id (${suggestionId})`);
+        logger.info(`User (${socket.username}) banned the device with uuid ${uuid}`);
         callback(true);
     };
 
