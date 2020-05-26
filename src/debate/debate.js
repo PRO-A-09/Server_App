@@ -107,7 +107,7 @@ export class Debate {
 
         // Create a new namespace for the debate
         this.userNamespace = io.of(SocketConfig.DEBATE_NAMESPACE_PREFIX + this.debateID);
-        this.userNamespace.use(new ClientBlacklistMiddleware().middlewareFunction);
+        this.userNamespace.use(new ClientBlacklistMiddleware(this.admin).middlewareFunction);
     }
 
     /**
