@@ -635,6 +635,45 @@ export class DataBaseManager {
     }
 
     /**
+     * Unban a device in the database
+     * @param user user that unbans the device
+     * @param uuid uuid of the device to unban
+     * @returns {Promise<boolean>} result of the unban
+     */
+    async unbanDevice(user, uuid) {
+        let adminId = await this.getAdminId(user);
+        if (adminId == null) {
+            logger.warn(`Cannot find username (${user})`);
+            return false;
+        }
+
+        let device = await Device.findOne({_id: uuid});
+        if (device == null) {
+            logger.warn(`Cannot find device with uuid ${uuid} to unban`);
+            return false;
+        }
+
+        if (device.refModerator !== adminId) {
+            logger.warn(`Cannot unban a device banned by another user`);
+        }
+
+        return false;
+        // device.refModerator = adminId;
+        // res = await new Promise(resolve => {
+        //     device.save()
+        //         .then(deviceUpdated => {
+        //             logger.debug(`Device update saved ${deviceUpdated}`);
+        //             resolve(true);
+        //         }).catch(err => {
+        //         logger.debug(`Error when updating device uuid (${uuid}). Err : ${err}`);
+        //         resolve(false);
+        //     });
+        // });
+        //
+        // return res;
+    }
+
+    /**
      * Try to save a device to the database.
      * @param uuid {String} represents the UUID of the device
      * @returns {Promise<boolean>} true if the save worked or the device already exists, false otherwise
