@@ -1,5 +1,5 @@
 import {SocketConfig, logger, ErrorMessage} from '../conf/config.js'
-import {dbManager} from "../database/DatabaseManager";
+import {dbManager} from "../database/DatabaseManager.js";
 
 /**
  * Class implementing a Middleware function with a fixed password
