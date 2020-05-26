@@ -31,6 +31,7 @@ export class PrivilegedNamespace extends CustomNamespace {
             // Register socket functions
             socket.on('getDebates', this.getDebates(socket));
             socket.on('getDebateQuestions', this.getDebateQuestions(socket));
+            socket.on('getDebateSuggestions', this.getDebateSuggestions(socket));
             socket.on('newDebate', this.newDebate(socket));
             socket.on('closeDebate', this.closeDebate(socket));
             socket.on('newQuestion', this.newQuestion(socket));
@@ -97,6 +98,35 @@ export class PrivilegedNamespace extends CustomNamespace {
         }
 
         callback(Array.from(debate.questions.values(), q => (q.format())));
+    };
+
+
+    /**
+     * Return the list of suggestions for a debate to the callback function
+     * debateId contains the id of the debate
+     */
+    getDebateSuggestions = (socket) => (debateId, callback) => {
+        logger.info(`getDebateSuggestions requested from ${socket.username}`);
+
+        if (!TypeCheck.isFunction(callback)) {
+            logger.debug(`callback is not a function.`);
+            return;
+        }
+
+        if (!TypeCheck.isInteger(debateId)) {
+            logger.debug('Invalid arguments for getDebateSuggestions.');
+            callback(-1);
+            return;
+        }
+
+        const debate = this.getActiveDebate(debateId);
+        if (debate == null) {
+            logger.debug(`Debate with id (${debateId}) not found.`);
+            callback(-1);
+            return;
+        }
+
+        callback(debate.questionSuggestion.getApprovedSuggestions());
     };
 
     /**
