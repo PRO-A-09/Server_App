@@ -10,6 +10,7 @@ import * as TypeCheck from '../utils/typecheck.js'
 export class PrivilegedNamespace extends CustomNamespace {
     io;
     activeDebates;
+    users;
 
     /**
      * Default constructor that saves the socket.io Namespace
@@ -19,6 +20,7 @@ export class PrivilegedNamespace extends CustomNamespace {
         super(io.of(SocketConfig.PRIVILEGED_NAMESPACE));
         this.io = io;
         this.activeDebates = new Map();
+        this.users = new Map();
     }
 
     /**
@@ -27,6 +29,9 @@ export class PrivilegedNamespace extends CustomNamespace {
     startSocketHandling() {
         this.nsp.on('connection', (socket) => {
             logger.debug(`New connected socket (socketid: ${socket.id}, username: ${socket.username})`);
+
+            // Initialize the
+            this.initializeUsers(socket);
 
             // Register socket functions
             socket.on('getDebates', this.getDebates(socket));
@@ -46,6 +51,24 @@ export class PrivilegedNamespace extends CustomNamespace {
     }
 
     /**
+     * Initialize the user and his attributes
+     * @param socket privileged socket to initialize
+     */
+    initializeUsers(socket) {
+        if (this.users.has(socket.username)) {
+            logger.debug(`Existing user username (${socket.username})`)
+            this.users.get(socket.username).socket = socket;
+        } else {
+            logger.debug(`New user username (${socket.username})`)
+            // Store the socket and initialize attributes
+            this.users.set(socket.username, {
+                socket: socket,
+                activeDebates: new Set()
+            });
+        }
+    }
+
+    /**
      * Return a Debate with the corresponding id
      * @param id of the debate
      * @returns {Debate}
@@ -58,9 +81,9 @@ export class PrivilegedNamespace extends CustomNamespace {
     // This section contains the different socket io functions
 
     /**
-     * Return the list of available debates to the callback function
+     * Return the list of all debates to the callback function
      */
-    getDebates = (socket) => (callback) => {
+    getDebates = (socket) => async (callback) => {
         logger.debug(`Get debate requested from ${socket.username}`);
 
         if (!TypeCheck.isFunction(callback)) {
@@ -68,12 +91,27 @@ export class PrivilegedNamespace extends CustomNamespace {
             return;
         }
 
-        // TODO: Only return debates available for this user
-        let debates = Array.from(this.activeDebates.values(), d => ({
-            debateId: d.debateID,
-            title: d.title,
-            description: d.description
-        }));
+        let debates = [];
+        for (let debateId of this.users.get(socket.username).activeDebates) {
+            let d = this.activeDebates.get(debateId);
+            debates.push({
+                debateId: d.debateID,
+                title: d.title,
+                description: d.description,
+                closed: false
+            });
+        }
+
+        logger.debug('Getting discussions from database');
+        let discussions = await dbManager.getDiscussionsAdmin(socket.username);
+        for (const discussion of discussions) {
+            debates.push({
+                debateId: discussion._id,
+                title: discussion.title,
+                description: discussion.description,
+                closed: discussion.finishTime != null
+            });
+        }
 
         callback(debates);
     };
@@ -158,6 +196,7 @@ export class PrivilegedNamespace extends CustomNamespace {
         // Create and start a new debate
         const debate = new Debate(title, description, socket, this.io, this.nsp);
         this.activeDebates.set(debate.debateID, debate);
+        this.users.get(socket.username).activeDebates.add(debate.debateID);
         await dbManager.saveDiscussion(debate)
             .then(res => {
                 if (res === true) {
@@ -196,6 +235,7 @@ export class PrivilegedNamespace extends CustomNamespace {
         }
         // Delete debate from active debates
         this.activeDebates.delete(aIdDiscussion);
+        this.users.get(socket.username).activeDebates.delete(debate.debateID);
         // Save in the database that the discussion is closed
         let update = await dbManager.saveEndDiscussion(aIdDiscussion);
 
