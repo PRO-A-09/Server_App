@@ -21,7 +21,7 @@ export class ClientBlacklistMiddleware {
      * @param next middleware function
      * @returns {*} the result returned by the next middleware
      */
-    async middlewareFunction(socket, next) {
+    middlewareFunction = async (socket, next) => {
         logger.debug('New ClientBlacklistMiddleware connection');
 
         const uuid = socket.handshake.query.uuid;
