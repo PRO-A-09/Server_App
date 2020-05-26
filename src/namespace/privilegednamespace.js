@@ -43,7 +43,7 @@ export class PrivilegedNamespace extends CustomNamespace {
 
             // Moderator functions
             socket.on('banUser', this.banUser(socket));
-            // socket.on('unbanUser', this.unbanUser(socket));
+            socket.on('unbanUser', this.unbanUser(socket));
 
             socket.on('approveQuestion', this.approveQuestion(socket));
             socket.on('rejectQuestion', this.rejectQuestion(socket));
@@ -316,7 +316,7 @@ export class PrivilegedNamespace extends CustomNamespace {
         }
 
         // Ban the device in the database
-        let res = await dbManager.banDevice(socket.username, uuid);
+        let res = await dbManager.banDevice(uuid, socket.username);
         if (res === false) { // A ban should always work.. We add an uuid to the database if not found.
             logger.error(`Cannot ban device with uuid ${uuid}`);
             callback(false);
@@ -332,6 +332,45 @@ export class PrivilegedNamespace extends CustomNamespace {
         }
 
         logger.info(`User (${socket.username}) banned the device with uuid ${uuid}`);
+        callback(true);
+    };
+
+    /**
+     * Unban a user from all admin future debates
+     * unbanObj contains the required information (uuid)
+     */
+    unbanUser = (socket) => async (unbanObj, callback) => {
+        logger.debug(`unbanUser received from user (${socket.username}), id(${socket.id})`);
+
+        if (!TypeCheck.isFunction(callback)) {
+            logger.debug(`callback is not a function.`);
+            return;
+        }
+
+        let {uuid} = unbanObj;
+        if (!TypeCheck.isString(uuid)) {
+            logger.debug('Invalid arguments for unbanUser');
+            callback(false);
+            return;
+        }
+
+        // Check if the device is banned by this user
+        let isBanned = await dbManager.isDeviceBanned(uuid, socket.username);
+        if (!isBanned) {
+            logger.info(`Device with uuid (${uuid}) is not banned`);
+            callback(true);
+            return;
+        }
+
+        // Ban the device in the database
+        let res = await dbManager.unbanDevice(uuid, socket.username);
+        if (res === false) { // We know the device exists and was banned by this specific user...
+            logger.error(`Couldn't unban device with uuid ${uuid}`);
+            callback(false);
+            return;
+        }
+
+        logger.info(`User (${socket.username}) unbanned the device with uuid ${uuid}`);
         callback(true);
     };
 
