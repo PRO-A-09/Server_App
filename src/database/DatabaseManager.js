@@ -595,6 +595,46 @@ export class DataBaseManager {
     }
 
     /**
+     * Ban a device in the database
+     * @param user user that banning the device
+     * @param uuid uuid of the device to ban
+     * @returns {Promise<boolean>} result of the ban
+     */
+    async banDevice(user, uuid) {
+        let res = await this.trySaveDevice(uuid);
+        if (res === false) {
+            logger.warn(`Cannot save device with uuid ${uuid} to the database`);
+            return false;
+        }
+
+        let adminId = await this.getAdminId(user);
+        if (adminId == null) {
+            logger.warn(`Cannot find username (${user})`);
+            return false;
+        }
+
+        let device = await Device.findOne({_id: uuid});
+        if (device == null) {
+            logger.warn(`Cannot find device with uuid ${uuid} to ban`);
+            return false;
+        }
+
+        device.refModerator = adminId;
+        res = await new Promise(resolve => {
+            device.save()
+                .then(deviceUpdated => {
+                    logger.debug(`Device update saved ${deviceUpdated}`);
+                    resolve(true);
+                }).catch(err => {
+                    logger.debug(`Error when updating device uuid (${uuid}). Err : ${err}`);
+                    resolve(false);
+            });
+        });
+
+        return res;
+    }
+
+    /**
      * Try to save a device to the database.
      * @param uuid {String} represents the UUID of the device
      * @returns {Promise<boolean>} true if the save worked or the device already exists, false otherwise
