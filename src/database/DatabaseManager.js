@@ -643,34 +643,34 @@ export class DataBaseManager {
     async unbanDevice(user, uuid) {
         let adminId = await this.getAdminId(user);
         if (adminId == null) {
-            logger.warn(`Cannot find username (${user})`);
+            logger.debug(`Cannot find username (${user})`);
             return false;
         }
 
         let device = await Device.findOne({_id: uuid});
         if (device == null) {
-            logger.warn(`Cannot find device with uuid ${uuid} to unban`);
+            logger.debug(`Cannot find device with uuid ${uuid} to unban`);
             return false;
         }
 
         if (device.refModerator !== adminId) {
-            logger.warn(`Cannot unban a device banned by another user`);
+            logger.debug(`Cannot unban a device banned by another user`);
+            return false;
         }
 
-        return false;
-        // device.refModerator = adminId;
-        // res = await new Promise(resolve => {
-        //     device.save()
-        //         .then(deviceUpdated => {
-        //             logger.debug(`Device update saved ${deviceUpdated}`);
-        //             resolve(true);
-        //         }).catch(err => {
-        //         logger.debug(`Error when updating device uuid (${uuid}). Err : ${err}`);
-        //         resolve(false);
-        //     });
-        // });
-        //
-        // return res;
+        device.refModerator = undefined;
+        let saved = true;
+        await device.save()
+            .then(responseSaved => {
+                logger.debug(`Device (${uuid}) saved`)
+            })
+            .catch(err => {
+                logger.debug(`Cannot save device (${uuid})`);
+                logger.debug(err);
+                saved = false;
+            });
+
+        return saved;
     }
 
     /**
