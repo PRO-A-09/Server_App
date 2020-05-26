@@ -180,7 +180,7 @@ export class DataBaseManager {
                 if (err || discussions == null) {
                     logger.debug(`Error when requesting discussions`);
                 } else {
-                    console.log(discussions);
+                    logger.debug(discussions);
                 }
             });
         }
