@@ -35,6 +35,9 @@ export class PrivilegedNamespace extends CustomNamespace {
             socket.on('newDebate', this.newDebate(socket));
             socket.on('closeDebate', this.closeDebate(socket));
             socket.on('newQuestion', this.newQuestion(socket));
+
+            socket.on('approveQuestion', this.approveQuestion(socket));
+            socket.on('rejectQuestion', this.rejectQuestion(socket));
         });
     }
 
@@ -99,7 +102,6 @@ export class PrivilegedNamespace extends CustomNamespace {
 
         callback(Array.from(debate.questions.values(), q => (q.format())));
     };
-
 
     /**
      * Return the list of suggestions for a debate to the callback function
@@ -243,4 +245,78 @@ export class PrivilegedNamespace extends CustomNamespace {
         await debate.sendNewQuestion(question);
         callback(question.id);
     };
+
+    /**
+     * Approve a suggestion with the specified id and debate
+     * approveObj contains the required information (debateId and suggestionId)
+     */
+    approveQuestion = (socket) => (approveObj, callback) => {
+        logger.debug(`approveQuestion received from user (${socket.username}), id(${socket.id})`);
+
+        if (!TypeCheck.isFunction(callback)) {
+            logger.debug(`callback is not a function.`);
+            return;
+        }
+
+        let {suggestionId, debateId} = approveObj;
+        if (!TypeCheck.isInteger(suggestionId) || !TypeCheck.isInteger(debateId)) {
+            logger.debug('Invalid arguments for approveSuggestion');
+            callback(false);
+            return;
+        }
+
+        const debate = this.getActiveDebate(debateId);
+        if (debate == null) {
+            logger.debug(`Debate with id (${debateId}) not found.`);
+            callback(false);
+            return;
+        }
+
+        const res = debate.questionSuggestion.approveSuggestion(suggestionId);
+        if (res === false) {
+            logger.debug('Cannot approve suggestion.');
+            callback(false);
+            return;
+        }
+
+        logger.info(`User (${socket.username}) approved suggestion with id (${suggestionId})`);
+        callback(true);
+    };
+
+    /**
+     * Reject a suggestion with the specified id and debate
+     * rejectObj contains the required information (debateId and suggestionId)
+     */
+    rejectQuestion = (socket) => (rejectObj, callback) => {
+        logger.debug(`rejectQuestion received from user (${socket.username}), id(${socket.id})`);
+
+        if (!TypeCheck.isFunction(callback)) {
+            logger.debug(`callback is not a function.`);
+            return;
+        }
+
+        let {suggestionId, debateId} = rejectObj;
+        if (!TypeCheck.isInteger(suggestionId) || !TypeCheck.isInteger(debateId)) {
+            logger.debug('Invalid arguments for rejectQuestion');
+            callback(false);
+            return;
+        }
+
+        const debate = this.getActiveDebate(debateId);
+        if (debate == null) {
+            logger.debug(`Debate with id (${debateId}) not found.`);
+            callback(false);
+            return;
+        }
+
+        const res = debate.questionSuggestion.rejectSuggestion(suggestionId);
+        if (res === false) {
+            logger.debug('Cannot reject suggestion.');
+            callback(false);
+            return;
+        }
+
+        logger.info(`User (${socket.username}) rejected suggestion with id (${suggestionId})`);
+        callback(true);
+    }
 }
