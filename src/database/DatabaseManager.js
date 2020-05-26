@@ -597,7 +597,7 @@ export class DataBaseManager {
     /**
      * Ban a device in the database
      * @param uuid uuid of the device to ban
-     * @param user user that banning the device
+     * @param user user that is banning the device
      * @returns {Promise<boolean>} result of the ban
      */
     async banDevice(uuid, user) {
@@ -636,11 +636,11 @@ export class DataBaseManager {
 
     /**
      * Unban a device in the database
-     * @param user user that unbans the device
      * @param uuid uuid of the device to unban
+     * @param user user that unbans the device
      * @returns {Promise<boolean>} result of the unban
      */
-    async unbanDevice(user, uuid) {
+    async unbanDevice(uuid, user) {
         let adminId = await this.getAdminId(user);
         if (adminId == null) {
             logger.debug(`Cannot find username (${user})`);
