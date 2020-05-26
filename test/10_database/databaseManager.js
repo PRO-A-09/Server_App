@@ -123,6 +123,7 @@ describe('Data Base manager test', () => {
                 refDiscussion: discussion1._id
             }
         });
+
         await response2.save().then((responseSaved) => {
             logger.debug(`response saved : ${responseSaved}`);
         });
@@ -180,7 +181,7 @@ describe('Data Base manager test', () => {
 
     describe('Get all responses from a Question', () => {
         it('Get Responses from Question 1', (done) => {
-            db.getResponsesQuestion(1).then(function(responses){
+            db.getResponsesQuestion(1, 1).then(function(responses){
                 let i = 1;
                 for(let response of responses){
                     response.id.should.equal(i);
@@ -289,6 +290,16 @@ describe('Data Base manager test', () => {
                     question.id.refDiscussion.should.equal(1);
                     question.approved.should.equal(true);
                 }
+                done();
+            });
+
+        });
+    });
+
+    describe('Get unknown questions that as been approved by admin', () => {
+        it('Getting approved unknown Question', (done) => {
+            db.getAcceptedQuestionsSuggestion(10).then((questions) => {
+                questions.length.should.equal(0);
                 done();
             });
 

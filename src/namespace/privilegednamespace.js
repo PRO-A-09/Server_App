@@ -1,6 +1,7 @@
 import {logger, SocketConfig, DebateConfig, ErrorMessage} from '../conf/config.js';
 import {CustomNamespace} from './customnamespace.js'
 import {Debate} from "../debate/debate.js";
+import {Statistic} from "../statistic/statistic.js";
 import {dbManager} from "../database/DatabaseManager.js";
 import * as TypeCheck from '../utils/typecheck.js'
 
@@ -11,6 +12,7 @@ export class PrivilegedNamespace extends CustomNamespace {
     io;
     activeDebates;
     users;
+    statistic;
 
     /**
      * Default constructor that saves the socket.io Namespace
@@ -21,6 +23,7 @@ export class PrivilegedNamespace extends CustomNamespace {
         this.io = io;
         this.activeDebates = new Map();
         this.users = new Map();
+        this.statistic = new Statistic();
     }
 
     /**
@@ -40,6 +43,9 @@ export class PrivilegedNamespace extends CustomNamespace {
             socket.on('newDebate', this.newDebate(socket));
             socket.on('closeDebate', this.closeDebate(socket));
             socket.on('newQuestion', this.newQuestion(socket));
+            socket.on('getAdminStats', this.getAdminStats(socket));
+            socket.on('getDebateStats', this.getDebateStats(socket));
+            socket.on('getQuestionStats', this.getQuestionStats(socket));
 
             // Moderator functions
             socket.on('banUser', this.banUser(socket));
@@ -287,6 +293,74 @@ export class PrivilegedNamespace extends CustomNamespace {
 
         await debate.sendNewQuestion(question);
         callback(question.id);
+    };
+
+    /**
+     * Return an array that contains stats for the debates of an admin in the result of the callback function
+     */
+    getAdminStats = (socket) => async (callback) => {
+        logger.debug(`getAdminStats received from ${socket.id}`);
+
+        if (!(callback instanceof Function)) {
+            logger.debug(`callback is not a function.`);
+            return;
+        }
+
+        // Ask for the stats for an admin user in the statistic class
+        let allDiscussions = await this.statistic.adminStats(socket.username);
+
+        if (allDiscussions.length !== 2) {
+            logger.debug('Invalid username.');
+            callback([]);
+            return;
+        }
+
+        callback([allDiscussions[0], allDiscussions[1]]);
+    };
+
+    /**
+     * Return an array that contains stats for a specific debate in the result of the callback function
+     */
+    getDebateStats = (socket) => async (debateId, callback) => {
+        logger.debug(`getDebatStats received from ${socket.id}`);
+
+        if (!(callback instanceof Function)) {
+            logger.debug(`callback is not a function.`);
+            return;
+        }
+
+        let allQuestions = await this.statistic.debateStats(debateId);
+
+        if (allQuestions.length !== 3) {
+            logger.debug('Invalid debate.');
+            callback([]);
+            return;
+        }
+
+        callback([allQuestions[0], allQuestions[1], allQuestions[2]]);
+    };
+
+    /**
+     * Return an array that contains stats for a specific question in the result of the callback function
+     */
+    getQuestionStats = (socket) => async (questionId, debateId, callback) => {
+        logger.debug(`getQuestionStats received from ${socket.id}`);
+
+        if (!(callback instanceof Function)) {
+            logger.debug(`callback is not a function.`);
+            return;
+        }
+
+        let allResponses = await this.statistic.questionStats(questionId, debateId);
+
+        if (allResponses.length !== 3) {
+            logger.debug('Invalid question.');
+            callback([]);
+            return;
+        }
+
+        callback([allResponses[0], allResponses[1], allResponses[2]]);
+
     };
 
     /**
