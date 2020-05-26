@@ -145,6 +145,7 @@ export class QuestionSuggestion {
         logger.debug(`Device with uuid (${uuid}) voted for suggestion with id (${suggestionId})`);
         suggestion.voters.add(uuid);
         this.debate.userNamespace.emit('newVote', suggestion.suggestionId);
+        this.debate.adminRoom.emit('newVote', suggestion.suggestionId);
 
         return true;
     }
@@ -172,6 +173,7 @@ export class QuestionSuggestion {
 
         logger.info(`Suggestion with id (${suggestionId}) has been approved`);
         this.debate.userNamespace.emit('suggestedQuestion', suggestion.format());
+        this.debate.adminRoom.emit('newSuggestedQuestion', suggestion.format());
 
         return true;
     }

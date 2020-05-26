@@ -381,6 +381,7 @@ export class Debate {
             });
 
         logger.info(`Socket (${socket.id}) replied (${answer}) to question (${questionId}).`);
+        this.adminRoom.emit('newOpenQuestionAnswer', {questionId: questionId, responseId, uuid: socket.uuid});
         callback(true);
     };
 
