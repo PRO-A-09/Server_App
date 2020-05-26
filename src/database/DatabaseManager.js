@@ -596,11 +596,11 @@ export class DataBaseManager {
 
     /**
      * Ban a device in the database
-     * @param user user that banning the device
      * @param uuid uuid of the device to ban
+     * @param user user that banning the device
      * @returns {Promise<boolean>} result of the ban
      */
-    async banDevice(user, uuid) {
+    async banDevice(uuid, user) {
         let res = await this.trySaveDevice(uuid);
         if (res === false) {
             logger.warn(`Cannot save device with uuid ${uuid} to the database`);
