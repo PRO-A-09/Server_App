@@ -11,11 +11,13 @@ services:
     container_name: mongo
     ports:
       - 27017:27017
-    command:
-      - mongo --eval 'db.usermoderators.insert({"__t" : "Administrator", "login" : "admin", "password" : "pass", "__v" : 0})' PRO
+    #command: >
+    #  bash -c "mongod && mongo --eval 'db.usermoderators.insert({\"__t\" : \"Administrator\", \"login\" : \"admin\", \"password\" : \"pass\", \"__v\" : 0})' PRO && exec mongod"
   server_app:
     image: azixus/server_app:dev
-    container_name: PRO_server
+    container_name: server
     ports:
       - 8080:8080
+    depends_on:
+      - database
 
