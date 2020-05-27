@@ -71,10 +71,20 @@ export class QuestionSuggestion {
 
     /**
      * Return the list of approved suggestions
+     * @param uuid optional, mark the voted suggestion if specified
      * @returns {*[]} array of approved suggested questions
      */
-    getApprovedSuggestions() {
-        return Array.from(this.approvedSuggestedQuestions.values(), s => s.format());
+    getApprovedSuggestions(uuid) {
+        if (!uuid) {
+            return Array.from(this.approvedSuggestedQuestions.values(), s => s.format());
+        } else {
+            return Array.from(this.approvedSuggestedQuestions.values(), s => {
+                let suggestion = s.format();
+                if (s.voters.has(uuid))
+                    suggestion.voted = true;
+                return suggestion;
+            });
+        }
     }
 
     /**
@@ -134,6 +144,9 @@ export class QuestionSuggestion {
 
         logger.debug(`Device with uuid (${uuid}) voted for suggestion with id (${suggestionId})`);
         suggestion.voters.add(uuid);
+        this.debate.userNamespace.emit('newVote', suggestion.suggestionId);
+        this.debate.adminRoom.emit('newVote', suggestion.suggestionId);
+
         return true;
     }
 
@@ -160,6 +173,7 @@ export class QuestionSuggestion {
 
         logger.info(`Suggestion with id (${suggestionId}) has been approved`);
         this.debate.userNamespace.emit('suggestedQuestion', suggestion.format());
+        this.debate.adminRoom.emit('newSuggestedQuestion', suggestion.format());
 
         return true;
     }

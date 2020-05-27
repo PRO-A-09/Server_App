@@ -8,11 +8,9 @@
 import mongoose from 'mongoose';
 import {Device} from './modele/Device.js';
 import {Discussion} from './modele/Discussion.js';
-import {Participant} from './modele/Participant.js';
 import {Question} from './modele/Question.js';
 import {Response} from './modele/Response.js';
-import {Tag} from './modele/Tag.js';
-import {Administrator,Moderator,Presentator,UserModerator} from './modele/Users.js';
+import {Administrator} from './modele/Users.js';
 import {logger} from '../conf/config.js';
 import {QuestionAdmin} from "./modele/QuestionAdmin.js";
 import {QuestionSuggestion} from "./modele/QuestionSuggestion.js";
@@ -37,7 +35,6 @@ export class DataBaseManager {
             logger.error(`Mongodb connection error : ${err.code}. Stack trace : ${err.stack}`);
             throw(err);
         }
-
         mongoose.set('useCreateIndex', true);
     }
 
@@ -130,13 +127,13 @@ export class DataBaseManager {
     /**
      * Get all the questions proposed by users and accepted by admin during a discussion
      * @param anIdDiscussion integer that represents the id of the discussion related to questions that we want
-     * @returns {Promise<*>} an array of Questions or undefined if no questions with the id of the discussion passed are found
+     * @returns {Promise<*>} an array of Questions or empty array if no questions with the id of the discussion passed are found
      */
     async getAcceptedQuestionsSuggestion(anIdDiscussion){
         logger.debug(`Getting the Question accepted by the admin of the debate ${anIdDiscussion}`);
         // Get the discussions related to the id
         return QuestionSuggestion.find({"id.refDiscussion": anIdDiscussion, approved: true}, function (err, questions) {
-            if (err || questions == null) {
+            if (err || questions == null || questions.length === 0) {
                 logger.debug(`Error when requesting accepted question : No questions were found`);
             } else {
                 logger.debug(questions);
@@ -147,13 +144,13 @@ export class DataBaseManager {
     /**
      * Get all the questions proposed by users but that are not yet accepted
      * @param anIdDiscussion integer that represents the id of the discussion related to questions that we want
-     * @returns {Promise<*>} an array of Questions or undefined if no questions with the id of the discussion passed are found
+     * @returns {Promise<*>} an array of Questions or empty array if no questions with the id of the discussion passed are found
      */
     async getNotYetAcceptedQuestionsSuggestion(anIdDiscussion){
         logger.debug(`Getting the Question not yet accepted by the admin of the debate ${anIdDiscussion}`);
         // Get the discussions related to the id and the approved status
         return QuestionSuggestion.find({"id.refDiscussion": anIdDiscussion, approved: undefined}, function (err, questions) {
-            if (err || questions == null) {
+            if (err || questions == null || questions.length === 0) {
                 logger.debug(`Error when requesting not yet accepted question : No questions were found`);
             } else {
                 logger.debug(questions);
@@ -177,12 +174,16 @@ export class DataBaseManager {
             logger.debug(`Getting the Discussions from ${aUsername}`);
             // Get all the discussions related to the user
             discussions = await Discussion.find({administrator: adminId}, function (err, discussions) {
-                if (err || discussions == null) {
+                if (err || discussions == null || discussions.length === 0) {
                     logger.debug(`Error when requesting discussions`);
                 } else {
-                    console.log(discussions);
+                    logger.debug(discussions);
                 }
             });
+            // With function find the request doesn't return null if the value was not found it simply returns an empty array
+            if (discussions.length === 0) {
+                discussions = null;
+            }
         }
         return discussions;
     }
@@ -206,12 +207,17 @@ export class DataBaseManager {
             discussions = await Discussion.find({administrator: adminId, finishTime: {$exists: true}}, function (err, discussions) {
                 if (err) {
                     logger.debug(`Error when requesting discussions`);
-                } else if (discussions == null) {
+                } else if (discussions == null || discussions.length === 0) {
                     logger.debug(`No debates were found`);
                 } else {
                     logger.debug(discussions);
                 }
             });
+
+            // With function find the request doesn't return null if the value was not found it simply returns an empty array
+            if (discussions.length === 0) {
+                discussions = null;
+            }
         }
         return discussions;
     }
@@ -230,12 +236,17 @@ export class DataBaseManager {
             logger.debug(`Getting the Questions from discussions ${anIdDebate}`);
             // Get all the questions from the DB from the desired debate
             questions = await Question.find({refDiscussion: anIdDebate}, function (err, questions) {
-                if (err || questions == null) {
+                if (err || questions == null || questions.length === 0) {
                     logger.debug(`Error when requesting questions`);
                 } else {
                     logger.debug(questions);
                 }
             });
+
+            // With function find the request doesn't return null if the value was not found it simply returns an empty array
+            if (questions.length === 0) {
+                questions = null;
+            }
         }
         return questions;
     }
@@ -254,12 +265,17 @@ export class DataBaseManager {
             logger.debug(`Getting the Responses from Device ${aUUID}`);
             // Get all the responses from the DB from the desired device
             responses = await Response.find({"devices.refDevice": aUUID}, function (err, responses) {
-                if (err || responses == null) {
+                if (err || responses == null || responses.length === 0) {
                     logger.debug(`Error when requesting responses`);
                 } else {
                     logger.debug(responses);
                 }
             });
+
+            // With function find the request doesn't return null if the value was not found it simply returns an empty array
+            if (responses.length === 0) {
+                responses = null;
+            }
         }
         return responses;
     }
@@ -267,23 +283,29 @@ export class DataBaseManager {
     /**
      * Get all responses from a question
      * @param aIdQuestion String that is the UUID of the device that we want to get the responses from
+     * @param aIdDiscussion integer that is the id of the discussion related to the response
      * @returns an Array of Responses that represents the responses related to the Device
      */
-    async getResponsesQuestion(aIdQuestion){
+    async getResponsesQuestion(aIdQuestion, aIdDiscussion){
         let responses = null;
         // If id is null error
-        if (aIdQuestion == null) {
+        if (aIdQuestion == null || aIdDiscussion == null) {
             logger.debug(`Error Question ID cannot be null`);
         } else {
-            logger.debug(`Getting the Responses from Question ${aIdQuestion}`);
+            logger.debug(`Getting the Responses from Question ${aIdQuestion} from debate ${aIdDiscussion}`);
             // Get all the responses from the DB from the desired device
-            responses = await Response.find({refQuestion: aIdQuestion}, function (err, responses) {
-                if (err || responses == null) {
+            responses = await Response.find({"refQuestion.refQuestion": aIdQuestion, "refQuestion.refDiscussion": aIdDiscussion}, function (err, responses) {
+                if (err || responses == null || responses.length === 0) {
                     logger.debug(`Error when requesting responses`);
                 } else {
                     logger.debug(responses);
                 }
             });
+
+            // With function find the request doesn't return null if the value was not found it simply returns an empty array
+            if (responses.length === 0) {
+                responses = null;
+            }
         }
         return responses;
     }
@@ -575,14 +597,14 @@ export class DataBaseManager {
 
         let response = await Response.findOne(responseObj);
         if (response == null) {
-            logger.debug(`Response not found id = ${responseId}`)
+            logger.debug(`Response not found id = ${responseId}`);
             return false;
         }
 
         let saved = true;
         response.devices.push({refDevice: uuid});
         await response.save()
-            .then(responseSaved => {
+            .then(() => {
                 logger.debug(`Device (${uuid}) added to response id = ${responseId}`)
             })
             .catch(err => {
@@ -592,6 +614,114 @@ export class DataBaseManager {
             });
 
         return saved;
+    }
+
+    /**
+     * Ban a device in the database
+     * @param uuid uuid of the device to ban
+     * @param user user that is banning the device
+     * @returns {Promise<boolean>} result of the ban
+     */
+    async banDevice(uuid, user) {
+        let res = await this.trySaveDevice(uuid);
+        if (res === false) {
+            logger.warn(`Cannot save device with uuid ${uuid} to the database`);
+            return false;
+        }
+
+        let adminId = await this.getAdminId(user);
+        if (adminId == null) {
+            logger.warn(`Cannot find username (${user})`);
+            return false;
+        }
+
+        let device = await Device.findOne({_id: uuid});
+        if (device == null) {
+            logger.warn(`Cannot find device with uuid ${uuid} to ban`);
+            return false;
+        }
+
+        device.refModerator = adminId;
+        res = await new Promise(resolve => {
+            device.save()
+                .then(deviceUpdated => {
+                    logger.debug(`Device update saved ${deviceUpdated}`);
+                    resolve(true);
+                }).catch(err => {
+                    logger.debug(`Error when updating device uuid (${uuid}). Err : ${err}`);
+                    resolve(false);
+            });
+        });
+
+        return res;
+    }
+
+    /**
+     * Unban a device in the database
+     * @param uuid uuid of the device to unban
+     * @param user user that unbans the device
+     * @returns {Promise<boolean>} result of the unban
+     */
+    async unbanDevice(uuid, user) {
+        let adminId = await this.getAdminId(user);
+        if (adminId == null) {
+            logger.debug(`Cannot find username (${user})`);
+            return false;
+        }
+
+        let device = await Device.findOne({_id: uuid});
+        if (device == null) {
+            logger.debug(`Cannot find device with uuid ${uuid} to unban`);
+            return false;
+        }
+
+        if (!device.refModerator.equals(adminId)) {
+            logger.debug(`Cannot unban a device banned by another user`);
+            return false;
+        }
+
+        device.refModerator = undefined;
+        let saved = true;
+        await device.save()
+            .then(responseSaved => {
+                logger.debug(`Device (${uuid}) saved`)
+            })
+            .catch(err => {
+                logger.debug(`Cannot save device (${uuid})`);
+                logger.debug(err);
+                saved = false;
+            });
+
+        return saved;
+    }
+
+    /**
+     * Check if the device is banned. If user is specified, it checks if the device has been
+     * banned by the user.
+     * @param uuid uuid of the device to check
+     * @param user optional, username that banned the device
+     * @returns {Promise<boolean>} true if it has been banned, false otherwise
+     */
+    async isDeviceBanned(uuid, user) {
+        let device = await Device.findOne({_id: uuid});
+        if (device == null) {
+            logger.debug(`Cannot find device with uuid ${uuid} in the database`);
+            return false;
+        }
+
+        let adminId = await this.getAdminId(user);
+        if (adminId == null) {
+            logger.debug(`Username (${user}) not found`);
+            return false;
+        }
+
+        if (device.refModerator == null) {
+            logger.debug(`Device with uuid (${uuid}) is not banned`);
+            return false;
+        }
+
+        logger.debug(`Device with uuid (${uuid}) has been banned by user ref ${device.refModerator}`);
+        return device.refModerator.equals(adminId);
     }
 
     /**

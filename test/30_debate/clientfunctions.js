@@ -262,7 +262,7 @@ describe("Debate client functions", () => {
         it('should return one suggestion', async () => {
             await new Promise(resolve => {
                 client.emit('suggestQuestion', 'This is my suggestion', res => {
-                    res.should.equal(true);
+                    res.should.not.equal(false);
                     resolve();
                 });
             });
@@ -279,7 +279,7 @@ describe("Debate client functions", () => {
     describe('suggestQuestion', () => {
         it('should accept a valid suggestion', (done) => {
             client.emit('suggestQuestion', 'This is my suggestion', res => {
-                res.should.equal(true);
+                res.should.not.equal(false);
                 done();
             });
         });
@@ -300,7 +300,7 @@ describe("Debate client functions", () => {
             for (let i = 0; i < DebateConfig.MAX_SUGGESTIONS; ++i) {
                 promises.push(new Promise(resolve => {
                     uniqueClient.emit('suggestQuestion', `Suggestion${i}`, res => {
-                        res.should.equal(true);
+                        res.should.not.equal(false);
                         resolve();
                     });
                 }));
@@ -336,7 +336,7 @@ describe("Debate client functions", () => {
             });
 
             client.emit('suggestQuestion', suggestionText, res => {
-                res.should.equal(true);
+                res.should.not.equal(true);
             });
         });
     });
@@ -366,7 +366,7 @@ describe("Debate client functions", () => {
             });
 
             client.emit('suggestQuestion', 'This is my new suggestion.', res => {
-                res.should.equal(true);
+                res.should.not.equal(true);
             });
         });
 
