@@ -1,4 +1,4 @@
-import {SocketConfig} from '../../src/conf/config.js'
+import {SocketConfig, ErrorMessage} from '../../src/conf/config.js'
 import {DebateManager} from "../../src/debatemanager.js";
 import io from 'socket.io-client'
 import chai from 'chai';
@@ -168,6 +168,90 @@ describe("Debate admin functions", () => {
         it('should not send questions with invalid debateId', (done) => {
             admin.emit('getDebateQuestions', -1, (res) => {
                 res.should.equal(-1);
+                done();
+            });
+        });
+    });
+
+    describe('banDevice', () => {
+        it('should ban existing device', async () => {
+            let bannedClient = io.connect(`${DEBATE_NAMESPACE}${id}`, {
+                path: SocketConfig.DEFAULT_PATH,
+                forceNew: true,
+                query: {
+                    uuid: 'my-bannedclient-uuid'
+                }
+            });
+
+            await new Promise(resolve => bannedClient.on('connect', resolve));
+
+            let donePromise = new Promise(resolve => {
+                bannedClient.on('banned', (banMessage) => {
+                    banMessage.should.equal(ErrorMessage.BAN_MESSAGE);
+                    bannedClient.close();
+                    resolve();
+                });
+            });
+
+            await new Promise(resolve => {
+                admin.emit('banUser', {uuid: 'my-bannedclient-uuid', debateId: id}, (res) => {
+                    res.should.equal(true);
+                    resolve();
+                });
+            });
+
+            await donePromise;
+        });
+
+        it('should not connect again', (done) => {
+            let bannedClient = io.connect(`${DEBATE_NAMESPACE}${id}`, {
+                path: SocketConfig.DEFAULT_PATH,
+                forceNew: true,
+                query: {
+                    uuid: 'my-bannedclient-uuid'
+                }
+            });
+
+            bannedClient.on('error', (err) => {
+                err.should.equal(ErrorMessage.BLACKLISTED_DEVICE);
+                bannedClient.close();
+                done();
+            });
+        });
+    });
+
+    describe('unbanDevice', () => {
+        it('should unban a banned device', async () => {
+            await new Promise(resolve => {
+                admin.emit('unbanUser', {uuid: 'my-bannedclient-uuid'}, (res) => {
+                    res.should.equal(true);
+                    resolve();
+                });
+            });
+
+            let bannedClient = io.connect(`${DEBATE_NAMESPACE}${id}`, {
+                path: SocketConfig.DEFAULT_PATH,
+                forceNew: true,
+                query: {
+                    uuid: 'my-bannedclient-uuid'
+                }
+            });
+
+            await new Promise(resolve => bannedClient.on('connect', resolve));
+            bannedClient.close();
+        });
+
+        it('should connect again', (done) => {
+            let bannedClient = io.connect(`${DEBATE_NAMESPACE}${id}`, {
+                path: SocketConfig.DEFAULT_PATH,
+                forceNew: true,
+                query: {
+                    uuid: 'my-bannedclient-uuid'
+                }
+            });
+
+            bannedClient.on('connect', () => {
+                bannedClient.close();
                 done();
             });
         });

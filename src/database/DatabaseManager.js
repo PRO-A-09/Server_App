@@ -26,7 +26,7 @@ export class DataBaseManager {
     async start() {
         // Connection to the local database
         try {
-            await mongoose.connect('mongodb://192.168.99.100:27017/PRO', {
+            await mongoose.connect('mongodb://localhost:27017/PRO', {
                 useNewUrlParser: true,
                 useUnifiedTopology: true
             });
@@ -614,6 +614,114 @@ export class DataBaseManager {
             });
 
         return saved;
+    }
+
+    /**
+     * Ban a device in the database
+     * @param uuid uuid of the device to ban
+     * @param user user that is banning the device
+     * @returns {Promise<boolean>} result of the ban
+     */
+    async banDevice(uuid, user) {
+        let res = await this.trySaveDevice(uuid);
+        if (res === false) {
+            logger.warn(`Cannot save device with uuid ${uuid} to the database`);
+            return false;
+        }
+
+        let adminId = await this.getAdminId(user);
+        if (adminId == null) {
+            logger.warn(`Cannot find username (${user})`);
+            return false;
+        }
+
+        let device = await Device.findOne({_id: uuid});
+        if (device == null) {
+            logger.warn(`Cannot find device with uuid ${uuid} to ban`);
+            return false;
+        }
+
+        device.refModerator = adminId;
+        res = await new Promise(resolve => {
+            device.save()
+                .then(deviceUpdated => {
+                    logger.debug(`Device update saved ${deviceUpdated}`);
+                    resolve(true);
+                }).catch(err => {
+                    logger.debug(`Error when updating device uuid (${uuid}). Err : ${err}`);
+                    resolve(false);
+            });
+        });
+
+        return res;
+    }
+
+    /**
+     * Unban a device in the database
+     * @param uuid uuid of the device to unban
+     * @param user user that unbans the device
+     * @returns {Promise<boolean>} result of the unban
+     */
+    async unbanDevice(uuid, user) {
+        let adminId = await this.getAdminId(user);
+        if (adminId == null) {
+            logger.debug(`Cannot find username (${user})`);
+            return false;
+        }
+
+        let device = await Device.findOne({_id: uuid});
+        if (device == null) {
+            logger.debug(`Cannot find device with uuid ${uuid} to unban`);
+            return false;
+        }
+
+        if (!device.refModerator.equals(adminId)) {
+            logger.debug(`Cannot unban a device banned by another user`);
+            return false;
+        }
+
+        device.refModerator = undefined;
+        let saved = true;
+        await device.save()
+            .then(responseSaved => {
+                logger.debug(`Device (${uuid}) saved`)
+            })
+            .catch(err => {
+                logger.debug(`Cannot save device (${uuid})`);
+                logger.debug(err);
+                saved = false;
+            });
+
+        return saved;
+    }
+
+    /**
+     * Check if the device is banned. If user is specified, it checks if the device has been
+     * banned by the user.
+     * @param uuid uuid of the device to check
+     * @param user optional, username that banned the device
+     * @returns {Promise<boolean>} true if it has been banned, false otherwise
+     */
+    async isDeviceBanned(uuid, user) {
+        let device = await Device.findOne({_id: uuid});
+        if (device == null) {
+            logger.debug(`Cannot find device with uuid ${uuid} in the database`);
+            return false;
+        }
+
+        let adminId = await this.getAdminId(user);
+        if (adminId == null) {
+            logger.debug(`Username (${user}) not found`);
+            return false;
+        }
+
+        if (device.refModerator == null) {
+            logger.debug(`Device with uuid (${uuid}) is not banned`);
+            return false;
+        }
+
+        logger.debug(`Device with uuid (${uuid}) has been banned by user ref ${device.refModerator}`);
+        return device.refModerator.equals(adminId);
     }
 
     /**

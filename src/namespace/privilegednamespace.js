@@ -1,4 +1,4 @@
-import {logger, SocketConfig, DebateConfig} from '../conf/config.js';
+import {logger, SocketConfig, DebateConfig, ErrorMessage} from '../conf/config.js';
 import {CustomNamespace} from './customnamespace.js'
 import {Debate} from "../debate/debate.js";
 import {Statistic} from "../statistic/statistic.js";
@@ -11,6 +11,7 @@ import * as TypeCheck from '../utils/typecheck.js'
 export class PrivilegedNamespace extends CustomNamespace {
     io;
     activeDebates;
+    users;
     statistic;
 
     /**
@@ -21,6 +22,7 @@ export class PrivilegedNamespace extends CustomNamespace {
         super(io.of(SocketConfig.PRIVILEGED_NAMESPACE));
         this.io = io;
         this.activeDebates = new Map();
+        this.users = new Map();
         this.statistic = new Statistic();
     }
 
@@ -31,16 +33,45 @@ export class PrivilegedNamespace extends CustomNamespace {
         this.nsp.on('connection', (socket) => {
             logger.debug(`New connected socket (socketid: ${socket.id}, username: ${socket.username})`);
 
+            // Initialize the
+            this.initializeUsers(socket);
+
             // Register socket functions
             socket.on('getDebates', this.getDebates(socket));
             socket.on('getDebateQuestions', this.getDebateQuestions(socket));
+            socket.on('getDebateSuggestions', this.getDebateSuggestions(socket));
             socket.on('newDebate', this.newDebate(socket));
             socket.on('closeDebate', this.closeDebate(socket));
             socket.on('newQuestion', this.newQuestion(socket));
             socket.on('getAdminStats', this.getAdminStats(socket));
             socket.on('getDebateStats', this.getDebateStats(socket));
             socket.on('getQuestionStats', this.getQuestionStats(socket));
+
+            // Moderator functions
+            socket.on('banUser', this.banUser(socket));
+            socket.on('unbanUser', this.unbanUser(socket));
+
+            socket.on('approveQuestion', this.approveQuestion(socket));
+            socket.on('rejectQuestion', this.rejectQuestion(socket));
         });
+    }
+
+    /**
+     * Initialize the user and his attributes
+     * @param socket privileged socket to initialize
+     */
+    initializeUsers(socket) {
+        if (this.users.has(socket.username)) {
+            logger.debug(`Existing user username (${socket.username})`)
+            this.users.get(socket.username).socket = socket;
+        } else {
+            logger.debug(`New user username (${socket.username})`)
+            // Store the socket and initialize attributes
+            this.users.set(socket.username, {
+                socket: socket,
+                activeDebates: new Set()
+            });
+        }
     }
 
     /**
@@ -56,9 +87,9 @@ export class PrivilegedNamespace extends CustomNamespace {
     // This section contains the different socket io functions
 
     /**
-     * Return the list of available debates to the callback function
+     * Return the list of all debates to the callback function
      */
-    getDebates = (socket) => (callback) => {
+    getDebates = (socket) => async (callback) => {
         logger.debug(`Get debate requested from ${socket.username}`);
 
         if (!TypeCheck.isFunction(callback)) {
@@ -66,13 +97,27 @@ export class PrivilegedNamespace extends CustomNamespace {
             return;
         }
 
-        // TODO: Only return debates available for this user
+        let debates = [];
+        for (let debateId of this.users.get(socket.username).activeDebates) {
+            let d = this.activeDebates.get(debateId);
+            debates.push({
+                debateId: d.debateID,
+                title: d.title,
+                description: d.description,
+                closed: false
+            });
+        }
 
-        let debates = Array.from(this.activeDebates.values(), d => ({
-            debateId: d.debateID,
-            title: d.title,
-            description: d.description
-        }));
+        logger.debug('Getting discussions from database');
+        let discussions = await dbManager.getDiscussionsAdmin(socket.username);
+        for (const discussion of discussions) {
+            debates.push({
+                debateId: discussion._id,
+                title: discussion.title,
+                description: discussion.description,
+                closed: discussion.finishTime != null
+            });
+        }
 
         callback(debates);
     };
@@ -106,6 +151,34 @@ export class PrivilegedNamespace extends CustomNamespace {
     };
 
     /**
+     * Return the list of suggestions for a debate to the callback function
+     * debateId contains the id of the debate
+     */
+    getDebateSuggestions = (socket) => (debateId, callback) => {
+        logger.info(`getDebateSuggestions requested from ${socket.username}`);
+
+        if (!TypeCheck.isFunction(callback)) {
+            logger.debug(`callback is not a function.`);
+            return;
+        }
+
+        if (!TypeCheck.isInteger(debateId)) {
+            logger.debug('Invalid arguments for getDebateSuggestions.');
+            callback(-1);
+            return;
+        }
+
+        const debate = this.getActiveDebate(debateId);
+        if (debate == null) {
+            logger.debug(`Debate with id (${debateId}) not found.`);
+            callback(-1);
+            return;
+        }
+
+        callback(debate.questionSuggestion.getApprovedSuggestions());
+    };
+
+    /**
      * Create a new debate
      * newDebateObj contains the information of the debate (title, description)
      */
@@ -129,6 +202,7 @@ export class PrivilegedNamespace extends CustomNamespace {
         // Create and start a new debate
         const debate = new Debate(title, description, socket, this.io, this.nsp);
         this.activeDebates.set(debate.debateID, debate);
+        this.users.get(socket.username).activeDebates.add(debate.debateID);
         await dbManager.saveDiscussion(debate)
             .then(res => {
                 if (res === true) {
@@ -167,6 +241,7 @@ export class PrivilegedNamespace extends CustomNamespace {
         }
         // Delete debate from active debates
         this.activeDebates.delete(aIdDiscussion);
+        this.users.get(socket.username).activeDebates.delete(debate.debateID);
         // Save in the database that the discussion is closed
         let update = await dbManager.saveEndDiscussion(aIdDiscussion);
 
@@ -289,4 +364,175 @@ export class PrivilegedNamespace extends CustomNamespace {
         callback([allResponses[0], allResponses[1], allResponses[2]]);
 
     };
+
+    /**
+     * Ban a user from all admin future debates and kick him immediately if debateId is specified
+     * banObj contains the required information (uuid and (optional) debateId)
+     */
+    banUser = (socket) => async (banObj, callback) => {
+        logger.debug(`banUser received from user (${socket.username}), id(${socket.id})`);
+
+        if (!TypeCheck.isFunction(callback)) {
+            logger.debug(`callback is not a function.`);
+            return;
+        }
+
+        let {uuid, debateId} = banObj;
+        let shouldKick = false;
+        if (debateId != null) {
+            shouldKick = true;
+        }
+
+        if (!TypeCheck.isString(uuid) || (shouldKick && !TypeCheck.isInteger(debateId))) {
+            logger.debug('Invalid arguments for banUser');
+            callback(false);
+            return;
+        }
+
+        let debate;
+        if (shouldKick) {
+            debate = this.getActiveDebate(debateId);
+            if (debate == null) {
+                logger.warn(`Debate with id (${debateId}) not found. Can't ban properly.`);
+                callback(false);
+                return;
+            }
+        }
+
+        // Ban the device in the database
+        let res = await dbManager.banDevice(uuid, socket.username);
+        if (res === false) { // A ban should always work.. We add an uuid to the database if not found.
+            logger.error(`Cannot ban device with uuid ${uuid}`);
+            callback(false);
+            return;
+        }
+
+        if (shouldKick) {
+            // Disconnect the client
+            let client = debate.getClient(uuid);
+            if (client == null) {
+                logger.debug(`Client with uuid (${uuid}) is not connected`)
+            } else {
+                // Inform the client he is banned
+                client.socket.emit('banned', ErrorMessage.BAN_MESSAGE);
+                client.socket.disconnect();
+            }
+        }
+
+        logger.info(`User (${socket.username}) banned the device with uuid ${uuid}`);
+        callback(true);
+    };
+
+    /**
+     * Unban a user from all admin future debates
+     * unbanObj contains the required information (uuid)
+     */
+    unbanUser = (socket) => async (unbanObj, callback) => {
+        logger.debug(`unbanUser received from user (${socket.username}), id(${socket.id})`);
+
+        if (!TypeCheck.isFunction(callback)) {
+            logger.debug(`callback is not a function.`);
+            return;
+        }
+
+        let {uuid} = unbanObj;
+        if (!TypeCheck.isString(uuid)) {
+            logger.debug('Invalid arguments for unbanUser');
+            callback(false);
+            return;
+        }
+
+        // Check if the device is banned by this user
+        let isBanned = await dbManager.isDeviceBanned(uuid, socket.username);
+        if (!isBanned) {
+            logger.info(`Device with uuid (${uuid}) is not banned`);
+            callback(true);
+            return;
+        }
+
+        // Ban the device in the database
+        let res = await dbManager.unbanDevice(uuid, socket.username);
+        if (res === false) { // We know the device exists and was banned by this specific user...
+            logger.error(`Couldn't unban device with uuid ${uuid}`);
+            callback(false);
+            return;
+        }
+
+        logger.info(`User (${socket.username}) unbanned the device with uuid ${uuid}`);
+        callback(true);
+    };
+
+    /**
+     * Approve a suggestion with the specified id and debate
+     * approveObj contains the required information (debateId and suggestionId)
+     */
+    approveQuestion = (socket) => (approveObj, callback) => {
+        logger.debug(`approveQuestion received from user (${socket.username}), id(${socket.id})`);
+
+        if (!TypeCheck.isFunction(callback)) {
+            logger.debug(`callback is not a function.`);
+            return;
+        }
+
+        let {debateId, suggestionId} = approveObj;
+        if (!TypeCheck.isInteger(suggestionId) || !TypeCheck.isInteger(debateId)) {
+            logger.debug('Invalid arguments for approveSuggestion');
+            callback(false);
+            return;
+        }
+
+        const debate = this.getActiveDebate(debateId);
+        if (debate == null) {
+            logger.debug(`Debate with id (${debateId}) not found.`);
+            callback(false);
+            return;
+        }
+
+        const res = debate.questionSuggestion.approveSuggestion(suggestionId);
+        if (res === false) {
+            logger.debug('Cannot approve suggestion.');
+            callback(false);
+            return;
+        }
+
+        logger.info(`User (${socket.username}) approved suggestion with id (${suggestionId})`);
+        callback(true);
+    };
+
+    /**
+     * Reject a suggestion with the specified id and debate
+     * rejectObj contains the required information (debateId and suggestionId)
+     */
+    rejectQuestion = (socket) => (rejectObj, callback) => {
+        logger.debug(`rejectQuestion received from user (${socket.username}), id(${socket.id})`);
+
+        if (!TypeCheck.isFunction(callback)) {
+            logger.debug(`callback is not a function.`);
+            return;
+        }
+
+        let {debateId, suggestionId} = rejectObj;
+        if (!TypeCheck.isInteger(suggestionId) || !TypeCheck.isInteger(debateId)) {
+            logger.debug('Invalid arguments for rejectQuestion');
+            callback(false);
+            return;
+        }
+
+        const debate = this.getActiveDebate(debateId);
+        if (debate == null) {
+            logger.debug(`Debate with id (${debateId}) not found.`);
+            callback(false);
+            return;
+        }
+
+        const res = debate.questionSuggestion.rejectSuggestion(suggestionId);
+        if (res === false) {
+            logger.debug('Cannot reject suggestion.');
+            callback(false);
+            return;
+        }
+
+        logger.info(`User (${socket.username}) rejected suggestion with id (${suggestionId})`);
+        callback(true);
+    }
 }

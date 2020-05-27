@@ -2,6 +2,7 @@ import {SocketConfig} from '../../src/conf/config.js'
 import {DebateManager} from "../../src/debatemanager.js";
 import io from 'socket.io-client'
 import chai from 'chai';
+import {DebateConfig} from "../../src/conf/config.js";
 
 const expect = chai.expect;
 const should = chai.should();
@@ -247,6 +248,163 @@ describe("Debate client functions", () => {
             });
 
             debate.sendNewQuestion(new debate.Question('Does this test work ?', null, true));
+        });
+    });
+
+    describe('getSuggestedQuestions', () => {
+        it('should return empty array', (done) => {
+            client.emit('getSuggestedQuestions', (suggestions) => {
+                suggestions.length.should.equal(0);
+                done();
+            });
+        });
+
+        it('should return one suggestion', async () => {
+            await new Promise(resolve => {
+                client.emit('suggestQuestion', 'This is my suggestion', res => {
+                    res.should.not.equal(false);
+                    resolve();
+                });
+            });
+
+            await new Promise(resolve => {
+                client.emit('getSuggestedQuestions', (suggestions) => {
+                    suggestions.length.should.equal(1);
+                    resolve();
+                });
+            });
+        });
+    });
+
+    describe('suggestQuestion', () => {
+        it('should accept a valid suggestion', (done) => {
+            client.emit('suggestQuestion', 'This is my suggestion', res => {
+                res.should.not.equal(false);
+                done();
+            });
+        });
+
+        it('should not make unlimited suggestions', async () => {
+            // Connect a new client for an unique uuid
+            let uniqueClient = io.connect(`${DEBATE_NAMESPACE}${id}`, {
+                path: SocketConfig.DEFAULT_PATH,
+                forceNew: true,
+                query: {
+                    uuid: '2143erdv32ew'
+                }
+            });
+            await new Promise(resolve => uniqueClient.on('connect', resolve));
+
+            // Generate the max number of suggestions
+            let promises = [];
+            for (let i = 0; i < DebateConfig.MAX_SUGGESTIONS; ++i) {
+                promises.push(new Promise(resolve => {
+                    uniqueClient.emit('suggestQuestion', `Suggestion${i}`, res => {
+                        res.should.not.equal(false);
+                        resolve();
+                    });
+                }));
+            }
+            await Promise.all(promises);
+
+            await new Promise(resolve => {
+                uniqueClient.emit('suggestQuestion', `My last of too many suggestions`, res => {
+                    res.should.equal(false);
+                    resolve();
+                });
+            });
+
+            uniqueClient.close();
+        });
+
+        it('should not accept suggestion with too many chars', (done) => {
+            let suggestion = 'a'.repeat(255);
+            client.emit('suggestQuestion', suggestion, res => {
+                res.should.equal(false);
+                done();
+            });
+        });
+
+        it('should emit suggestion once approved', (done) => {
+            let suggestionText = 'This is my personal suggestion.'
+            client.on('suggestedQuestion', (suggestionObj) => {
+                let {id, suggestion, votes} = suggestionObj
+
+                suggestion.should.equal(suggestionText);
+                votes.should.equal(1);
+                done();
+            });
+
+            client.emit('suggestQuestion', suggestionText, res => {
+                res.should.not.equal(true);
+            });
+        });
+    });
+
+    describe('voteSuggestedQuestion', () => {
+        let votingClient;
+        let suggestion;
+        let suggestionId;
+
+        before((done) => {
+            votingClient = io.connect(`${DEBATE_NAMESPACE}${id}`, {
+                path: SocketConfig.DEFAULT_PATH,
+                forceNew: true,
+                query: {
+                    uuid: '2345671312325432'
+                }
+            });
+
+            votingClient.on('connect', done);
+        });
+
+        beforeEach((done) => {
+            client.on('suggestedQuestion', (suggestionObj) => {
+                suggestionId = suggestionObj.suggestionId;
+                suggestion = debate.questionSuggestion.approvedSuggestedQuestions.get(suggestionId);
+                done();
+            });
+
+            client.emit('suggestQuestion', 'This is my new suggestion.', res => {
+                res.should.not.equal(true);
+            });
+        });
+
+        it('should be able to vote', (done) => {
+            votingClient.emit('voteSuggestedQuestion', suggestionId, res => {
+                res.should.equal(true);
+                suggestion.getNbVotes().should.equal(2);
+                done();
+            });
+        });
+
+        it('should not vote twice', async () => {
+            await new Promise(resolve => {
+                votingClient.emit('voteSuggestedQuestion', suggestionId, res => {
+                    res.should.equal(true);
+                    suggestion.getNbVotes().should.equal(2);
+                    resolve();
+                });
+            });
+
+            await new Promise(resolve => {
+                votingClient.emit('voteSuggestedQuestion', suggestionId, res => {
+                    res.should.equal(false);
+                    suggestion.getNbVotes().should.equal(2);
+                    resolve();
+                });
+            });
+        });
+
+        it('should not vote with an invalid suggestion id', (done) => {
+            votingClient.emit('voteSuggestedQuestion', -1, (res) => {
+                res.should.equal(false);
+                done();
+            });
+        });
+
+        after(() => {
+            votingClient.close();
         });
     });
 
