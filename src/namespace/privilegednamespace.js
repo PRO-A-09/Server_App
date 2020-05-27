@@ -472,7 +472,7 @@ export class PrivilegedNamespace extends CustomNamespace {
             return;
         }
 
-        let {suggestionId, debateId} = approveObj;
+        let {debateId, suggestionId} = approveObj;
         if (!TypeCheck.isInteger(suggestionId) || !TypeCheck.isInteger(debateId)) {
             logger.debug('Invalid arguments for approveSuggestion');
             callback(false);
@@ -509,7 +509,7 @@ export class PrivilegedNamespace extends CustomNamespace {
             return;
         }
 
-        let {suggestionId, debateId} = rejectObj;
+        let {debateId, suggestionId} = rejectObj;
         if (!TypeCheck.isInteger(suggestionId) || !TypeCheck.isInteger(debateId)) {
             logger.debug('Invalid arguments for rejectQuestion');
             callback(false);
