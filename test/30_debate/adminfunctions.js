@@ -173,6 +173,25 @@ describe("Debate admin functions", () => {
         });
     });
 
+    describe('getDebateDetails', () => {
+        it('should give details on valid debate', (done) => {
+            admin.emit('getDebateDetails', id, (details) => {
+                details.should.not.equal(false);
+                details.debateId.should.equal(id);
+                should.exist(details.title);
+                should.exist(details.description);
+                done();
+            });
+        });
+
+        it('should return false on invalid id', (done) => {
+            admin.emit('getDebateDetails', 999, (details) => {
+                details.should.equal(false);
+                done();
+            });
+        });
+    });
+
     describe('banDevice', () => {
         it('should ban existing device', async () => {
             let bannedClient = io.connect(`${DEBATE_NAMESPACE}${id}`, {
