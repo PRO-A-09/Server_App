@@ -428,7 +428,8 @@ export class DataBaseManager {
         const questionSave = new Question({
             id: aQuestion.id,
             titreQuestion: aQuestion.title,
-            refDiscussion: aIdDiscussion
+            refDiscussion: aIdDiscussion,
+            isOpenQuestion: aQuestion.isOpenQuestion
         });
         // Save the question in database
         await questionSave.save()
