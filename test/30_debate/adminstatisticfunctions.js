@@ -78,7 +78,7 @@ describe('Statistic functions test', () => {
         it("Get stats of unknown question", (done) => {
             let debateID = 4;
             let questionID = 100;
-            admin.emit("getQuestionStats", questionID, debateID, (questionStats) => {
+            admin.emit("getQuestionStats", {questionID, debateID}, (questionStats) => {
                 questionStats.length.should.equal(0);
                 done();
             });
