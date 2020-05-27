@@ -10,6 +10,7 @@ const should = chai.should();
 const SERVER_ADDRESS = `http://localhost:${SocketConfig.SOCKET_PORT}`;
 const PRIVILEGED_NAMESPACE = `${SERVER_ADDRESS}${SocketConfig.PRIVILEGED_NAMESPACE}`;
 const DEBATE_NAMESPACE = `${SERVER_ADDRESS}${SocketConfig.DEBATE_NAMESPACE_PREFIX}`;
+const defaultUUID = '2345675432';
 
 describe("Debate admin functions", () => {
     let debateManager;
@@ -51,7 +52,7 @@ describe("Debate admin functions", () => {
             path: SocketConfig.DEFAULT_PATH,
             forceNew: true,
             query: {
-                uuid: '2345675432'
+                uuid: defaultUUID
             }
         });
 
@@ -273,6 +274,73 @@ describe("Debate admin functions", () => {
                 bannedClient.close();
                 done();
             });
+        });
+    });
+
+    describe('lockDebate & unlockDebate', () => {
+        it('should lock a debate and block new clients', async () => {
+            await new Promise(resolve => {
+                admin.emit('lockDebate', id, (res) => {
+                    res.should.equal(true);
+                    resolve();
+                });
+            });
+
+            let newClient = io.connect(`${DEBATE_NAMESPACE}${id}`, {
+                path: SocketConfig.DEFAULT_PATH,
+                forceNew: true,
+                query: {
+                    uuid: 'my-new-device-uuid'
+                }
+            });
+
+            await new Promise(resolve => {
+                newClient.on('cError', (res) => {
+                    should.exist(res);
+                    resolve();
+                });
+            });
+            newClient.close();
+        });
+        it('should allow existing clients', async () => {
+            let newClient = io.connect(`${DEBATE_NAMESPACE}${id}`, {
+                path: SocketConfig.DEFAULT_PATH,
+                forceNew: true,
+                query: {
+                    uuid: defaultUUID
+                }
+            });
+
+            await new Promise(resolve => {
+                newClient.on('connect', () => {
+                    resolve();
+                });
+            });
+            newClient.close();
+        });
+        it('should unlock debate and allow new clients', async () => {
+            await new Promise(resolve => {
+                admin.emit('unlockDebate', id, (res) => {
+                    res.should.equal(true);
+                    resolve();
+                });
+            });
+
+            let newClient = io.connect(`${DEBATE_NAMESPACE}${id}`, {
+                path: SocketConfig.DEFAULT_PATH,
+                forceNew: true,
+                query: {
+                    uuid: 'my-new-device-uuid'
+                }
+            });
+
+            await new Promise(resolve => {
+                newClient.on('connect', () => {
+                    should.exist(res);
+                    resolve();
+                });
+            });
+            newClient.close();
         });
     });
 

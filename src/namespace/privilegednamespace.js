@@ -37,13 +37,22 @@ export class PrivilegedNamespace extends CustomNamespace {
             this.initializeUsers(socket);
 
             // Register socket functions
+            // Debate information functions
             socket.on('getDebates', this.getDebates(socket));
             socket.on('getDebateDetails', this.getDebateDetails(socket));
             socket.on('getDebateQuestions', this.getDebateQuestions(socket));
             socket.on('getDebateSuggestions', this.getDebateSuggestions(socket));
+
+            // New debate information functions
             socket.on('newDebate', this.newDebate(socket));
-            socket.on('closeDebate', this.closeDebate(socket));
             socket.on('newQuestion', this.newQuestion(socket));
+
+            // Debate management functions
+            socket.on('closeDebate', this.closeDebate(socket));
+            socket.on('lockDebate', this.lockDebate(socket));
+            socket.on('unlockDebate', this.unlockDebate(socket));
+
+            // Stats functions
             socket.on('getAdminStats', this.getAdminStats(socket));
             socket.on('getDebateStats', this.getDebateStats(socket));
             socket.on('getQuestionStats', this.getQuestionStats(socket));
@@ -51,7 +60,6 @@ export class PrivilegedNamespace extends CustomNamespace {
             // Moderator functions
             socket.on('banUser', this.banUser(socket));
             socket.on('unbanUser', this.unbanUser(socket));
-
             socket.on('approveQuestion', this.approveQuestion(socket));
             socket.on('rejectQuestion', this.rejectQuestion(socket));
         });
@@ -315,7 +323,7 @@ export class PrivilegedNamespace extends CustomNamespace {
     };
 
     /**
-     * Return the true if the debate was closed correctly false otherwise in the callback function
+     * Return the true if the debate was locked correctly false otherwise in the callback function
      */
     lockDebate = (socket) => async (debateId, callback) => {
         logger.debug(`lockDebate requested from ${socket.username}`);
@@ -333,23 +341,57 @@ export class PrivilegedNamespace extends CustomNamespace {
 
         // Get the debate with the desired id
         let debate = this.getActiveDebate(debateId);
-        logger.debug(`Debate given ${debate}`);
-        // If the debate does not exist it cannot be closed
         if(debate == null){
+            logger.debug(`No active debate with id ${debateId} was found`);
             callback(false);
-            logger.debug(`No active debate with the id ${aIdDiscussion} was found`);
             return;
         }
-        debate.close(this.io);
-        // Delete debate from active debates
-        this.activeDebates.delete(debateId);
-        this.users.get(socket.username).activeDebates.delete(debate.debateID);
-        // Save in the database that the discussion is closed
-        let update = await dbManager.saveEndDiscussion(debateId);
 
-        logger.debug(`result update: ${update}`);
+        if (debate.locked === true) {
+            logger.debug(`Debate with id ${debateId} is already locked`);
+            callback(true);
+            return;
+        }
 
-        callback(update);
+        debate.lockDebate();
+        logger.info(`Debate with id (${debateId}) was locked by ${socket.username}`);
+        callback(true);
+    };
+
+    /**
+     * Return the true if the debate was unlocked correctly false otherwise in the callback function
+     */
+    unlockDebate = (socket) => async (debateId, callback) => {
+        logger.debug(`unlockDebate requested from ${socket.username}`);
+
+        if (!(callback instanceof Function)) {
+            logger.debug(`callback is not a function.`);
+            return;
+        }
+
+        if (!TypeCheck.isInteger(debateId)) {
+            logger.debug(`Invalid arguments for unlockDebate. debateId: ${debateId})`)
+            callback(false);
+            return;
+        }
+
+        // Get the debate with the desired id
+        let debate = this.getActiveDebate(debateId);
+        if(debate == null){
+            logger.debug(`No active debate with id ${debateId} was found`);
+            callback(false);
+            return;
+        }
+
+        if (debate.locked === false) {
+            logger.debug(`Debate with id ${debateId} is already unlocked`);
+            callback(true);
+            return;
+        }
+
+        debate.unlockDebate();
+        logger.info(`Debate with id (${debateId}) was unlocked by ${socket.username}`);
+        callback(true);
     };
 
     /**
