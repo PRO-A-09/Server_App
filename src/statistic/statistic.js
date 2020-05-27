@@ -40,6 +40,7 @@ export class Statistic {
     questionFormat(aQuestion){
         logger.debug(`Formatting question : ${aQuestion}`);
         return {
+            id: aQuestion.id,
             title: aQuestion.titreQuestion,
             numberVotes: aQuestion.numberVotes
         }
@@ -96,19 +97,26 @@ export class Statistic {
         return numberTotalVotes;
     }
 
+    /**
+     * Get the number of auditors for activeDebates or debates on the database
+     * @param aDiscussionId integer that is the id of a Discussion
+     * @param activeDebates the list of active debates on the server
+     * @returns {Promise<number|auditors|{type, required}>} the number of auditors for the discussion desired
+     */
     async getAuditors(aDiscussionId, activeDebates){
         let auditors = 0;
         let debate = activeDebates.get(aDiscussionId);
+        // If no discussion is found in the activeDebates
         if(debate == null){
             debate = await dbManager.getDiscussion(aDiscussionId);
+            // If no discussion is found in the database we exit
             if (debate == null) {
                 logger.warn(`No debate found with id ${aDiscussionId}`);
                 return auditors;
             }
             auditors = debate.auditors;
         } else{
-            logger.debug(`I got auditors from active debate ${debate.clients}`);
-            auditors = debate.clients;
+            auditors = debate.clients.size;
         }
         return auditors;
     }
@@ -165,6 +173,7 @@ export class Statistic {
             return [];
         }
        let numberTotalVotes = await this.getNumberVotesQuestion(aQuestionId,aDiscussionId);
+       // To not have problems with the divison by 0
        let interest = auditors === 0 ? 0 : Math.round((numberTotalVotes/auditors) * 100);
        return [allResponses.length, interest, Array.from(allResponses.values(), r => this.responseFormat(r, numberTotalVotes))];
    }
