@@ -31,6 +31,10 @@ const QuestionSchema = new mongoose.Schema({
             });
         }
     },
+    isOpenQuestion: {
+        type: Boolean,
+        required: true
+    },
     // Multiple tags can be linked to a question so declaration of an array
     tags:[
         {

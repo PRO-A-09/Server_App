@@ -38,6 +38,7 @@ export class PrivilegedNamespace extends CustomNamespace {
 
             // Register socket functions
             socket.on('getDebates', this.getDebates(socket));
+            socket.on('getDebateDetails', this.getDebateDetails(socket));
             socket.on('getDebateQuestions', this.getDebateQuestions(socket));
             socket.on('getDebateSuggestions', this.getDebateSuggestions(socket));
             socket.on('newDebate', this.newDebate(socket));
@@ -121,6 +122,64 @@ export class PrivilegedNamespace extends CustomNamespace {
 
         callback(debates);
     };
+
+    /**
+     * Return the details of the debate with the specified id
+     * debateId contains the id of the debate
+     */
+    getDebateDetails = (socket) => async (debateId, callback) => {
+        logger.debug(`getDebateDetails received from user (${socket.username}) id (${socket.id})`);
+
+        if (!TypeCheck.isFunction(callback)) {
+            logger.debug(`callback is not a function.`);
+            return;
+        }
+
+        if (!TypeCheck.isInteger(debateId)) {
+            logger.debug('Invalid arguments for getDebateDetails.');
+            callback(false);
+            return;
+        }
+
+        const debate = this.getActiveDebate(debateId);
+        if (debate == null) { // Try to query from DB
+            logger.debug(`Debate with id (${debateId}) not found... Checking in database.`);
+
+            const adminId = await dbManager.getAdminId(socket.username);
+            const discussion = await dbManager.getDiscussion(debateId);
+            if (discussion == null) {
+                logger.debug(`Discussion with id (${debateId}) not found`);
+                callback(false);
+                return
+            }
+
+            if (!discussion.administrator.equals(adminId)) {
+                logger.debug(`Cannot get the debate information of another user.`);
+                callback(false);
+                return;
+            }
+
+            let details = {
+                debateId: discussion._id,
+                title: discussion.title,
+                description: discussion.description,
+                startTime: discussion.startTime,
+                finishTime: discussion.finishTime
+            }
+
+            callback(details);
+        } else {
+            // Store details in an object before sending it
+            let details = {
+                debateId: debate.debateID,
+                title: debate.title,
+                description: debate.description,
+                startTime: debate.startTime
+            }
+
+            callback(details);
+        }
+    }
 
     /**
      * Return the list of questions for a debate to the callback function
@@ -330,7 +389,7 @@ export class PrivilegedNamespace extends CustomNamespace {
             return;
         }
 
-        let allQuestions = await this.statistic.debateStats(debateId);
+        let allQuestions = await this.statistic.debateStats(debateId, this.activeDebates);
 
         if (allQuestions.length !== 3) {
             logger.debug('Invalid debate.');
@@ -344,7 +403,7 @@ export class PrivilegedNamespace extends CustomNamespace {
     /**
      * Return an array that contains stats for a specific question in the result of the callback function
      */
-    getQuestionStats = (socket) => async (questionId, debateId, callback) => {
+    getQuestionStats = (socket) => async (questionId, callback) => {
         logger.debug(`getQuestionStats received from ${socket.id}`);
 
         if (!(callback instanceof Function)) {
@@ -352,13 +411,15 @@ export class PrivilegedNamespace extends CustomNamespace {
             return;
         }
 
-        let allResponses = await this.statistic.questionStats(questionId, debateId);
+        let allResponses = await this.statistic.questionStats(questionId[0], questionId[1], this.activeDebates);
 
         if (allResponses.length !== 3) {
             logger.debug('Invalid question.');
             callback([]);
             return;
         }
+
+        console.log(allResponses);
 
         callback([allResponses[0], allResponses[1], allResponses[2]]);
 
@@ -383,7 +444,7 @@ export class PrivilegedNamespace extends CustomNamespace {
         }
 
         if (!TypeCheck.isString(uuid) || (shouldKick && !TypeCheck.isInteger(debateId))) {
-            logger.debug('Invalid arguments for banUser');
+            logger.debug(`Invalid arguments for banUser. Uuid: ${uuid}, debateId: ${debateId}`);
             callback(false);
             return;
         }

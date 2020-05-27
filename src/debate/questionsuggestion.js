@@ -173,7 +173,12 @@ export class QuestionSuggestion {
 
         logger.info(`Suggestion with id (${suggestionId}) has been approved`);
         this.debate.userNamespace.emit('suggestedQuestion', suggestion.format());
-        this.debate.adminRoom.emit('newSuggestedQuestion', suggestion.format());
+        this.debate.adminRoom.emit('newSuggestedQuestion', {
+            uuid: suggestion.uuid,
+            suggestionId: suggestion.suggestionId,
+            suggestion: suggestion.question,
+            votes: suggestion.getNbVotes()
+        });
 
         return true;
     }

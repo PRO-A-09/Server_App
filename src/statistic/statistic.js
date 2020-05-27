@@ -40,6 +40,7 @@ export class Statistic {
     questionFormat(aQuestion){
         logger.debug(`Formatting question : ${aQuestion}`);
         return {
+            id: aQuestion.id,
             title: aQuestion.titreQuestion,
             numberVotes: aQuestion.numberVotes
         }
@@ -97,11 +98,36 @@ export class Statistic {
     }
 
     /**
+     * Get the number of auditors for activeDebates or debates on the database
+     * @param aDiscussionId integer that is the id of a Discussion
+     * @param activeDebates the list of active debates on the server
+     * @returns {Promise<number|auditors|{type, required}>} the number of auditors for the discussion desired
+     */
+    async getAuditors(aDiscussionId, activeDebates){
+        let auditors = 0;
+        let debate = activeDebates.get(aDiscussionId);
+        // If no discussion is found in the activeDebates
+        if(debate == null){
+            debate = await dbManager.getDiscussion(aDiscussionId);
+            // If no discussion is found in the database we exit
+            if (debate == null) {
+                logger.warn(`No debate found with id ${aDiscussionId}`);
+                return auditors;
+            }
+            auditors = debate.auditors;
+        } else{
+            auditors = debate.clients.size;
+        }
+        return auditors;
+    }
+
+    /**
      * Get all the stats for a debate
      * @param aDiscussionId the id of the discussion to get the stats from
+     * @param activeDebates all the active debates on the server
      * @returns {Promise<*[]>} an array containing the stats wanted for a debate or an empty one if it fails
      */
-    async debateStats(aDiscussionId){
+    async debateStats(aDiscussionId, activeDebates){
         // Get the discussion in the database
         let debate = await dbManager.getDiscussion(aDiscussionId);
         if (debate == null) {
@@ -118,8 +144,8 @@ export class Statistic {
         for(let i = 0; i < allQuestions.length; ++i) {
             allQuestions[i].numberVotes = await this.getNumberVotesQuestion(allQuestions[i].id, aDiscussionId);
         }
-
-        return [allQuestions.length, debate.auditors, Array.from(allQuestions.values(), q => this.questionFormat(q)).
+        let auditors = await this.getAuditors(aDiscussionId, activeDebates);
+        return [allQuestions.length, auditors, Array.from(allQuestions.values(), q => this.questionFormat(q)).
         // Will sort the questions by the number of votes most actives in first places
         sort(function (a, b) {
             if (a.numberVotes > b.numberVotes) {
@@ -136,20 +162,19 @@ export class Statistic {
      * Get all the stats a the question
      * @param aQuestionId integer that is the id of the question
      * @param aDiscussionId integer that is the id of the discussion
+     * @param activeDebates all the active debates on the server
      * @returns {Promise<*[]>} Array that contains the stats wanted for a question or an empty one if it fails
      */
-   async questionStats(aQuestionId, aDiscussionId){
-        let debate = await dbManager.getDiscussion(aDiscussionId);
-        if (debate == null) {
-            logger.warn(`No debate found with id ${aDiscussionId}`);
-            return [];
-        }
+   async questionStats(aQuestionId, aDiscussionId, activeDebates){
+        let auditors = await this.getAuditors(aDiscussionId, activeDebates);
         let allResponses = await dbManager.getResponsesQuestion(aQuestionId, aDiscussionId);
         if (allResponses == null) {
             logger.warn(`No responses found for question ${aQuestionId} with debate id ${aDiscussionId}`);
             return [];
         }
        let numberTotalVotes = await this.getNumberVotesQuestion(aQuestionId,aDiscussionId);
-       return [allResponses.length, Math.round((numberTotalVotes/debate.auditors) * 100), Array.from(allResponses.values(), r => this.responseFormat(r, numberTotalVotes))];
+       // To not have problems with the divison by 0
+       let interest = auditors === 0 ? 0 : Math.round((numberTotalVotes/auditors) * 100);
+       return [allResponses.length, interest, Array.from(allResponses.values(), r => this.responseFormat(r, numberTotalVotes))];
    }
 }
