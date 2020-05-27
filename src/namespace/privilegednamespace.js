@@ -302,6 +302,7 @@ export class PrivilegedNamespace extends CustomNamespace {
             logger.debug(`No active debate with the id ${aIdDiscussion} was found`);
             return;
         }
+        debate.close(this.io);
         // Delete debate from active debates
         this.activeDebates.delete(aIdDiscussion);
         this.users.get(socket.username).activeDebates.delete(debate.debateID);
