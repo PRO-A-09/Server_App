@@ -176,7 +176,8 @@ export class PrivilegedNamespace extends CustomNamespace {
                 title: discussion.title,
                 description: discussion.description,
                 startTime: discussion.startTime,
-                finishTime: discussion.finishTime
+                finishTime: discussion.finishTime,
+                closed: true
             }
 
             callback(details);
@@ -186,7 +187,8 @@ export class PrivilegedNamespace extends CustomNamespace {
                 debateId: debate.debateID,
                 title: debate.title,
                 description: debate.description,
-                startTime: debate.startTime
+                startTime: debate.startTime,
+                closed: false
             }
 
             callback(details);
