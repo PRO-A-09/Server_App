@@ -1,6 +1,7 @@
 import {SocketConfig, logger, ErrorMessage} from '../conf/config.js'
 import {DataBaseManager} from "../database/DatabaseManager.js";
 import {dbManager} from "../database/DatabaseManager.js";
+import bcrypt from 'bcrypt';
 
 /**
  * Class implementing a Middleware function with a fixed password
@@ -21,7 +22,19 @@ export class LoginMiddleware {
         socket.username = username;
         socket.handshake.query.password = null;
 
-        if (password === await dbManager.getAdminPassword(username)) {
+        let adminHash = await dbManager.getAdminPassword(username);
+        let res = await new Promise(resolve => {
+            bcrypt.compare(password, adminHash, (err, res) => {
+                if (err) {
+                    logger.error(`Error while comparing bcrypt passwords: ${err}`);
+                    resolve(false);
+                } else {
+                    return res;
+                }
+            });
+        });
+
+        if (res === true) {
             logger.info('Successful connection to the admin namespace');
             socket.userid = await dbManager.getAdminId(username);
             return next();
