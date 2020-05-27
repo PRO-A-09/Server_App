@@ -238,6 +238,7 @@ describe("Debate admin functions", () => {
             });
 
             await new Promise(resolve => bannedClient.on('connect', resolve));
+            bannedClient.close();
         });
 
         it('should connect again', (done) => {
@@ -256,18 +257,17 @@ describe("Debate admin functions", () => {
         });
     });
 
-    // This test makes mocha hang...
-    // describe("closeDebate", () =>{
-    //     it("Close debate", async () => {
-    //         let idDebate = await dbManager.getLastDiscussionId();
-    //         admin.emit("closeDebate", idDebate, async (status) => {
-    //             status.should.equal(true);
-    //             let debate = await dbManager.getDiscussion(idDebate);
-    //             debate.hasOwnProperty('auditors').should.equal(true);
-    //             debate.hasOwnProperty('finishTime').should.equal(true);
-    //         });
-    //     });
-    // });
+    describe("closeDebate", () =>{
+        it("Close debate", async () => {
+            let idDebate = await dbManager.getLastDiscussionId();
+            admin.emit("closeDebate", idDebate, async (status) => {
+                status.should.equal(true);
+                let debate = await dbManager.getDiscussion(idDebate);
+                debate.hasOwnProperty('auditors').should.equal(true);
+                debate.hasOwnProperty('finishTime').should.equal(true);
+            });
+        });
+    });
 
     afterEach(() => {
         client.close();
