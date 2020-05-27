@@ -23,6 +23,7 @@ export class LoginMiddleware {
 
         if (password === await dbManager.getAdminPassword(username)) {
             logger.info('Successful connection to the admin namespace');
+            socket.userid = await dbManager.getAdminId(username);
             return next();
         }
 

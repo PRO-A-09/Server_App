@@ -315,6 +315,44 @@ export class PrivilegedNamespace extends CustomNamespace {
     };
 
     /**
+     * Return the true if the debate was closed correctly false otherwise in the callback function
+     */
+    lockDebate = (socket) => async (debateId, callback) => {
+        logger.debug(`lockDebate requested from ${socket.username}`);
+
+        if (!(callback instanceof Function)) {
+            logger.debug(`callback is not a function.`);
+            return;
+        }
+
+        if (!TypeCheck.isInteger(debateId)) {
+            logger.debug(`Invalid arguments for lockDebate. debateId: ${debateId})`)
+            callback(false);
+            return;
+        }
+
+        // Get the debate with the desired id
+        let debate = this.getActiveDebate(debateId);
+        logger.debug(`Debate given ${debate}`);
+        // If the debate does not exist it cannot be closed
+        if(debate == null){
+            callback(false);
+            logger.debug(`No active debate with the id ${aIdDiscussion} was found`);
+            return;
+        }
+        debate.close(this.io);
+        // Delete debate from active debates
+        this.activeDebates.delete(debateId);
+        this.users.get(socket.username).activeDebates.delete(debate.debateID);
+        // Save in the database that the discussion is closed
+        let update = await dbManager.saveEndDiscussion(debateId);
+
+        logger.debug(`result update: ${update}`);
+
+        callback(update);
+    };
+
+    /**
      * Add a new question to the specified debate
      * newQuestionObj contains the required information (debateId, title, answers, (optional) isOpenQuestion)
      */
