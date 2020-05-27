@@ -336,7 +336,7 @@ describe("Debate client functions", () => {
             });
 
             client.emit('suggestQuestion', suggestionText, res => {
-                res.should.not.equal(true);
+                res.should.not.equal(false);
             });
         });
     });
@@ -366,7 +366,7 @@ describe("Debate client functions", () => {
             });
 
             client.emit('suggestQuestion', 'This is my new suggestion.', res => {
-                res.should.not.equal(true);
+                res.should.not.equal(false);
             });
         });
 
