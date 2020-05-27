@@ -13,6 +13,7 @@ export class ErrorMessage {
     static LOGIN_PASSWORD_INVALID = 'Invalid password';
     static UNSPECIFIED_UUID = 'Device UUID need to be provided';
     static BLACKLISTED_DEVICE = 'This device has been banned';
+    static BAN_MESSAGE = 'You have been banned';
 }
 
 export class DebateConfig {

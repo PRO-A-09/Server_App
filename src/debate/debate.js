@@ -107,7 +107,7 @@ export class Debate {
 
         // Create a new namespace for the debate
         this.userNamespace = io.of(SocketConfig.DEBATE_NAMESPACE_PREFIX + this.debateID);
-        this.userNamespace.use(new ClientBlacklistMiddleware().middlewareFunction);
+        this.userNamespace.use(new ClientBlacklistMiddleware(this.admin).middlewareFunction);
     }
 
     /**
@@ -237,8 +237,18 @@ export class Debate {
             return;
         }
 
+        // Mark the question that were answered
+        const questions = Array.from(this.questions.values(), q => (q.format()));
+        for (let [questionId, answerId] of this.getClient(socket.uuid).answers) {
+            try {
+                questions[questionId - 1].answered = true;
+            } catch {
+                logger.error(`Question ID (${questionId - 1}) not found in questions list`);
+            }
+        }
+
         // Format the questions before sending them
-        callback(Array.from(this.questions.values(), q => (q.format())));
+        callback(questions);
     };
 
     /**
@@ -371,6 +381,7 @@ export class Debate {
             });
 
         logger.info(`Socket (${socket.id}) replied (${answer}) to question (${questionId}).`);
+        this.adminRoom.emit('newOpenQuestionAnswer', {questionId: questionId, responseId, uuid: socket.uuid});
         callback(true);
     };
 
@@ -386,13 +397,13 @@ export class Debate {
             return;
         }
 
-        callback(this.questionSuggestion.getApprovedSuggestions());
+        callback(this.questionSuggestion.getApprovedSuggestions(socket.uuid));
     };
 
     /**
      * Suggest a new question to the participants of the debate.
      * question is a String that contains the question
-     * callback is a function that takes true on success, otherwise false.
+     * callback is a function that takes the id of the suggestion on success, otherwise false.
      */
     suggestQuestion = (socket) => (question, callback) => {
         logger.debug(`suggestQuestion received from ${socket.id}`);
@@ -410,7 +421,7 @@ export class Debate {
         }
 
         logger.info(`Socket (${socket.id}) suggested (${question}).`);
-        callback(true);
+        callback(suggestionId);
     };
 
     /**
