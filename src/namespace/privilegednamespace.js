@@ -388,7 +388,7 @@ export class PrivilegedNamespace extends CustomNamespace {
             return;
         }
 
-        let allQuestions = await this.statistic.debateStats(debateId);
+        let allQuestions = await this.statistic.debateStats(debateId, this.activeDebates);
 
         if (allQuestions.length !== 3) {
             logger.debug('Invalid debate.');
@@ -402,7 +402,7 @@ export class PrivilegedNamespace extends CustomNamespace {
     /**
      * Return an array that contains stats for a specific question in the result of the callback function
      */
-    getQuestionStats = (socket) => async (questionId, debateId, callback) => {
+    getQuestionStats = (socket) => async (questionId, callback) => {
         logger.debug(`getQuestionStats received from ${socket.id}`);
 
         if (!(callback instanceof Function)) {
@@ -410,13 +410,15 @@ export class PrivilegedNamespace extends CustomNamespace {
             return;
         }
 
-        let allResponses = await this.statistic.questionStats(questionId, debateId);
+        let allResponses = await this.statistic.questionStats(questionId[0], questionId[1], this.activeDebates);
 
         if (allResponses.length !== 3) {
             logger.debug('Invalid question.');
             callback([]);
             return;
         }
+
+        console.log(allResponses);
 
         callback([allResponses[0], allResponses[1], allResponses[2]]);
 
