@@ -38,6 +38,7 @@ export class PrivilegedNamespace extends CustomNamespace {
 
             // Register socket functions
             socket.on('getDebates', this.getDebates(socket));
+            socket.on('getDebateDetails', this.getDebateDetails(socket));
             socket.on('getDebateQuestions', this.getDebateQuestions(socket));
             socket.on('getDebateSuggestions', this.getDebateSuggestions(socket));
             socket.on('newDebate', this.newDebate(socket));
@@ -121,6 +122,64 @@ export class PrivilegedNamespace extends CustomNamespace {
 
         callback(debates);
     };
+
+    /**
+     * Return the details of the debate with the specified id
+     * debateId contains the id of the debate
+     */
+    getDebateDetails = (socket) => async (debateId, callback) => {
+        logger.debug(`getDebateDetails received from user (${socket.username}) id (${socket.id})`);
+
+        if (!TypeCheck.isFunction(callback)) {
+            logger.debug(`callback is not a function.`);
+            return;
+        }
+
+        if (!TypeCheck.isInteger(debateId)) {
+            logger.debug('Invalid arguments for getDebateDetails.');
+            callback(false);
+            return;
+        }
+
+        const debate = this.getActiveDebate(debateId);
+        if (debate == null) { // Try to query from DB
+            logger.debug(`Debate with id (${debateId}) not found... Checking in database.`);
+
+            const adminId = await dbManager.getAdminId(socket.username);
+            const discussion = await dbManager.getDiscussion(debateId);
+            if (discussion == null) {
+                logger.debug(`Discussion with id (${debateId}) not found`);
+                callback(false);
+                return
+            }
+
+            if (!discussion.administrator.equals(adminId)) {
+                logger.debug(`Cannot get the debate information of another user.`);
+                callback(false);
+                return;
+            }
+
+            let details = {
+                debateId: discussion._id,
+                title: discussion.title,
+                description: discussion.description,
+                startTime: discussion.startTime,
+                finishTime: discussion.finishTime
+            }
+
+            callback(details);
+        } else {
+            // Store details in an object before sending it
+            let details = {
+                debateId: debate.debateID,
+                title: debate.title,
+                description: debate.description,
+                startTime: debate.startTime
+            }
+
+            callback(details);
+        }
+    }
 
     /**
      * Return the list of questions for a debate to the callback function
