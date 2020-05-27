@@ -365,7 +365,7 @@ export class PrivilegedNamespace extends CustomNamespace {
 
     /**
      * Ban a user from all admin future debates and kick him immediately if debateId is specified
-     * banObj contains the required information (uuid and debateId)
+     * banObj contains the required information (uuid and (optional) debateId)
      */
     banUser = (socket) => async (banObj, callback) => {
         logger.debug(`banUser received from user (${socket.username}), id(${socket.id})`);
@@ -376,17 +376,25 @@ export class PrivilegedNamespace extends CustomNamespace {
         }
 
         let {uuid, debateId} = banObj;
-        if (!TypeCheck.isString(uuid) || !TypeCheck.isInteger(debateId)) {
+        let shouldKick = false;
+        if (debateId != null) {
+            shouldKick = true;
+        }
+
+        if (!TypeCheck.isString(uuid) || (shouldKick && !TypeCheck.isInteger(debateId))) {
             logger.debug('Invalid arguments for banUser');
             callback(false);
             return;
         }
 
-        const debate = this.getActiveDebate(debateId);
-        if (debate == null) {
-            logger.warn(`Debate with id (${debateId}) not found. Can't ban properly.`);
-            callback(false);
-            return;
+        let debate;
+        if (shouldKick) {
+            debate = this.getActiveDebate(debateId);
+            if (debate == null) {
+                logger.warn(`Debate with id (${debateId}) not found. Can't ban properly.`);
+                callback(false);
+                return;
+            }
         }
 
         // Ban the device in the database
@@ -397,14 +405,16 @@ export class PrivilegedNamespace extends CustomNamespace {
             return;
         }
 
-        // Disconnect the client
-        let client = debate.getClient(uuid);
-        if (client == null) {
-            logger.debug(`Client with uuid (${uuid}) is not connected`)
-        } else {
-            // Inform the client he is banned
-            client.socket.emit('banned', ErrorMessage.BAN_MESSAGE);
-            client.socket.disconnect();
+        if (shouldKick) {
+            // Disconnect the client
+            let client = debate.getClient(uuid);
+            if (client == null) {
+                logger.debug(`Client with uuid (${uuid}) is not connected`)
+            } else {
+                // Inform the client he is banned
+                client.socket.emit('banned', ErrorMessage.BAN_MESSAGE);
+                client.socket.disconnect();
+            }
         }
 
         logger.info(`User (${socket.username}) banned the device with uuid ${uuid}`);
