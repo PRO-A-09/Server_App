@@ -443,7 +443,7 @@ export class PrivilegedNamespace extends CustomNamespace {
         }
 
         if (!TypeCheck.isString(uuid) || (shouldKick && !TypeCheck.isInteger(debateId))) {
-            logger.debug('Invalid arguments for banUser');
+            logger.debug(`Invalid arguments for banUser. Uuid: ${uuid}, debateId: ${debateId}`);
             callback(false);
             return;
         }
