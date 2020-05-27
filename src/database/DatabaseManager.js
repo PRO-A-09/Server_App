@@ -26,7 +26,7 @@ export class DataBaseManager {
     async start() {
         // Connection to the local database
         try {
-            await mongoose.connect('mongodb://localhost:27017/PRO', {
+            await mongoose.connect('mongodb://mongo:27017/PRO', {
                 useNewUrlParser: true,
                 useUnifiedTopology: true
             });
@@ -317,7 +317,7 @@ export class DataBaseManager {
         logger.debug('getLastDiscussionId called');
         return new Promise(resolve => {
             Discussion.find().sort({_id: 'descending'}).exec((err, discussions) => {
-                if (err) {
+                if (err || discussions.length === 0) {
                     logger.debug('getLastDiscussionId returning 0');
                     resolve(0);
                 } else {
