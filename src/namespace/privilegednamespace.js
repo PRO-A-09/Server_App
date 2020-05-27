@@ -111,13 +111,17 @@ export class PrivilegedNamespace extends CustomNamespace {
 
         logger.debug('Getting discussions from database');
         let discussions = await dbManager.getDiscussionsAdmin(socket.username);
-        for (const discussion of discussions) {
-            debates.push({
-                debateId: discussion._id,
-                title: discussion.title,
-                description: discussion.description,
-                closed: discussion.finishTime != null
-            });
+        if(discussions != null) {
+            for (const discussion of discussions) {
+                if (!this.activeDebates.has(discussion._id)) {
+                    debates.push({
+                        debateId: discussion._id,
+                        title: discussion.title,
+                        description: discussion.description,
+                        closed: discussion.finishTime != null
+                    });
+                }
+            }
         }
 
         callback(debates);

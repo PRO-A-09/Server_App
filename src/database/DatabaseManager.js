@@ -317,7 +317,7 @@ export class DataBaseManager {
         logger.debug('getLastDiscussionId called');
         return new Promise(resolve => {
             Discussion.find().sort({_id: 'descending'}).exec((err, discussions) => {
-                if (err) {
+                if (err || discussions.length === 0) {
                     logger.debug('getLastDiscussionId returning 0');
                     resolve(0);
                 } else {

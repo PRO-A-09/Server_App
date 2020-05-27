@@ -169,7 +169,7 @@ export class Debate {
         //TODO: - Control if await slows down the app
         //      - If it slows down the app, remove it and modify tests
         //          (currently only pass with await otherwise they are executed too quickly)
-        await dbManager.saveQuestion(question, this.debateID)
+        await dbManager.saveQuestionAdmin(question, this.debateID)
             .then(res => {
                 if (res === true) {
                     logger.info('Question saved to db');
