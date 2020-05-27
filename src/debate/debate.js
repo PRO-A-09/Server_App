@@ -114,8 +114,13 @@ export class Debate {
         this.userNamespace.use(new ClientBlacklistMiddleware(this.admin).middlewareFunction);
     }
 
+    /**
+     * Close the debate and disconnect all clients
+     * @param io
+     */
     close(io) {
         logger.info(`Closing debate with id (${this.debateID})`);
+        this.lockDebate();
 
         logger.debug(`Disconnecting clients...`);
         for (let [uuid, client] of this.clients) {
@@ -138,7 +143,9 @@ export class Debate {
         this.userNamespace.on('connection', async (socket) => {
             logger.debug(`New socket connected to namespace (${this.userNamespace.name}) id (${socket.id})`);
 
-            this.initializeClient(socket);
+            // If initialization is false, return now
+            if (!this.initializeClient(socket))
+                return;
 
             // Register socket functions
             socket.on('getDebateDetails', this.getDebateDetails(socket));
@@ -152,6 +159,22 @@ export class Debate {
     }
 
     /**
+     * Lock the debate by blocking all new connections
+     */
+    lockDebate() {
+        logger.info(`Debate with id (${this.debateID}) is now locked.`);
+        this.locked = true;
+    }
+
+    /**
+     * Unlock the debate by allowing all new connections
+     */
+    unlockDebate() {
+        logger.info(`Debate with id (${this.debateID}) is now unlocked.`);
+        this.locked = false;
+    }
+
+    /**
      * Initialize the client and his attributes
      * @param socket client socket to initialize
      */
@@ -161,6 +184,15 @@ export class Debate {
             this.getClient(socket.uuid).socket = socket;
         } else {
             logger.debug(`New client uuid (${socket.uuid})`)
+
+            // If the debate is locked, disconnect the client
+            if (this.locked) {
+                logger.debug(`The debate does not accept new clients at this time.`);
+                socket.emit('cError', 'New clients are not accepted at this time.');
+                socket.disconnect();
+                return false;
+            }
+
             // Store the socket and initialize attributes
             this.clients.set(socket.uuid, {
                 socket: socket,
@@ -180,6 +212,7 @@ export class Debate {
                     logger.error(`saveDevice threw : ${res}.`)
                 });
         }
+        return true;
     }
 
     /**
