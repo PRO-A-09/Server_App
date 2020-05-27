@@ -14,10 +14,12 @@ export class Debate {
     debateID;
     title;
     description;
+    locked;
 
     // Admin information
     adminRoomName;
     adminRoom;
+    adminId;
     admin;
 
     // User information
@@ -87,10 +89,11 @@ export class Debate {
      * @param adminNamespace admin namespace to create the room communicate with the admins
      */
     constructor(title, description, ownerSocket, io, adminNamespace) {
-        // Initialize detailts
+        // Initialize details
         this.title = title;
         this.description = description;
         this.debateID = ++Debate.nb_debate;
+        this.locked = false;
 
         // Initialize data
         this.clients = new Map();
@@ -101,6 +104,7 @@ export class Debate {
         this.adminRoomName = SocketConfig.ADMIN_ROOM_PREFIX + this.debateID;
         this.adminRoom = adminNamespace.to(this.adminRoomName);
         this.admin = ownerSocket.username;
+        this.adminId = ownerSocket.userid;
 
         // Join the admin room
         ownerSocket.join(this.adminRoomName);
