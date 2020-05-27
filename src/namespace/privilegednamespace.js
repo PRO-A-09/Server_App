@@ -126,7 +126,7 @@ export class PrivilegedNamespace extends CustomNamespace {
                         debateId: discussion._id,
                         title: discussion.title,
                         description: discussion.description,
-                        closed: discussion.finishTime != null
+                        closed: true
                     });
                 }
             }
