@@ -295,7 +295,7 @@ describe("Debate admin functions", () => {
             });
 
             await new Promise(resolve => {
-                newClient.on('cError', (res) => {
+                newClient.on('connect_error', (res) => {
                     should.exist(res);
                     resolve();
                 });

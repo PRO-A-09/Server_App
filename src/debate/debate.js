@@ -188,7 +188,7 @@ export class Debate {
             // If the debate is locked, disconnect the client
             if (this.locked) {
                 logger.debug(`The debate does not accept new clients at this time.`);
-                socket.emit('cError', 'New clients are not accepted at this time.');
+                socket.emit('connect_error', 'New clients are not accepted at this time.');
                 socket.disconnect();
                 return false;
             }
