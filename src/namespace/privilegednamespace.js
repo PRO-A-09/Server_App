@@ -60,8 +60,8 @@ export class PrivilegedNamespace extends CustomNamespace {
             // Moderator functions
             socket.on('banUser', this.banUser(socket));
             socket.on('unbanUser', this.unbanUser(socket));
-            socket.on('approveQuestion', this.approveQuestion(socket));
-            socket.on('rejectQuestion', this.rejectQuestion(socket));
+            socket.on('approveSuggestion', this.approveSuggestion(socket));
+            socket.on('rejectSuggestion', this.rejectSuggestion(socket));
         });
     }
 
@@ -615,8 +615,8 @@ export class PrivilegedNamespace extends CustomNamespace {
      * Approve a suggestion with the specified id and debate
      * approveObj contains the required information (debateId and suggestionId)
      */
-    approveQuestion = (socket) => async (approveObj, callback) => {
-        logger.debug(`approveQuestion received from user (${socket.username}), id(${socket.id})`);
+    approveSuggestion = (socket) => async (approveObj, callback) => {
+        logger.debug(`approveSuggestion received from user (${socket.username}), id(${socket.id})`);
 
         if (!TypeCheck.isFunction(callback)) {
             logger.debug(`callback is not a function.`);
@@ -652,8 +652,8 @@ export class PrivilegedNamespace extends CustomNamespace {
      * Reject a suggestion with the specified id and debate
      * rejectObj contains the required information (debateId and suggestionId)
      */
-    rejectQuestion = (socket) => (rejectObj, callback) => {
-        logger.debug(`rejectQuestion received from user (${socket.username}), id(${socket.id})`);
+    rejectSuggestion = (socket) => (rejectObj, callback) => {
+        logger.debug(`rejectSuggestion received from user (${socket.username}), id(${socket.id})`);
 
         if (!TypeCheck.isFunction(callback)) {
             logger.debug(`callback is not a function.`);
