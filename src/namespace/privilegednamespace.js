@@ -617,7 +617,7 @@ export class PrivilegedNamespace extends CustomNamespace {
      * Approve a suggestion with the specified id and debate
      * approveObj contains the required information (debateId and suggestionId)
      */
-    approveQuestion = (socket) => (approveObj, callback) => {
+    approveQuestion = (socket) => async (approveObj, callback) => {
         logger.debug(`approveQuestion received from user (${socket.username}), id(${socket.id})`);
 
         if (!TypeCheck.isFunction(callback)) {
@@ -639,7 +639,7 @@ export class PrivilegedNamespace extends CustomNamespace {
             return;
         }
 
-        const res = debate.questionSuggestion.approveSuggestion(suggestionId);
+        const res = await debate.questionSuggestion.approveSuggestion(suggestionId);
         if (res === false) {
             logger.debug('Cannot approve suggestion.');
             callback(false);
