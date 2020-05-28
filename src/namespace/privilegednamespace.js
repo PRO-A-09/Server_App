@@ -327,6 +327,7 @@ export class PrivilegedNamespace extends CustomNamespace {
 
     /**
      * Return the true if the debate was locked correctly false otherwise in the callback function
+     * If the debate is already locked and we attempt to lock it, return also true
      */
     lockDebate = (socket) => async (debateId, callback) => {
         logger.debug(`lockDebate requested from ${socket.username}`);
@@ -337,7 +338,7 @@ export class PrivilegedNamespace extends CustomNamespace {
         }
 
         if (!TypeCheck.isInteger(debateId)) {
-            logger.debug(`Invalid arguments for lockDebate. debateId: ${debateId})`)
+            logger.debug(`Invalid arguments for lockDebate. debateId: ${debateId})`);
             callback(false);
             return;
         }
@@ -362,7 +363,8 @@ export class PrivilegedNamespace extends CustomNamespace {
     };
 
     /**
-     * Return the true if the debate was unlocked correctly false otherwise in the callback function
+     * Return the true if the debate was unlocked correctly false otherwise in the callback function.
+     * If the debate is already unlocked and we attempt to unlock it, return also true
      */
     unlockDebate = (socket) => async (debateId, callback) => {
         logger.debug(`unlockDebate requested from ${socket.username}`);
@@ -373,7 +375,7 @@ export class PrivilegedNamespace extends CustomNamespace {
         }
 
         if (!TypeCheck.isInteger(debateId)) {
-            logger.debug(`Invalid arguments for unlockDebate. debateId: ${debateId})`)
+            logger.debug(`Invalid arguments for unlockDebate. debateId: ${debateId})`);
             callback(false);
             return;
         }
