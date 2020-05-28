@@ -346,11 +346,15 @@ describe("Debate admin functions", () => {
     describe("closeDebate", () =>{
         it("Close debate", async () => {
             let idDebate = await dbManager.getLastDiscussionId();
-            admin.emit("closeDebate", idDebate, async (status) => {
-                status.should.equal(true);
-                let debate = await dbManager.getDiscussion(idDebate);
-                debate.hasOwnProperty('auditors').should.equal(true);
-                debate.hasOwnProperty('finishTime').should.equal(true);
+            await new Promise(resolve => {
+                admin.emit("closeDebate", idDebate, async (status) => {
+                    status.should.equal(true);
+                    let debate = await dbManager.getDiscussion(idDebate);
+                    console.log(debate);
+                    should.exist(debate.auditors);
+                    should.exist(debate.finishTime);
+                    resolve();
+                });
             });
         });
     });

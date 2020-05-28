@@ -46,7 +46,6 @@ describe('Statistic functions test', () => {
             admin.emit("getDebateStats", debateID, (debateStats) => {
                 debateStats[0].should.equal(3);
                 debateStats[1].should.equal(50);
-                console.log(debateStats[2]);
                 debateStats[2][0].numberVotes.should.equal(1);
                 debateStats[2][1].numberVotes.should.equal(0);
                 done();
