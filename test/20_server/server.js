@@ -24,7 +24,6 @@ describe('Server connection test', () => {
 
     describe('socket.io connection test', () => {
         let client;
-        let client2;
 
         beforeEach(() => {
             client = io.connect(srvAddress, {
