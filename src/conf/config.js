@@ -1,6 +1,7 @@
 import winston from "winston";
 
 export class SocketConfig {
+    static TEST_SERVER_NAME = "localhost";
     static SOCKET_PORT = 8080;
     static DEFAULT_PATH = '/socket-io';
     static PRIVILEGED_NAMESPACE = '/admin';
@@ -24,6 +25,20 @@ export class DebateConfig {
     static MAX_QUESTION_LENGTH = 50;
     static MAX_SUGGESTION_LENGTH = 50;
     static MAX_SUGGESTIONS = 10;
+}
+
+export class SSLConfig {
+    static CERT       = '/etc/letsencrypt/live/sondage.codeheure.com/cert.pem';
+    static CERT_CHAIN = '/etc/letsencrypt/live/sondage.codeheure.com/chain.pem';
+    static CERT_KEY   = '/etc/letsencrypt/live/sondage.codeheure.com/privkey.pem';
+}
+
+export function isProduction() {
+    return process.env.NODE_ENV === 'production';
+}
+
+export function getProtocol() {
+    return process.env.NODE_ENV === 'production' ? 'https' : 'http';
 }
 
 // Create a winston logger that logs to console
