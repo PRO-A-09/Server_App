@@ -73,6 +73,23 @@ export class DebateManager {
             socket.on('disconnect', (reason) => {
                 logger.debug(`Socket (${socket.id}) disconnected`);
             });
+
+            socket.on(`newAdmin`, async (user, callback) => {
+                logger.debug(`New admin to add to the database`);
+                if(user.username == null){
+                    callback(false, "Username cannot be null");
+                }
+                if(user.password == null){
+                    callback(false, "Password cannot be null");
+                }
+                let result = await dbManager.saveUser(user.username, user.password);
+                if(result === true){
+                    callback(true, "Username was inserted");
+                } else{
+                    callback(false, result);
+                }
+
+            });
         });
     }
 

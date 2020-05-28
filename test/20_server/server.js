@@ -40,6 +40,21 @@ describe('Server connection test', () => {
             });
         });
 
+        it('Socket.io default add new User', (done) => {
+            client.emit('newAdmin', {password: "testetstetet", username:"myaccount"}, (res, err) => {
+                res.should.equal(true);
+                done();
+            });
+        });
+
+        it('Socket.io add admin with short password', (done) => {
+            client.emit('newAdmin', {password: "test", username:"myaccount"}, (res, err) => {
+                res.should.equal(false);
+                err.should.equal("Password is too short");
+                done();
+            });
+        });
+
         it('Socket.io default namespace disconnect', (done) => {
             client.disconnect();
             client.disconnected.should.equal(true);
