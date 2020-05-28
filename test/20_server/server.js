@@ -24,11 +24,12 @@ describe('Server connection test', () => {
 
     describe('socket.io connection test', () => {
         let client;
+        let client2;
 
         beforeEach(() => {
             client = io.connect(srvAddress, {
                 path: SocketConfig.DEFAULT_PATH,
-                forceNew: true
+                forceNew: true,
             });
         });
 
@@ -36,6 +37,21 @@ describe('Server connection test', () => {
             client.on('connect', () => {
                 client.connected.should.equal(true);
                 client.disconnected.should.equal(false);
+                done();
+            });
+        });
+
+        it('Socket.io default add new User', (done) => {
+            client.emit('newAdmin', {password: "testetstetet", username:"myaccount"}, (res, err) => {
+                res.should.equal(true);
+                done();
+            });
+        });
+
+        it('Socket.io add admin with short password', (done) => {
+            client.emit('newAdmin', {password: "test", username:"myaccount"}, (res, err) => {
+                res.should.equal(false);
+                err.should.equal("Password is too short");
                 done();
             });
         });

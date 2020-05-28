@@ -238,6 +238,7 @@ export class Debate {
         logger.debug(`Sending new question with id ${question.id}`);
         this.questions.set(question.id, question);
         this.userNamespace.emit('newQuestion', question.format());
+        this.adminRoom.emit('newQuestion');
     }
 
     /**

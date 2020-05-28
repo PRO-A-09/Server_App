@@ -329,6 +329,43 @@ export class DataBaseManager {
     }
 
     /**
+     * Save a new admin in the database
+     * @param aUsername the username of the admin
+     * @param aPassword the password of the admin
+     * @returns {Promise<String|boolean>} true if the save went well false otherwise
+     */
+    async saveUser(aUsername, aPassword){
+        // If one of the two parameters is null or undefined error
+        if(aUsername == null || aPassword == null){
+            return false;
+        }
+        // If the password has not 8 characters error
+        if(aPassword.length < 8){
+            return "Password is too short";
+        }
+        let idAdmin = await this.getAdminId(aUsername);
+        // If the username already exists error
+        if(idAdmin != null){
+            return "Username already exists";
+        }
+        const admin = new Administrator({
+            login: aUsername,
+            password: aPassword
+        });
+        let saved = true;
+        // Try to save the admin in database
+        await admin.save()
+            .then(adminSaved => logger.debug(`Admin saved ${adminSaved}`))
+            .catch(err => {
+                logger.debug(`Error when saving admin`);
+                logger.debug(err);
+                saved = false
+            });
+        logger.debug(`saved = ${saved}`);
+        return saved;
+    }
+
+    /**
      * Save a discussion in the database
      * @param aDiscussion object Debate that represents the discussion to save in the database
      * @returns {Promise<boolean>} true if the saving was successful false otherwise
