@@ -350,7 +350,6 @@ describe("Debate admin functions", () => {
                 admin.emit("closeDebate", idDebate, async (status) => {
                     status.should.equal(true);
                     let debate = await dbManager.getDiscussion(idDebate);
-                    console.log(debate);
                     should.exist(debate.auditors);
                     should.exist(debate.finishTime);
                     resolve();

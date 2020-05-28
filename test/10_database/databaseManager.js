@@ -206,7 +206,7 @@ describe('Data Base manager test', () => {
 
     describe('End a debate by saving it in database', () => {
         it('Saving end debate 2', (done) => {
-            db.saveEndDiscussion(2).then(() => {
+            db.saveEndDiscussion(2, 57).then(() => {
                 let updatedDebate = db.getDiscussion(2);
                 updatedDebate.auditeurs = 57;
                 done();

@@ -318,7 +318,7 @@ export class PrivilegedNamespace extends CustomNamespace {
         this.activeDebates.delete(aIdDiscussion);
         this.users.get(socket.username).activeDebates.delete(debate.debateID);
         // Save in the database that the discussion is closed
-        let update = await dbManager.saveEndDiscussion(aIdDiscussion);
+        let update = await dbManager.saveEndDiscussion(aIdDiscussion, debate.getNbUniqueClients());
 
         logger.debug(`result update: ${update}`);
 
