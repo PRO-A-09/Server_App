@@ -201,7 +201,6 @@ export class Debate {
                     logger.error(`saveDevice threw : ${res}.`)
                 });
         }
-        return true;
     }
 
     /**
