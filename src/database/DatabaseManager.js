@@ -386,9 +386,10 @@ export class DataBaseManager {
      * Update a discussion when the discussion is closed.
      * Save the finish time and the number of auditors.
      * @param aIdDiscussion integer that is the Id of the discussion to update
+     * @param nbAuditors number of person that participated in the debate
      * @returns {Promise<boolean>} true if the update in the database went well false otherwise
      */
-    async saveEndDiscussion(aIdDiscussion){
+    async saveEndDiscussion(aIdDiscussion, nbAuditors){
         if(aIdDiscussion != null) {
             // Get the current state of the discussion in the database
             let debate = await this.getDiscussion(aIdDiscussion);
@@ -401,7 +402,7 @@ export class DataBaseManager {
             // Update the field finishTime and auditors
             debate.finishTime = new Date();
             // Will be changed by an attribute in the debate class
-            debate.auditors = 57;
+            debate.auditors = nbAuditors;
             let update = true;
             // Update the discussion in the database
             await debate.save()
