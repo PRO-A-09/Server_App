@@ -188,7 +188,8 @@ export class PrivilegedNamespace extends CustomNamespace {
                 title: debate.title,
                 description: debate.description,
                 startTime: debate.startTime,
-                closed: false
+                closed: false,
+                locked: debate.locked
             }
 
             callback(details);
