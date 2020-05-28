@@ -191,18 +191,6 @@ export class QuestionSuggestion {
         this.approvedSuggestedQuestions.set(suggestionId, suggestion);
         this.suggestedQuestions.delete(suggestionId);
 
-        await dbManager.saveQuestionUser(suggestion, this.debate.debateID)
-            .then(res => {
-                if (res === true) {
-                    logger.info('Question saved to db');
-                } else {
-                    logger.warn('Cannot save question to db');
-                }
-            })
-            .catch(res => {
-                logger.error(`saveQuestionUser threw : ${res}.`)
-            });
-
         logger.info(`Suggestion with id (${suggestionId}) has been approved`);
         this.debate.userNamespace.emit('suggestedQuestion', suggestion.format());
         this.debate.adminRoom.emit('newSuggestedQuestion', suggestion.formatAdmin());
