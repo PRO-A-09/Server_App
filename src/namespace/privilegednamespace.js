@@ -508,8 +508,6 @@ export class PrivilegedNamespace extends CustomNamespace {
             return;
         }
 
-        console.log(allResponses);
-
         callback([allResponses[0], allResponses[1], allResponses[2]]);
 
     };
