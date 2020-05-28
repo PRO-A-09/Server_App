@@ -75,16 +75,16 @@ describe('Question suggestion class test', () => {
     });
 
     describe('approveSuggestion', () => {
-        it('should approve suggestion', () => {
-            let res = questionSuggestion.approveSuggestion(suggestionId);
+        it('should approve suggestion', async () => {
+            let res = await questionSuggestion.approveSuggestion(suggestionId);
             res.should.equal(true);
 
             let s = questionSuggestion.approvedSuggestedQuestions.get(suggestionId);
             s.question.should.equal(`Suggestion ${suggestionId}`);
         });
 
-        it('should not approve invalid suggestion', () => {
-            let res = questionSuggestion.approveSuggestion(-1);
+        it('should not approve invalid suggestion', async () => {
+            let res = await questionSuggestion.approveSuggestion(-1);
             res.should.equal(false);
         });
     });
@@ -119,8 +119,8 @@ describe('Question suggestion class test', () => {
             votingClient.on('connect', done);
         });
 
-        it('should vote for a suggestion', () => {
-            let res = questionSuggestion.approveSuggestion(suggestionId);
+        it('should vote for a suggestion', async () => {
+            let res = await questionSuggestion.approveSuggestion(suggestionId);
             res.should.equal(true);
 
             res = questionSuggestion.voteSuggestion(suggestionId, votingClientUUID);
@@ -130,8 +130,8 @@ describe('Question suggestion class test', () => {
             s.getNbVotes().should.equal(2); // 2 : because client who suggested it + us
         });
 
-        it('should not vote more than once with same uuid', () => {
-            let res = questionSuggestion.approveSuggestion(suggestionId);
+        it('should not vote more than once with same uuid', async () => {
+            let res = await questionSuggestion.approveSuggestion(suggestionId);
             res.should.equal(true);
 
             res = questionSuggestion.voteSuggestion(suggestionId, votingClientUUID);
