@@ -48,6 +48,15 @@ export class QuestionSuggestion {
             };
         }
 
+        formatAdmin() {
+            return{
+                uuid: this.uuid,
+                suggestionId: this.suggestionId,
+                suggestion: this.question,
+                votes: this.getNbVotes()
+            }
+        }
+
         /**
          * Returns the number of votes for this suggestion
          * @returns {Number} number of votes
@@ -76,7 +85,7 @@ export class QuestionSuggestion {
      */
     getApprovedSuggestions(uuid) {
         if (!uuid) {
-            return Array.from(this.approvedSuggestedQuestions.values(), s => s.format());
+            return Array.from(this.approvedSuggestedQuestions.values(), s => s.formatAdmin());
         } else {
             return Array.from(this.approvedSuggestedQuestions.values(), s => {
                 let suggestion = s.format();
@@ -173,12 +182,7 @@ export class QuestionSuggestion {
 
         logger.info(`Suggestion with id (${suggestionId}) has been approved`);
         this.debate.userNamespace.emit('suggestedQuestion', suggestion.format());
-        this.debate.adminRoom.emit('newSuggestedQuestion', {
-            uuid: suggestion.uuid,
-            suggestionId: suggestion.suggestionId,
-            suggestion: suggestion.question,
-            votes: suggestion.getNbVotes()
-        });
+        this.debate.adminRoom.emit('newSuggestedQuestion', suggestion.formatAdmin());
 
         return true;
     }
