@@ -5,14 +5,14 @@ import {dbManager} from "../database/DatabaseManager.js";
  * Class implementing a Middleware function with a fixed password
  */
 export class ClientBlacklistMiddleware {
-    user;
+    debate;
 
     /**
      * Constructor of ClientBlacklistMiddleware that sets the username
-     * @param user name of the user who owns the middleware
+     * @param debate debate managed by the middleware
      */
-    constructor(user) {
-        this.user = user;
+    constructor(debate) {
+        this.debate = debate;
     }
 
     /**
@@ -30,7 +30,12 @@ export class ClientBlacklistMiddleware {
             return next(new Error(ErrorMessage.UNSPECIFIED_UUID));
         }
 
-        let isBanned = await dbManager.isDeviceBanned(uuid, this.user);
+        // If the debate is locked and it is not an existing client
+        if (this.debate.locked && !this.debate.clients.has(uuid)) {
+            return next(new Error('Le débat est verrouillé.'));
+        }
+
+        let isBanned = await dbManager.isDeviceBanned(uuid, this.debate.admin);
         if (!isBanned) {
             logger.debug(`socket (${socket.id}) with uuid (${uuid}) connected`);
             socket.uuid = uuid;
