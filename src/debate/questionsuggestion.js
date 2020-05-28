@@ -22,6 +22,7 @@ export class QuestionSuggestion {
         uuid;
         question;
         voters;
+        removed;
 
         /**
          * Default constructor of SuggestedQuestion that stores the question and the uuid
@@ -34,26 +35,33 @@ export class QuestionSuggestion {
             this.uuid = uuid;
             this.question = question;
             this.voters = new Set();
+            this.removed = false;
         }
 
         /**
          * Format the SuggestedQuestion into a format that can be sent with socket.io
-         * @returns {{suggestionId: Number, suggestion: String, votes: Number}} object
+         * @returns {{suggestionId: Number, suggestion: String, votes: Number, removed: boolean}} object
          */
         format() {
             return {
                 suggestionId: this.suggestionId,
                 suggestion: this.question,
-                votes: this.getNbVotes()
+                votes: this.getNbVotes(),
+                removed: this.removed
             };
         }
 
+        /**
+         * Format specific to admins
+         * @returns {{removed: boolean, suggestionId: Number, suggestion: String, votes: Number, uuid: String}}
+         */
         formatAdmin() {
             return{
                 uuid: this.uuid,
                 suggestionId: this.suggestionId,
                 suggestion: this.question,
-                votes: this.getNbVotes()
+                votes: this.getNbVotes(),
+                removed: this.removed
             }
         }
 
@@ -88,6 +96,9 @@ export class QuestionSuggestion {
             return Array.from(this.approvedSuggestedQuestions.values(), s => s.formatAdmin());
         } else {
             return Array.from(this.approvedSuggestedQuestions.values(), s => {
+                if (s.removed === true)
+                    return;
+
                 let suggestion = s.format();
                 if (s.voters.has(uuid))
                     suggestion.voted = true;
@@ -164,7 +175,7 @@ export class QuestionSuggestion {
      * @param suggestionId id of the suggestion to approve
      * @returns {boolean} true if the suggestion was successfully approved, false otherwise
      */
-    approveSuggestion(suggestionId) {
+    async approveSuggestion(suggestionId) {
         logger.debug(`Approving suggestion with id (${suggestionId})`);
         if (!this.suggestedQuestions.has(suggestionId)) {
             logger.debug(`Suggestion with id (${suggestionId}) does not exist`);
@@ -179,6 +190,18 @@ export class QuestionSuggestion {
         let suggestion = this.suggestedQuestions.get(suggestionId);
         this.approvedSuggestedQuestions.set(suggestionId, suggestion);
         this.suggestedQuestions.delete(suggestionId);
+
+        await dbManager.saveQuestionUser(suggestion, this.debate.debateID)
+            .then(res => {
+                if (res === true) {
+                    logger.info('Question saved to db');
+                } else {
+                    logger.warn('Cannot save question to db');
+                }
+            })
+            .catch(res => {
+                logger.error(`saveQuestionUser threw : ${res}.`)
+            });
 
         logger.info(`Suggestion with id (${suggestionId}) has been approved`);
         this.debate.userNamespace.emit('suggestedQuestion', suggestion.format());
@@ -206,8 +229,27 @@ export class QuestionSuggestion {
         this.suggestedQuestions.delete(suggestionId);
 
         logger.info(`Suggestion with id (${suggestionId}) has been rejected`);
-
-        // TODO: Emit suggestion deletion to moderator room
+        this.debate.adminRoom.emit('rejectedSuggestion', suggestionId);
         return true;
+    }
+
+    /**
+     * Should mark all suggestions of the client as removed
+     * @param uuid uuid of the client
+     */
+    removeDeviceSuggestions(uuid) {
+        logger.info(`Removing suggestions from device with uuid (${uuid})`);
+        let clientSuggestions = this.debate.getClient(uuid).suggestions;
+
+        for (let suggestionId of clientSuggestions) {
+            this.debate.userNamespace.emit('deletedSuggestion', suggestionId);
+            this.debate.adminRoom.emit('deletedSuggestion', suggestionId);
+            let suggestion = this.approvedSuggestedQuestions.get(suggestionId);
+            if (suggestion == null) {
+                logger.error(`Trying to remove a suggestion that does not exist.`);
+            } else {
+                suggestion.removed = true;
+            }
+        }
     }
 }

@@ -546,6 +546,8 @@ export class PrivilegedNamespace extends CustomNamespace {
                 callback(false);
                 return;
             }
+
+            debate.questionSuggestion.removeDeviceSuggestions(uuid);
         }
 
         // Ban the device in the database
