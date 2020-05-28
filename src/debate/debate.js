@@ -14,10 +14,12 @@ export class Debate {
     debateID;
     title;
     description;
+    locked;
 
     // Admin information
     adminRoomName;
     adminRoom;
+    adminId;
     admin;
 
     // User information
@@ -87,10 +89,11 @@ export class Debate {
      * @param adminNamespace admin namespace to create the room communicate with the admins
      */
     constructor(title, description, ownerSocket, io, adminNamespace) {
-        // Initialize detailts
+        // Initialize details
         this.title = title;
         this.description = description;
         this.debateID = ++Debate.nb_debate;
+        this.locked = false;
 
         // Initialize data
         this.clients = new Map();
@@ -101,6 +104,7 @@ export class Debate {
         this.adminRoomName = SocketConfig.ADMIN_ROOM_PREFIX + this.debateID;
         this.adminRoom = adminNamespace.to(this.adminRoomName);
         this.admin = ownerSocket.username;
+        this.adminId = ownerSocket.userid;
 
         // Join the admin room
         ownerSocket.join(this.adminRoomName);
@@ -110,8 +114,13 @@ export class Debate {
         this.userNamespace.use(new ClientBlacklistMiddleware(this.admin).middlewareFunction);
     }
 
+    /**
+     * Close the debate and disconnect all clients
+     * @param io
+     */
     close(io) {
         logger.info(`Closing debate with id (${this.debateID})`);
+        this.lockDebate();
 
         logger.debug(`Disconnecting clients...`);
         for (let [uuid, client] of this.clients) {
@@ -134,7 +143,9 @@ export class Debate {
         this.userNamespace.on('connection', async (socket) => {
             logger.debug(`New socket connected to namespace (${this.userNamespace.name}) id (${socket.id})`);
 
-            this.initializeClient(socket);
+            // If initialization is false, return now
+            if (!this.initializeClient(socket))
+                return;
 
             // Register socket functions
             socket.on('getDebateDetails', this.getDebateDetails(socket));
@@ -148,6 +159,22 @@ export class Debate {
     }
 
     /**
+     * Lock the debate by blocking all new connections
+     */
+    lockDebate() {
+        logger.info(`Debate with id (${this.debateID}) is now locked.`);
+        this.locked = true;
+    }
+
+    /**
+     * Unlock the debate by allowing all new connections
+     */
+    unlockDebate() {
+        logger.info(`Debate with id (${this.debateID}) is now unlocked.`);
+        this.locked = false;
+    }
+
+    /**
      * Initialize the client and his attributes
      * @param socket client socket to initialize
      */
@@ -157,6 +184,15 @@ export class Debate {
             this.getClient(socket.uuid).socket = socket;
         } else {
             logger.debug(`New client uuid (${socket.uuid})`)
+
+            // If the debate is locked, disconnect the client
+            if (this.locked) {
+                logger.debug(`The debate does not accept new clients at this time.`);
+                socket.emit('connect_error', 'New clients are not accepted at this time.');
+                socket.disconnect();
+                return false;
+            }
+
             // Store the socket and initialize attributes
             this.clients.set(socket.uuid, {
                 socket: socket,
@@ -176,6 +212,7 @@ export class Debate {
                     logger.error(`saveDevice threw : ${res}.`)
                 });
         }
+        return true;
     }
 
     /**
