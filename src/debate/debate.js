@@ -111,7 +111,7 @@ export class Debate {
 
         // Create a new namespace for the debate
         this.userNamespace = io.of(SocketConfig.DEBATE_NAMESPACE_PREFIX + this.debateID);
-        this.userNamespace.use(new ClientBlacklistMiddleware(this.admin).middlewareFunction);
+        this.userNamespace.use(new ClientBlacklistMiddleware(this).middlewareFunction);
     }
 
     /**
@@ -142,10 +142,7 @@ export class Debate {
     startSocketHandling() {
         this.userNamespace.on('connection', async (socket) => {
             logger.debug(`New socket connected to namespace (${this.userNamespace.name}) id (${socket.id})`);
-
-            // If initialization is false, return now
-            if (!this.initializeClient(socket))
-                return;
+            this.initializeClient(socket);
 
             // Register socket functions
             socket.on('getDebateDetails', this.getDebateDetails(socket));
@@ -183,15 +180,7 @@ export class Debate {
             logger.debug(`Existing client uuid (${socket.uuid})`)
             this.getClient(socket.uuid).socket = socket;
         } else {
-            logger.debug(`New client uuid (${socket.uuid})`)
-
-            // If the debate is locked, disconnect the client
-            if (this.locked) {
-                logger.debug(`The debate does not accept new clients at this time.`);
-                socket.emit('connect_error', 'New clients are not accepted at this time.');
-                socket.disconnect();
-                return false;
-            }
+            logger.debug(`New client uuid (${socket.uuid})`);
 
             // Store the socket and initialize attributes
             this.clients.set(socket.uuid, {
@@ -212,7 +201,6 @@ export class Debate {
                     logger.error(`saveDevice threw : ${res}.`)
                 });
         }
-        return true;
     }
 
     /**
