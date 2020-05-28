@@ -1,4 +1,4 @@
-import {SocketConfig, ErrorMessage} from '../../src/conf/config.js'
+import {SocketConfig, ErrorMessage, getProtocol} from '../../src/conf/config.js'
 import {DebateManager} from "../../src/debatemanager.js";
 import io from 'socket.io-client'
 import chai from 'chai';
@@ -7,7 +7,7 @@ import {dbManager} from "../../src/database/DatabaseManager.js";
 const expect = chai.expect;
 const should = chai.should();
 
-const SERVER_ADDRESS = `http://localhost:${SocketConfig.SOCKET_PORT}`;
+const SERVER_ADDRESS = `${getProtocol()}://${SocketConfig.TEST_SERVER_NAME}:${SocketConfig.SOCKET_PORT}`;
 const PRIVILEGED_NAMESPACE = `${SERVER_ADDRESS}${SocketConfig.PRIVILEGED_NAMESPACE}`;
 const DEBATE_NAMESPACE = `${SERVER_ADDRESS}${SocketConfig.DEBATE_NAMESPACE_PREFIX}`;
 const defaultUUID = '2345675432';

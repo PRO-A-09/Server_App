@@ -1,4 +1,4 @@
-import {SocketConfig, ErrorMessage} from '../../src/conf/config.js'
+import {SocketConfig, ErrorMessage, getProtocol} from '../../src/conf/config.js'
 import {DebateManager} from "../../src/debatemanager.js";
 import io from 'socket.io-client'
 import request from 'request'
@@ -7,16 +7,19 @@ import chai from 'chai';
 const expect = chai.expect;
 const should = chai.should();
 
+const SERVER_ADDRESS = `${getProtocol()}://${SocketConfig.TEST_SERVER_NAME}:${SocketConfig.SOCKET_PORT}`;
+const PRIVILEGED_NAMESPACE = `${SERVER_ADDRESS}${SocketConfig.PRIVILEGED_NAMESPACE}`;
+const DEBATE_NAMESPACE = `${SERVER_ADDRESS}${SocketConfig.DEBATE_NAMESPACE_PREFIX}`;
+
 describe('Server connection test', () => {
     const debateManager = new DebateManager();
-    const srvAddress = `http://localhost:${SocketConfig.SOCKET_PORT}`;
 
     before(async () => {
         await debateManager.start();
     });
 
     it('Server response body', (done) => {
-        request(srvAddress , (err, req, body) => {
+        request(SERVER_ADDRESS , (err, req, body) => {
             expect(body).to.equal('Socket.io server');
             done();
         });
@@ -26,7 +29,7 @@ describe('Server connection test', () => {
         let client;
 
         beforeEach(() => {
-            client = io.connect(srvAddress, {
+            client = io.connect(SERVER_ADDRESS, {
                 path: SocketConfig.DEFAULT_PATH,
                 forceNew: true
             });
@@ -56,7 +59,7 @@ describe('Server connection test', () => {
         let client;
 
         beforeEach(() => {
-            client = io.connect(`http://localhost:${SocketConfig.SOCKET_PORT}${SocketConfig.PRIVILEGED_NAMESPACE}`, {
+            client = io.connect(PRIVILEGED_NAMESPACE, {
                 path: SocketConfig.DEFAULT_PATH,
                 forceNew: true,
                 query: {
@@ -90,7 +93,7 @@ describe('Server connection test', () => {
         let client;
 
         beforeEach(() => {
-            client = io.connect(`http://localhost:${SocketConfig.SOCKET_PORT}${SocketConfig.PRIVILEGED_NAMESPACE}`, {
+            client = io.connect(PRIVILEGED_NAMESPACE, {
                 path: SocketConfig.DEFAULT_PATH,
                 forceNew: true,
                 query: {
