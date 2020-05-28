@@ -336,7 +336,6 @@ describe("Debate admin functions", () => {
 
             await new Promise(resolve => {
                 newClient.on('connect', () => {
-                    should.exist(res);
                     resolve();
                 });
             });
