@@ -13,6 +13,7 @@ Development team:
 | Stéphane Teixeira Carvalho           | stephane.teixeiracarvalho@heig-vd.ch     | Naludrag  |
 | Bruno Egremy (project lead)          | bruno.egremy@heig-vd.ch      | egremyb   |
 | Müller Robin                         | robin.muller@heig-vd.ch      | AziXus |
+| Diego Villagrasa                     | diego.villagrasa@heig-vd.ch |  TheSnekySnek|
 | Rosy-Laure Wonjamouna                | rosy-laure.wonjamouna@heig-vd.ch | 1996Rosy  |
 | Arthur Bécaud (deputy project lead) | arthur.becaud@heig-vd.ch    | BecaudA   |
 
