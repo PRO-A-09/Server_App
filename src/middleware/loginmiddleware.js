@@ -18,11 +18,18 @@ export class LoginMiddleware {
         logger.debug('New connection to the admin namespace');
 
         const password = socket.handshake.query.password;
+        if (!password) {
+            logger.debug(`No password specified`);
+            return next(new Error('No password specified'));
+        }
+
         const username = socket.handshake.query.username;
         socket.username = username;
         socket.handshake.query.password = null;
 
         let adminHash = await dbManager.getAdminPassword(username);
+        console.log(username)
+        console.log(adminHash)
         let res = await new Promise(resolve => {
             bcrypt.compare(password, adminHash, (err, res) => {
                 if (err) {

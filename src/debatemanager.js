@@ -144,8 +144,6 @@ export class DebateManager {
                     });
                 });
 
-                console.log(hash);
-
                 let result = await dbManager.saveUser(user.username, hash);
                 if(result === true){
                     callback(true, "Username was inserted");
