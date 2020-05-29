@@ -28,8 +28,11 @@ export class LoginMiddleware {
         socket.handshake.query.password = null;
 
         let adminHash = await dbManager.getAdminPassword(username);
-        console.log(username)
-        console.log(adminHash)
+        if (!adminHash) {
+            logger.debug(`Invalid username`);
+            return next(new Error('Invalid username'));
+        }
+
         let res = await new Promise(resolve => {
             bcrypt.compare(password, adminHash, (err, res) => {
                 if (err) {
