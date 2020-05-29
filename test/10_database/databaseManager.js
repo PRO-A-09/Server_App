@@ -56,7 +56,8 @@ describe('Data Base manager test', () => {
             id: 1,
             titreQuestion: "Question for debate 1",
             numberVotes: 0,
-            refDiscussion: discussion1._id
+            refDiscussion: discussion1._id,
+            isOpenQuestion: false
         });
         await question1.save().then((questionSaved) => {
             logger.debug(`question saved : ${questionSaved}`);
@@ -77,7 +78,8 @@ describe('Data Base manager test', () => {
             id: 2,
             titreQuestion: "Question 2 for debate 1",
             numberVotes: 0,
-            refDiscussion: discussion1._id
+            refDiscussion: discussion1._id,
+            isOpenQuestion: false
         });
         await question2.save().then((questionSaved) => {
             logger.debug(`question saved : ${questionSaved}`);
@@ -204,7 +206,7 @@ describe('Data Base manager test', () => {
 
     describe('End a debate by saving it in database', () => {
         it('Saving end debate 2', (done) => {
-            db.saveEndDiscussion(2).then(() => {
+            db.saveEndDiscussion(2, 57).then(() => {
                 let updatedDebate = db.getDiscussion(2);
                 updatedDebate.auditeurs = 57;
                 done();
@@ -250,10 +252,12 @@ describe('Data Base manager test', () => {
                 id;
                 title;
                 answers;
+                isOpenQuestion;
                 constructor(id, title){
                     this.id = id;
                     this.title = title;
                     this.answers = [];
+                    this.isOpenQuestion = true;
                 }
             }
             let question = new myQuestion(3, "My user question is good?");

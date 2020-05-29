@@ -26,7 +26,7 @@ export class DataBaseManager {
     async start() {
         // Connection to the local database
         try {
-            await mongoose.connect('mongodb://localhost:27017/PRO', {
+            await mongoose.connect('mongodb://mongo:27017/PRO', {
                 useNewUrlParser: true,
                 useUnifiedTopology: true
             });
@@ -317,7 +317,7 @@ export class DataBaseManager {
         logger.debug('getLastDiscussionId called');
         return new Promise(resolve => {
             Discussion.find().sort({_id: 'descending'}).exec((err, discussions) => {
-                if (err) {
+                if (err || discussions.length === 0) {
                     logger.debug('getLastDiscussionId returning 0');
                     resolve(0);
                 } else {
@@ -326,6 +326,43 @@ export class DataBaseManager {
                 }
             });
         });
+    }
+
+    /**
+     * Save a new admin in the database
+     * @param aUsername the username of the admin
+     * @param aPassword the password of the admin
+     * @returns {Promise<String|boolean>} true if the save went well false otherwise
+     */
+    async saveUser(aUsername, aPassword){
+        // If one of the two parameters is null or undefined error
+        if(aUsername == null || aPassword == null){
+            return false;
+        }
+        // If the password has not 8 characters error
+        if(aPassword.length < 8){
+            return "Password is too short";
+        }
+        let idAdmin = await this.getAdminId(aUsername);
+        // If the username already exists error
+        if(idAdmin != null){
+            return "Username already exists";
+        }
+        const admin = new Administrator({
+            login: aUsername,
+            password: aPassword
+        });
+        let saved = true;
+        // Try to save the admin in database
+        await admin.save()
+            .then(adminSaved => logger.debug(`Admin saved ${adminSaved}`))
+            .catch(err => {
+                logger.debug(`Error when saving admin`);
+                logger.debug(err);
+                saved = false
+            });
+        logger.debug(`saved = ${saved}`);
+        return saved;
     }
 
     /**
@@ -386,9 +423,10 @@ export class DataBaseManager {
      * Update a discussion when the discussion is closed.
      * Save the finish time and the number of auditors.
      * @param aIdDiscussion integer that is the Id of the discussion to update
+     * @param nbAuditors number of person that participated in the debate
      * @returns {Promise<boolean>} true if the update in the database went well false otherwise
      */
-    async saveEndDiscussion(aIdDiscussion){
+    async saveEndDiscussion(aIdDiscussion, nbAuditors){
         if(aIdDiscussion != null) {
             // Get the current state of the discussion in the database
             let debate = await this.getDiscussion(aIdDiscussion);
@@ -401,7 +439,7 @@ export class DataBaseManager {
             // Update the field finishTime and auditors
             debate.finishTime = new Date();
             // Will be changed by an attribute in the debate class
-            debate.auditors = 57;
+            debate.auditors = nbAuditors;
             let update = true;
             // Update the discussion in the database
             await debate.save()
@@ -428,7 +466,8 @@ export class DataBaseManager {
         const questionSave = new Question({
             id: aQuestion.id,
             titreQuestion: aQuestion.title,
-            refDiscussion: aIdDiscussion
+            refDiscussion: aIdDiscussion,
+            isOpenQuestion: aQuestion.isOpenQuestion
         });
         // Save the question in database
         await questionSave.save()

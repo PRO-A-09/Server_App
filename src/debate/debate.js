@@ -14,10 +14,12 @@ export class Debate {
     debateID;
     title;
     description;
+    locked;
 
     // Admin information
     adminRoomName;
     adminRoom;
+    adminId;
     admin;
 
     // User information
@@ -87,10 +89,11 @@ export class Debate {
      * @param adminNamespace admin namespace to create the room communicate with the admins
      */
     constructor(title, description, ownerSocket, io, adminNamespace) {
-        // Initialize detailts
+        // Initialize details
         this.title = title;
         this.description = description;
         this.debateID = ++Debate.nb_debate;
+        this.locked = false;
 
         // Initialize data
         this.clients = new Map();
@@ -101,13 +104,36 @@ export class Debate {
         this.adminRoomName = SocketConfig.ADMIN_ROOM_PREFIX + this.debateID;
         this.adminRoom = adminNamespace.to(this.adminRoomName);
         this.admin = ownerSocket.username;
+        this.adminId = ownerSocket.userid;
 
         // Join the admin room
         ownerSocket.join(this.adminRoomName);
 
         // Create a new namespace for the debate
         this.userNamespace = io.of(SocketConfig.DEBATE_NAMESPACE_PREFIX + this.debateID);
-        this.userNamespace.use(new ClientBlacklistMiddleware(this.admin).middlewareFunction);
+        this.userNamespace.use(new ClientBlacklistMiddleware(this).middlewareFunction);
+    }
+
+    /**
+     * Close the debate and disconnect all clients
+     * @param io
+     */
+    close(io) {
+        logger.info(`Closing debate with id (${this.debateID})`);
+        this.lockDebate();
+
+        logger.debug(`Disconnecting clients...`);
+        for (let [uuid, client] of this.clients) {
+            client.socket.disconnect(true);
+        }
+
+        logger.debug('Removing listeners...');
+        this.userNamespace.removeAllListeners();
+
+        logger.debug('Deleting namespace reference...');
+        delete io.nsps[`${SocketConfig.DEBATE_NAMESPACE_PREFIX}${this.debateID}`];
+
+        logger.info('Debate has been closed.');
     }
 
     /**
@@ -116,7 +142,6 @@ export class Debate {
     startSocketHandling() {
         this.userNamespace.on('connection', async (socket) => {
             logger.debug(`New socket connected to namespace (${this.userNamespace.name}) id (${socket.id})`);
-
             this.initializeClient(socket);
 
             // Register socket functions
@@ -131,6 +156,22 @@ export class Debate {
     }
 
     /**
+     * Lock the debate by blocking all new connections
+     */
+    lockDebate() {
+        logger.info(`Debate with id (${this.debateID}) is now locked.`);
+        this.locked = true;
+    }
+
+    /**
+     * Unlock the debate by allowing all new connections
+     */
+    unlockDebate() {
+        logger.info(`Debate with id (${this.debateID}) is now unlocked.`);
+        this.locked = false;
+    }
+
+    /**
      * Initialize the client and his attributes
      * @param socket client socket to initialize
      */
@@ -139,7 +180,8 @@ export class Debate {
             logger.debug(`Existing client uuid (${socket.uuid})`)
             this.getClient(socket.uuid).socket = socket;
         } else {
-            logger.debug(`New client uuid (${socket.uuid})`)
+            logger.debug(`New client uuid (${socket.uuid})`);
+
             // Store the socket and initialize attributes
             this.clients.set(socket.uuid, {
                 socket: socket,
@@ -169,7 +211,7 @@ export class Debate {
         //TODO: - Control if await slows down the app
         //      - If it slows down the app, remove it and modify tests
         //          (currently only pass with await otherwise they are executed too quickly)
-        await dbManager.saveQuestion(question, this.debateID)
+        await dbManager.saveQuestionAdmin(question, this.debateID, this.admin)
             .then(res => {
                 if (res === true) {
                     logger.info('Question saved to db');
@@ -184,6 +226,7 @@ export class Debate {
         logger.debug(`Sending new question with id ${question.id}`);
         this.questions.set(question.id, question);
         this.userNamespace.emit('newQuestion', question.format());
+        this.adminRoom.emit('newQuestion');
     }
 
     /**

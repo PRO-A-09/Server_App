@@ -1,4 +1,4 @@
-import {SocketConfig} from '../../src/conf/config.js'
+import {SocketConfig, getProtocol} from '../../src/conf/config.js'
 import {DebateManager} from "../../src/debatemanager.js";
 import io from 'socket.io-client'
 import chai from 'chai';
@@ -6,8 +6,9 @@ import chai from 'chai';
 const expect = chai.expect;
 const should = chai.should();
 
-const SERVER_ADDRESS = `http://localhost:${SocketConfig.SOCKET_PORT}`;
+const SERVER_ADDRESS = `${getProtocol()}://${SocketConfig.TEST_SERVER_NAME}:${SocketConfig.SOCKET_PORT}`;
 const PRIVILEGED_NAMESPACE = `${SERVER_ADDRESS}${SocketConfig.PRIVILEGED_NAMESPACE}`;
+const DEBATE_NAMESPACE = `${SERVER_ADDRESS}${SocketConfig.DEBATE_NAMESPACE_PREFIX}`;
 
 describe('Statistic functions test', () => {
     let debateManager;
@@ -46,7 +47,6 @@ describe('Statistic functions test', () => {
             admin.emit("getDebateStats", debateID, (debateStats) => {
                 debateStats[0].should.equal(3);
                 debateStats[1].should.equal(50);
-                console.log(debateStats[2]);
                 debateStats[2][0].numberVotes.should.equal(1);
                 debateStats[2][1].numberVotes.should.equal(0);
                 done();
@@ -56,7 +56,7 @@ describe('Statistic functions test', () => {
         it("Get stats of specific question", (done) => {
             let debateID = 1;
             let questionID = 1;
-            admin.emit("getQuestionStats", questionID, debateID, (questionStats) => {
+            admin.emit("getQuestionStats", [ questionID, debateID ], (questionStats) => {
                 questionStats[0].should.equal(2);// Verify number of responses
                 questionStats[1].should.equal(2);// Verify percentage
                 questionStats[2][0].response.should.equal("Yes");// Verify the response given
@@ -78,7 +78,7 @@ describe('Statistic functions test', () => {
         it("Get stats of unknown question", (done) => {
             let debateID = 4;
             let questionID = 100;
-            admin.emit("getQuestionStats", questionID, debateID, (questionStats) => {
+            admin.emit("getQuestionStats", [ questionID, debateID ], (questionStats) => {
                 questionStats.length.should.equal(0);
                 done();
             });

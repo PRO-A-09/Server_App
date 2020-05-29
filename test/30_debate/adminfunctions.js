@@ -1,4 +1,4 @@
-import {SocketConfig, ErrorMessage} from '../../src/conf/config.js'
+import {SocketConfig, ErrorMessage, getProtocol} from '../../src/conf/config.js'
 import {DebateManager} from "../../src/debatemanager.js";
 import io from 'socket.io-client'
 import chai from 'chai';
@@ -7,9 +7,10 @@ import {dbManager} from "../../src/database/DatabaseManager.js";
 const expect = chai.expect;
 const should = chai.should();
 
-const SERVER_ADDRESS = `http://localhost:${SocketConfig.SOCKET_PORT}`;
+const SERVER_ADDRESS = `${getProtocol()}://${SocketConfig.TEST_SERVER_NAME}:${SocketConfig.SOCKET_PORT}`;
 const PRIVILEGED_NAMESPACE = `${SERVER_ADDRESS}${SocketConfig.PRIVILEGED_NAMESPACE}`;
 const DEBATE_NAMESPACE = `${SERVER_ADDRESS}${SocketConfig.DEBATE_NAMESPACE_PREFIX}`;
+const defaultUUID = '2345675432';
 
 describe("Debate admin functions", () => {
     let debateManager;
@@ -51,7 +52,7 @@ describe("Debate admin functions", () => {
             path: SocketConfig.DEFAULT_PATH,
             forceNew: true,
             query: {
-                uuid: '2345675432'
+                uuid: defaultUUID
             }
         });
 
@@ -173,6 +174,25 @@ describe("Debate admin functions", () => {
         });
     });
 
+    describe('getDebateDetails', () => {
+        it('should give details on valid debate', (done) => {
+            admin.emit('getDebateDetails', id, (details) => {
+                details.should.not.equal(false);
+                details.debateId.should.equal(id);
+                should.exist(details.title);
+                should.exist(details.description);
+                done();
+            });
+        });
+
+        it('should return false on invalid id', (done) => {
+            admin.emit('getDebateDetails', 999, (details) => {
+                details.should.equal(false);
+                done();
+            });
+        });
+    });
+
     describe('banDevice', () => {
         it('should ban existing device', async () => {
             let bannedClient = io.connect(`${DEBATE_NAMESPACE}${id}`, {
@@ -257,14 +277,83 @@ describe("Debate admin functions", () => {
         });
     });
 
+    describe('lockDebate & unlockDebate', () => {
+        it('should lock a debate and block new clients', async () => {
+            await new Promise(resolve => {
+                admin.emit('lockDebate', id, (res) => {
+                    res.should.equal(true);
+                    resolve();
+                });
+            });
+
+            let newClient = io.connect(`${DEBATE_NAMESPACE}${id}`, {
+                path: SocketConfig.DEFAULT_PATH,
+                forceNew: true,
+                query: {
+                    uuid: 'my-new-device-uuid'
+                }
+            });
+
+            await new Promise(resolve => {
+                newClient.on('error', (res) => {
+                    should.exist(res);
+                    resolve();
+                });
+            });
+            newClient.close();
+        });
+        it('should allow existing clients', async () => {
+            let newClient = io.connect(`${DEBATE_NAMESPACE}${id}`, {
+                path: SocketConfig.DEFAULT_PATH,
+                forceNew: true,
+                query: {
+                    uuid: defaultUUID
+                }
+            });
+
+            await new Promise(resolve => {
+                newClient.on('connect', () => {
+                    resolve();
+                });
+            });
+            newClient.close();
+        });
+        it('should unlock debate and allow new clients', async () => {
+            await new Promise(resolve => {
+                admin.emit('unlockDebate', id, (res) => {
+                    res.should.equal(true);
+                    resolve();
+                });
+            });
+
+            let newClient = io.connect(`${DEBATE_NAMESPACE}${id}`, {
+                path: SocketConfig.DEFAULT_PATH,
+                forceNew: true,
+                query: {
+                    uuid: 'my-new-device-uuid'
+                }
+            });
+
+            await new Promise(resolve => {
+                newClient.on('connect', () => {
+                    resolve();
+                });
+            });
+            newClient.close();
+        });
+    });
+
     describe("closeDebate", () =>{
         it("Close debate", async () => {
             let idDebate = await dbManager.getLastDiscussionId();
-            admin.emit("closeDebate", idDebate, async (status) => {
-                status.should.equal(true);
-                let debate = await dbManager.getDiscussion(idDebate);
-                debate.hasOwnProperty('auditors').should.equal(true);
-                debate.hasOwnProperty('finishTime').should.equal(true);
+            await new Promise(resolve => {
+                admin.emit("closeDebate", idDebate, async (status) => {
+                    status.should.equal(true);
+                    let debate = await dbManager.getDiscussion(idDebate);
+                    should.exist(debate.auditors);
+                    should.exist(debate.finishTime);
+                    resolve();
+                });
             });
         });
     });

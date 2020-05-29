@@ -37,12 +37,22 @@ export class PrivilegedNamespace extends CustomNamespace {
             this.initializeUsers(socket);
 
             // Register socket functions
+            // Debate information functions
             socket.on('getDebates', this.getDebates(socket));
+            socket.on('getDebateDetails', this.getDebateDetails(socket));
             socket.on('getDebateQuestions', this.getDebateQuestions(socket));
             socket.on('getDebateSuggestions', this.getDebateSuggestions(socket));
+
+            // New debate information functions
             socket.on('newDebate', this.newDebate(socket));
-            socket.on('closeDebate', this.closeDebate(socket));
             socket.on('newQuestion', this.newQuestion(socket));
+
+            // Debate management functions
+            socket.on('closeDebate', this.closeDebate(socket));
+            socket.on('lockDebate', this.lockDebate(socket));
+            socket.on('unlockDebate', this.unlockDebate(socket));
+
+            // Stats functions
             socket.on('getAdminStats', this.getAdminStats(socket));
             socket.on('getDebateStats', this.getDebateStats(socket));
             socket.on('getQuestionStats', this.getQuestionStats(socket));
@@ -50,9 +60,8 @@ export class PrivilegedNamespace extends CustomNamespace {
             // Moderator functions
             socket.on('banUser', this.banUser(socket));
             socket.on('unbanUser', this.unbanUser(socket));
-
-            socket.on('approveQuestion', this.approveQuestion(socket));
-            socket.on('rejectQuestion', this.rejectQuestion(socket));
+            socket.on('approveSuggestion', this.approveSuggestion(socket));
+            socket.on('rejectSuggestion', this.rejectSuggestion(socket));
         });
     }
 
@@ -110,17 +119,82 @@ export class PrivilegedNamespace extends CustomNamespace {
 
         logger.debug('Getting discussions from database');
         let discussions = await dbManager.getDiscussionsAdmin(socket.username);
-        for (const discussion of discussions) {
-            debates.push({
-                debateId: discussion._id,
-                title: discussion.title,
-                description: discussion.description,
-                closed: discussion.finishTime != null
-            });
+        if(discussions != null) {
+            for (const discussion of discussions) {
+                if (!this.activeDebates.has(discussion._id)) {
+                    debates.push({
+                        debateId: discussion._id,
+                        title: discussion.title,
+                        description: discussion.description,
+                        closed: true
+                    });
+                }
+            }
         }
 
         callback(debates);
     };
+
+    /**
+     * Return the details of the debate with the specified id
+     * debateId contains the id of the debate
+     */
+    getDebateDetails = (socket) => async (debateId, callback) => {
+        logger.debug(`getDebateDetails received from user (${socket.username}) id (${socket.id})`);
+
+        if (!TypeCheck.isFunction(callback)) {
+            logger.debug(`callback is not a function.`);
+            return;
+        }
+
+        if (!TypeCheck.isInteger(debateId)) {
+            logger.debug('Invalid arguments for getDebateDetails.');
+            callback(false);
+            return;
+        }
+
+        const debate = this.getActiveDebate(debateId);
+        if (debate == null) { // Try to query from DB
+            logger.debug(`Debate with id (${debateId}) not found... Checking in database.`);
+
+            const adminId = await dbManager.getAdminId(socket.username);
+            const discussion = await dbManager.getDiscussion(debateId);
+            if (discussion == null) {
+                logger.debug(`Discussion with id (${debateId}) not found`);
+                callback(false);
+                return
+            }
+
+            if (!discussion.administrator.equals(adminId)) {
+                logger.debug(`Cannot get the debate information of another user.`);
+                callback(false);
+                return;
+            }
+
+            let details = {
+                debateId: discussion._id,
+                title: discussion.title,
+                description: discussion.description,
+                startTime: discussion.startTime,
+                finishTime: discussion.finishTime,
+                closed: true
+            }
+
+            callback(details);
+        } else {
+            // Store details in an object before sending it
+            let details = {
+                debateId: debate.debateID,
+                title: debate.title,
+                description: debate.description,
+                startTime: debate.startTime,
+                closed: false,
+                locked: debate.locked
+            }
+
+            callback(details);
+        }
+    }
 
     /**
      * Return the list of questions for a debate to the callback function
@@ -239,15 +313,90 @@ export class PrivilegedNamespace extends CustomNamespace {
             logger.debug(`No active debate with the id ${aIdDiscussion} was found`);
             return;
         }
+        debate.close(this.io);
         // Delete debate from active debates
         this.activeDebates.delete(aIdDiscussion);
         this.users.get(socket.username).activeDebates.delete(debate.debateID);
         // Save in the database that the discussion is closed
-        let update = await dbManager.saveEndDiscussion(aIdDiscussion);
+        let update = await dbManager.saveEndDiscussion(aIdDiscussion, debate.getNbUniqueClients());
 
         logger.debug(`result update: ${update}`);
 
         callback(update);
+    };
+
+    /**
+     * Return the true if the debate was locked correctly false otherwise in the callback function
+     * If the debate is already locked and we attempt to lock it, return also true
+     */
+    lockDebate = (socket) => async (debateId, callback) => {
+        logger.debug(`lockDebate requested from ${socket.username}`);
+
+        if (!(callback instanceof Function)) {
+            logger.debug(`callback is not a function.`);
+            return;
+        }
+
+        if (!TypeCheck.isInteger(debateId)) {
+            logger.debug(`Invalid arguments for lockDebate. debateId: ${debateId})`);
+            callback(false);
+            return;
+        }
+
+        // Get the debate with the desired id
+        let debate = this.getActiveDebate(debateId);
+        if(debate == null){
+            logger.debug(`No active debate with id ${debateId} was found`);
+            callback(false);
+            return;
+        }
+
+        if (debate.locked === true) {
+            logger.debug(`Debate with id ${debateId} is already locked`);
+            callback(true);
+            return;
+        }
+
+        debate.lockDebate();
+        logger.info(`Debate with id (${debateId}) was locked by ${socket.username}`);
+        callback(true);
+    };
+
+    /**
+     * Return the true if the debate was unlocked correctly false otherwise in the callback function.
+     * If the debate is already unlocked and we attempt to unlock it, return also true
+     */
+    unlockDebate = (socket) => async (debateId, callback) => {
+        logger.debug(`unlockDebate requested from ${socket.username}`);
+
+        if (!(callback instanceof Function)) {
+            logger.debug(`callback is not a function.`);
+            return;
+        }
+
+        if (!TypeCheck.isInteger(debateId)) {
+            logger.debug(`Invalid arguments for unlockDebate. debateId: ${debateId})`);
+            callback(false);
+            return;
+        }
+
+        // Get the debate with the desired id
+        let debate = this.getActiveDebate(debateId);
+        if(debate == null){
+            logger.debug(`No active debate with id ${debateId} was found`);
+            callback(false);
+            return;
+        }
+
+        if (debate.locked === false) {
+            logger.debug(`Debate with id ${debateId} is already unlocked`);
+            callback(true);
+            return;
+        }
+
+        debate.unlockDebate();
+        logger.info(`Debate with id (${debateId}) was unlocked by ${socket.username}`);
+        callback(true);
     };
 
     /**
@@ -329,7 +478,7 @@ export class PrivilegedNamespace extends CustomNamespace {
             return;
         }
 
-        let allQuestions = await this.statistic.debateStats(debateId);
+        let allQuestions = await this.statistic.debateStats(debateId, this.activeDebates);
 
         if (allQuestions.length !== 3) {
             logger.debug('Invalid debate.');
@@ -343,7 +492,7 @@ export class PrivilegedNamespace extends CustomNamespace {
     /**
      * Return an array that contains stats for a specific question in the result of the callback function
      */
-    getQuestionStats = (socket) => async (questionId, debateId, callback) => {
+    getQuestionStats = (socket) => async (questionId, callback) => {
         logger.debug(`getQuestionStats received from ${socket.id}`);
 
         if (!(callback instanceof Function)) {
@@ -351,7 +500,7 @@ export class PrivilegedNamespace extends CustomNamespace {
             return;
         }
 
-        let allResponses = await this.statistic.questionStats(questionId, debateId);
+        let allResponses = await this.statistic.questionStats(questionId[0], questionId[1], this.activeDebates);
 
         if (allResponses.length !== 3) {
             logger.debug('Invalid question.');
@@ -382,7 +531,7 @@ export class PrivilegedNamespace extends CustomNamespace {
         }
 
         if (!TypeCheck.isString(uuid) || (shouldKick && !TypeCheck.isInteger(debateId))) {
-            logger.debug('Invalid arguments for banUser');
+            logger.debug(`Invalid arguments for banUser. Uuid: ${uuid}, debateId: ${debateId}`);
             callback(false);
             return;
         }
@@ -395,6 +544,8 @@ export class PrivilegedNamespace extends CustomNamespace {
                 callback(false);
                 return;
             }
+
+            debate.questionSuggestion.removeDeviceSuggestions(uuid);
         }
 
         // Ban the device in the database
@@ -464,8 +615,8 @@ export class PrivilegedNamespace extends CustomNamespace {
      * Approve a suggestion with the specified id and debate
      * approveObj contains the required information (debateId and suggestionId)
      */
-    approveQuestion = (socket) => (approveObj, callback) => {
-        logger.debug(`approveQuestion received from user (${socket.username}), id(${socket.id})`);
+    approveSuggestion = (socket) => async (approveObj, callback) => {
+        logger.debug(`approveSuggestion received from user (${socket.username}), id(${socket.id})`);
 
         if (!TypeCheck.isFunction(callback)) {
             logger.debug(`callback is not a function.`);
@@ -486,7 +637,7 @@ export class PrivilegedNamespace extends CustomNamespace {
             return;
         }
 
-        const res = debate.questionSuggestion.approveSuggestion(suggestionId);
+        const res = await debate.questionSuggestion.approveSuggestion(suggestionId);
         if (res === false) {
             logger.debug('Cannot approve suggestion.');
             callback(false);
@@ -501,8 +652,8 @@ export class PrivilegedNamespace extends CustomNamespace {
      * Reject a suggestion with the specified id and debate
      * rejectObj contains the required information (debateId and suggestionId)
      */
-    rejectQuestion = (socket) => (rejectObj, callback) => {
-        logger.debug(`rejectQuestion received from user (${socket.username}), id(${socket.id})`);
+    rejectSuggestion = (socket) => (rejectObj, callback) => {
+        logger.debug(`rejectSuggestion received from user (${socket.username}), id(${socket.id})`);
 
         if (!TypeCheck.isFunction(callback)) {
             logger.debug(`callback is not a function.`);
