@@ -29,7 +29,7 @@ export class LoginMiddleware {
                     logger.error(`Error while comparing bcrypt passwords: ${err}`);
                     resolve(false);
                 } else {
-                    return res;
+                    resolve(res);
                 }
             });
         });
@@ -39,7 +39,6 @@ export class LoginMiddleware {
             socket.userid = await dbManager.getAdminId(username);
             return next();
         }
-
         logger.debug(ErrorMessage.LOGIN_PASSWORD_INVALID);
         return next(new Error(ErrorMessage.LOGIN_PASSWORD_INVALID));
     }

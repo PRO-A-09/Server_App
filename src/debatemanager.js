@@ -1,4 +1,4 @@
-import {SocketConfig, logger, isProduction, SSLConfig} from './conf/config.js'
+import {SocketConfig, logger, isProduction, SSLConfig, PasswordConfig} from './conf/config.js'
 import {PrivilegedNamespace} from './namespace/privilegednamespace.js';
 import {LoginMiddleware} from './middleware/loginmiddleware.js';
 import http from 'http'
@@ -8,6 +8,7 @@ import Server from 'socket.io'
 import {dbManager} from "./database/DatabaseManager.js";
 import {Debate} from "./debate/debate.js";
 import * as fs from 'fs';
+import bcrypt from 'bcrypt';
 
 /**
  * This class is used to manage the debate server.
@@ -125,11 +126,27 @@ export class DebateManager {
                 logger.debug(`New admin to add to the database`);
                 if(user.username == null){
                     callback(false, "Username cannot be null");
+                    return;
                 }
                 if(user.password == null){
                     callback(false, "Password cannot be null");
+                    return;
                 }
-                let result = await dbManager.saveUser(user.username, user.password);
+                // If the password has not 8 characters error
+                if(user.password.length < PasswordConfig.MIN_LENGTH){
+                    callback(false, "Password is too short");
+                    return;
+                }
+
+                let hash = await new Promise(resolve => {
+                    bcrypt.hash(user.password, PasswordConfig.NB_ROUNDS).then(function(hash) {
+                        resolve(hash);
+                    });
+                });
+
+                console.log(hash);
+
+                let result = await dbManager.saveUser(user.username, hash);
                 if(result === true){
                     callback(true, "Username was inserted");
                 } else{
