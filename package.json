@@ -5,7 +5,9 @@
   "main": "src/index.js",
   "scripts": {
     "start": "node src/index.js",
-    "test": "mocha test/"
+    "prod": "NODE_ENV=production node src/index.js",
+    "test": "mocha test/ --recursive",
+    "testprod": "NODE_ENV=production mocha test/ --recursive"
   },
   "repository": {
     "type": "git",
@@ -27,6 +29,7 @@
     "socket.io-client": "latest"
   },
   "dependencies": {
+    "bcrypt": "^4.0.1",
     "http-terminator": "^2.0.2",
     "mongoose": "^5.9.6",
     "socket.io": "^2.3.0",

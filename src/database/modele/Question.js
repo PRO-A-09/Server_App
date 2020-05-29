@@ -19,10 +19,6 @@ const QuestionSchema = new mongoose.Schema({
         type: String,
         required: true
     },
-    numberVotes:{
-        type: Number,
-        required: true
-    },
     refDiscussion:{
         type: Number,
         ref: 'Discussion',
@@ -34,6 +30,10 @@ const QuestionSchema = new mongoose.Schema({
                 Discussion.findOne({_id: v}, (err, discussion) => resolve(discussion ? true : false));
             });
         }
+    },
+    isOpenQuestion: {
+        type: Boolean,
+        required: true
     },
     // Multiple tags can be linked to a question so declaration of an array
     tags:[
