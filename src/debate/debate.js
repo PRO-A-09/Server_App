@@ -208,9 +208,6 @@ export class Debate {
      * @param question object from the nested class Question
      */
     async sendNewQuestion(question) {
-        //TODO: - Control if await slows down the app
-        //      - If it slows down the app, remove it and modify tests
-        //          (currently only pass with await otherwise they are executed too quickly)
         await dbManager.saveQuestionAdmin(question, this.debateID, this.admin)
             .then(res => {
                 if (res === true) {
@@ -340,9 +337,6 @@ export class Debate {
             return;
         }
 
-        //TODO: - Control if await slows down the app
-        //      - If it slows down the app, remove it and modify tests
-        //          (currently only pass with await otherwise they are executed too quickly)
         await dbManager.saveResponseDevice(socket.uuid, answerId, questionId, this.debateID)
             .then(res => {
                 if (res === true) {
@@ -408,9 +402,6 @@ export class Debate {
         let responseId = newLength - 1;
         this.getClient(socket.uuid).answers.set(questionId, responseId);
 
-        //TODO: - Control if await slows down the app
-        //      - If it slows down the app, remove it and modify tests
-        //          (currently only pass with await otherwise they are executed too quickly)
         await dbManager.saveResponse(responseId, answer, questionId, this.debateID, socket.uuid)
             .then(res => {
                 if (res === true) {

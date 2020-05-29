@@ -136,7 +136,6 @@ export class QuestionSuggestion {
 
         logger.info(`Device with uuid (${uuid}) suggested (${question}) id (${suggestedQuestion.suggestionId})`);
 
-        // TODO: - Integration with moderator rooms
         if (!this.approvalRequired) {
             logger.info('Approval not required... Calling approveSuggestion.')
             this.approveSuggestion(suggestedQuestion.suggestionId);
