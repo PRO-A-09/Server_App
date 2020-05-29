@@ -21,10 +21,15 @@ export class DebateConfig {
     static MAX_TITLE_LENGTH = 50;
     static MAX_DESCRIPTION_LENGTH = 250;
     static MAX_CLOSED_ANSWERS = 20;
-    static MAX_OPEN_ANSWER_LENGTH = 50;
+    static MAX_OPEN_ANSWER_LENGTH = 150;
     static MAX_QUESTION_LENGTH = 50;
-    static MAX_SUGGESTION_LENGTH = 50;
+    static MAX_SUGGESTION_LENGTH = 150;
     static MAX_SUGGESTIONS = 10;
+}
+
+export class PasswordConfig {
+    static NB_ROUNDS = 12;
+    static MIN_LENGTH = 8;
 }
 
 export class SSLConfig {

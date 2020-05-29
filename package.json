@@ -29,6 +29,7 @@
     "socket.io-client": "latest"
   },
   "dependencies": {
+    "bcrypt": "^4.0.1",
     "http-terminator": "^2.0.2",
     "mongoose": "^5.9.6",
     "socket.io": "^2.3.0",

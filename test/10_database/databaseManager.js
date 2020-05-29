@@ -7,7 +7,8 @@ import {QuestionAdmin} from "../../src/database/modele/QuestionAdmin.js";
 import {QuestionSuggestion} from "../../src/database/modele/QuestionSuggestion.js";
 import {Device} from "../../src/database/modele/Device.js";
 import {Response} from "../../src/database/modele/Response.js";
-import {logger} from "../../src/conf/config.js";
+import {logger, PasswordConfig} from "../../src/conf/config.js";
+import bcrypt from 'bcrypt';
 
 const expect = chai.expect;
 const should = chai.should();
@@ -19,9 +20,15 @@ describe('Data Base manager test', () => {
         await db.start();
         let user = null;
 
+        let adminHash = await new Promise(resolve => {
+            bcrypt.hash('pass', PasswordConfig.NB_ROUNDS).then(function(hash) {
+                resolve(hash);
+            });
+        });
+
         const admin = new Administrator({
             login: 'admin',
-            password: 'pass'
+            password: adminHash
         });
         await admin.save().then((userSaved) => {
             logger.debug(`administrator saved : ${userSaved}`);
@@ -137,7 +144,7 @@ describe('Data Base manager test', () => {
             const username = "admin";
             db.getAdminPassword(username).then( function(password) {
                     console.log(password);
-                    password.should.equal("pass");
+                    should.exist(password);
                     done();
                 }
             );

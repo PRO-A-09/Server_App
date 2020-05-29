@@ -339,10 +339,6 @@ export class DataBaseManager {
         if(aUsername == null || aPassword == null){
             return false;
         }
-        // If the password has not 8 characters error
-        if(aPassword.length < 8){
-            return "Password is too short";
-        }
         let idAdmin = await this.getAdminId(aUsername);
         // If the username already exists error
         if(idAdmin != null){
